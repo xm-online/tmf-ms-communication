@@ -170,6 +170,8 @@ repositories {
 dependencies {
     // Use ", version: jhipster_dependencies_version, changing: true" if you want
     // to use a SNAPSHOT release instead of a stable release
+    provided "org.projectlombok:lombok:${lombok_version}"
+    apt "org.projectlombok:lombok:${lombok_version}"
     compile group: "io.github.jhipster", name: "jhipster-framework"
     compile "io.dropwizard.metrics:metrics-core"
     compile "io.dropwizard.metrics:metrics-json"
