@@ -1,0 +1,41 @@
+{
+  "generator-jhipster": {
+    "promptValues": {
+      "packageName": "com.icthh.xm.tmf.ms.communication",
+      "nativeLanguage": "en"
+    },
+    "jhipsterVersion": "5.5.0",
+    "applicationType": "microservice",
+    "baseName": "communication",
+    "packageName": "com.icthh.xm.tmf.ms.communication",
+    "packageFolder": "com/icthh/xm/tmf/ms/communication",
+    "serverPort": "8701",
+    "authenticationType": "uaa",
+    "uaaBaseName": "uaa",
+    "cacheProvider": "no",
+    "enableHibernateCache": false,
+    "websocket": false,
+    "databaseType": "no",
+    "devDatabaseType": "no",
+    "prodDatabaseType": "no",
+    "searchEngine": false,
+    "messageBroker": false,
+    "serviceDiscoveryType": "consul",
+    "buildTool": "gradle",
+    "enableSwaggerCodegen": true,
+    "jwtSecretKey": "Y2U2OWQ3MTY4Mzg4MmM0NWQ4ZTA5MTNkMWRlOGNlNmM0ZWRjNWQ3MGJmZjYwOWQ3YWE3Y2NlYTI0MDhlMGRlN2RlYTc1MjAxODA0YWRkYjViM2RmZDg1MTg0MTkyMTYzN2UyM2I5ZTRkZWViMjhhNDBkNzMwNThmYzU5N2M4OTY=",
+    "enableTranslation": true,
+    "languages": [
+      "en"
+    ],
+    "testFrameworks": [
+      "gatling",
+      "cucumber"
+    ],
+    "jhiPrefix": "jhi",
+    "clientPackageManager": "npm",
+    "nativeLanguage": "en",
+    "skipClient": true,
+    "skipUserManagement": true
+  }
+}
