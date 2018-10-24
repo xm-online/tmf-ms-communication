@@ -22,14 +22,13 @@ plugins {
     id "net.ltgt.apt-idea" version "0.18"
     id "net.ltgt.apt" version "0.18"
     id "io.spring.dependency-management" version "1.0.6.RELEASE"
+    id "com.github.spotbugs" version "1.6.3"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
 
 apply plugin: 'java'
-sourceCompatibility=1.8
-targetCompatibility=1.8
-// Until JHipster supports JDK 9
-assert System.properties['java.specification.version'] == '1.8'
+sourceCompatibility=1.9
+targetCompatibility=1.9
 
 apply plugin: 'maven'
 apply plugin: 'org.springframework.boot'
@@ -37,6 +36,8 @@ apply plugin: 'war'
 apply plugin: 'propdeps'
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'idea'
+apply plugin: 'checkstyle'
+apply plugin: 'pmd'
 
 dependencyManagement {
   imports {
@@ -86,6 +87,24 @@ if (OperatingSystem.current().isWindows()) {
             classpath = files("$buildDir/classes/java/main", "$buildDir/resources/main", classpathJar.archivePath)
         }
     }
+}
+
+checkstyle {
+    toolVersion = "7.6.1"
+    ignoreFailures = true
+    configFile = rootProject.file('./qa/checkstyle.xml')
+}
+
+spotbugs {
+    toolVersion = '3.1.3'
+    ignoreFailures = true
+}
+
+pmd {
+    rulePriority = 3
+    toolVersion = '5.5.4'
+    ignoreFailures = true
+    ruleSetFiles = files("./qa/pmd.xml")
 }
 
 test {

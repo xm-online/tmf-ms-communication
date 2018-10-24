@@ -76,20 +76,20 @@ public class OAuth2Properties {
     public static class SignatureVerification {
         /**
          * Maximum refresh rate for public keys in ms.
-         * We won't fetch new public keys any faster than that to avoid spamming UAA in case
+         * We won't fetch new public keys any faster than that to avoid spamming Config in case
          * we receive a lot of "illegal" tokens.
          */
         private long publicKeyRefreshRateLimit = 10 * 1000L;
         /**
          * Maximum TTL for the public key in ms.
-         * The public key will be fetched again from UAA if it gets older than that.
+         * The public key will be fetched again from Config if it gets older than that.
          * That way, we make sure that we get the newest keys always in case they are updated there.
          */
         private long ttl = 24 * 60 * 60 * 1000L;
         /**
          * Endpoint where to retrieve the public key used to verify token signatures.
          */
-        private String publicKeyEndpointUri = "http://uaa/oauth/token_key";
+        private String publicKeyEndpointUri = "http://config/oauth/token_key";
 
         public long getPublicKeyRefreshRateLimit() {
             return publicKeyRefreshRateLimit;

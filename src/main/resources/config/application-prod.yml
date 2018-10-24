@@ -87,8 +87,8 @@ jhipster:
             timeToLiveInDays: 1461
     security:
         client-authorization:
-            access-token-uri: http://uaa/oauth/token
-            token-service-id: uaa
+            access-token-uri: http://config/oauth/token
+            token-service-id: config
             client-id: internal
             client-secret: internal
     mail: # specific JHipster mail property, for standard properties see MailProperties
@@ -97,8 +97,8 @@ jhipster:
     metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
         jmx:
             enabled: true
-        prometheus: 
-            enabled: false #expose metrics via prometheus 
+        prometheus:
+            enabled: false #expose metrics via prometheus
         logs: # Reports Dropwizard metrics in the logs
             enabled: false
             report-frequency: 60 # in seconds
@@ -110,13 +110,13 @@ jhipster:
             queue-size: 512
 oauth2:
     signature-verification:
-        public-key-endpoint-uri: http://uaa/oauth/token_key
+        public-key-endpoint-uri: http://config/oauth/token_key
         #ttl for public keys to verify JWT tokens (in ms)
         ttl: 3600000
         #max. rate at which public keys will be fetched (in ms)
         public-key-refresh-rate-limit: 10000
     web-client-configuration:
-        #change client secret in production, keep in sync with UAA configuration
+        #change client secret in production, keep in sync with Config configuration
         client-id: web_app
         secret: changeit
 

@@ -17,24 +17,24 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 
 /**
- * Client fetching the public key from UAA to create a SignatureVerifier.
+ * Client fetching the public key from Config to create a SignatureVerifier.
  */
 @Component
-public class UaaSignatureVerifierClient implements OAuth2SignatureVerifierClient {
-    private final Logger log = LoggerFactory.getLogger(UaaSignatureVerifierClient.class);
+public class ConfigSignatureVerifierClient implements OAuth2SignatureVerifierClient {
+    private final Logger log = LoggerFactory.getLogger(ConfigSignatureVerifierClient.class);
     private final RestTemplate restTemplate;
     protected final OAuth2Properties oAuth2Properties;
 
-    public UaaSignatureVerifierClient(DiscoveryClient discoveryClient, @Qualifier("loadBalancedRestTemplate") RestTemplate restTemplate,
-                                  OAuth2Properties oAuth2Properties) {
+    public ConfigSignatureVerifierClient(DiscoveryClient discoveryClient, @Qualifier("loadBalancedRestTemplate") RestTemplate restTemplate,
+                                         OAuth2Properties oAuth2Properties) {
         this.restTemplate = restTemplate;
         this.oAuth2Properties = oAuth2Properties;
-        // Load available UAA servers
+        // Load available Config servers
         discoveryClient.getServices();
     }
 
     /**
-     * Fetches the public key from the UAA.
+     * Fetches the public key from the Config.
      *
      * @return the public key used to verify JWT tokens; or null.
      */
@@ -47,7 +47,7 @@ public class UaaSignatureVerifierClient implements OAuth2SignatureVerifierClient
                 .get("value");
             return new RsaVerifier(key);
         } catch (IllegalStateException ex) {
-            log.warn("could not contact UAA to get public key");
+            log.warn("could not contact Config to get public key");
             return null;
         }
     }
