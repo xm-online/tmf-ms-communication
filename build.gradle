@@ -27,8 +27,8 @@ plugins {
 }
 
 apply plugin: 'java'
-sourceCompatibility=1.9
-targetCompatibility=1.9
+sourceCompatibility=1.8
+targetCompatibility=1.8
 
 apply plugin: 'maven'
 apply plugin: 'org.springframework.boot'
@@ -243,6 +243,9 @@ dependencies {
     testCompile "org.mockito:mockito-core"
     testCompile "org.hamcrest:hamcrest-library"
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
+
+    compile "com.icthh.xm.commons:xm-commons-logging-web:${xm_commons_version}"
+
 }
 
 task cleanResources(type: Delete) {

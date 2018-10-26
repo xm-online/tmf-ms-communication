@@ -120,6 +120,12 @@ jhipster:
         license:
         license-url:
 
+logging:
+    level:
+        ROOT: INFO
+        com.icthh.xm.tmf: INFO
+        io.github.jhipster: INFO
+
 # ===================================================================
 # Application specific properties
 # Add your own application properties here, see the ApplicationProperties class
