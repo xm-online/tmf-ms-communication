@@ -192,6 +192,7 @@ dependencies {
     compile "commons-io:commons-io"
     compile "javax.transaction:javax.transaction-api"
     compile "org.springframework.boot:spring-boot-loader-tools"
+    compile "org.springframework.boot:spring-boot-autoconfigure"
     compile "org.springframework.boot:spring-boot-starter-mail"
     compile "org.springframework.boot:spring-boot-starter-logging"
     compile "org.springframework.boot:spring-boot-starter-actuator"
@@ -244,7 +245,8 @@ dependencies {
     testCompile "org.hamcrest:hamcrest-library"
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 
-    compile "com.icthh.xm.commons:xm-commons-logging-web:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-ms-web:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-lep:${xm_commons_version}"
 
 }
 

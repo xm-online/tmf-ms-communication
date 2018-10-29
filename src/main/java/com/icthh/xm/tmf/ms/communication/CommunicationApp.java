@@ -26,7 +26,7 @@ import java.util.Collection;
 @ComponentScan(
     excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = OAuth2InterceptedFeignConfiguration.class)
 )
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = "com.icthh.xm")
 @EnableConfigurationProperties({ApplicationProperties.class})
 @EnableDiscoveryClient
 public class CommunicationApp {

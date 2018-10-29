@@ -34,9 +34,9 @@
         </encoder>
     </appender>
 
-    <logger name="com.icthh.xm.tmf" level="#logback.loglevel#"/>
+    <logger name="com.icthh.xm" level="#logback.loglevel#"/>
 
-    <logger name="io.github.jhipster" level="#logback.loglevel#"/
+    <logger name="io.github.jhipster" level="#logback.loglevel#"/>
 
     <logger name="javax.activation" level="WARN"/>
     <logger name="javax.mail" level="WARN"/>
@@ -72,5 +72,9 @@
     <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
         <resetJUL>true</resetJUL>
     </contextListener>
+
+    <root level="#logback.loglevel#">
+        <appender-ref ref="STDOUT"/>
+    </root>
 
 </configuration>
