@@ -122,10 +122,12 @@ jhipster:
 
 logging:
     level:
-        ROOT: INFO
-        com.icthh.xm.tmf: INFO
-        io.github.jhipster: INFO
+        ROOT: DEBUG
+        com.icthh.xm: DEBUG
+        io.github.jhipster: DEBUG
 
+xm-config:
+    enabled: false
 # ===================================================================
 # Application specific properties
 # Add your own application properties here, see the ApplicationProperties class
