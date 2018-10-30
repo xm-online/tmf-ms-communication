@@ -3,6 +3,7 @@ package com.icthh.xm.tmf.ms.communication.config;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.servlet.InstrumentedFilter;
 import com.codahale.metrics.servlets.MetricsServlet;
+import com.icthh.xm.commons.web.spring.config.XmMsWebConfiguration;
 import io.github.jhipster.config.JHipsterProperties;
 import io.undertow.UndertowOptions;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.web.cors.CorsConfiguration;
@@ -29,6 +31,9 @@ import java.util.*;
  * Configuration of web application with Servlet 3.0 APIs.
  */
 @Configuration
+@Import({
+    XmMsWebConfiguration.class
+})
 public class WebConfigurer implements ServletContextInitializer, WebServerFactoryCustomizer<WebServerFactory> {
 
     private final Logger log = LoggerFactory.getLogger(WebConfigurer.class);
