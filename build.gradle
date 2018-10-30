@@ -221,11 +221,12 @@ dependencies {
         exclude module: 'mapstruct'
     }
     compile "io.springfox:springfox-bean-validators"
-    compile "org.mapstruct:mapstruct-jdk8:${mapstruct_version}"
     annotationProcessor "javax.xml.bind:jaxb-api:2.3.0"
     annotationProcessor "javax.annotation:javax.annotation-api:1.3.1"
     compile "com.sun.xml.bind:jaxb-impl:2.2.11"
     compile "com.sun.xml.bind:jaxb-core:2.2.11"
+    compile "org.mapstruct:mapstruct-jdk8:${mapstruct_version}"
+    compile "com.icthh.xm.commons:xm-commons-logging-web:${xm_commons_version}"
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor") {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
@@ -243,8 +244,6 @@ dependencies {
     testCompile "org.mockito:mockito-core"
     testCompile "org.hamcrest:hamcrest-library"
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
-
-    compile "com.icthh.xm.commons:xm-commons-logging-web:${xm_commons_version}"
 
 }
 
