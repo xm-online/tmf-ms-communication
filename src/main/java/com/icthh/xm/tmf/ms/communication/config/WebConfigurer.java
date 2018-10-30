@@ -37,9 +37,6 @@ import java.util.EnumSet;
  * Configuration of web application with Servlet 3.0 APIs.
  */
 @Configuration
-@Import({
-    ServiceLoggingAspectConfiguration.class
-})
 public class WebConfigurer implements ServletContextInitializer, WebServerFactoryCustomizer<WebServerFactory> {
 
     private final Logger log = LoggerFactory.getLogger(WebConfigurer.class);

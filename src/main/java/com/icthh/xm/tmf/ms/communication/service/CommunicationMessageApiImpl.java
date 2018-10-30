@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
+import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.tmf.ms.communication.web.api.CommunicationMessageApiDelegate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +15,7 @@ public class CommunicationMessageApiImpl implements CommunicationMessageApiDeleg
     public ResponseEntity<List<CommunicationMessage>> listCommunicationMessage(String fields,
                                                                         Integer offset,
                                                                         Integer limit) {
-        return ResponseEntity.ok(null);
+        throw new BusinessException("error.code", "text message");
     }
 
 }
