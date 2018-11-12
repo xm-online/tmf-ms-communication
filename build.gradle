@@ -188,6 +188,7 @@ dependencies {
     compile "com.fasterxml.jackson.core:jackson-databind"
     compile "com.fasterxml.jackson.module:jackson-module-afterburner"
     compile "com.ryantenney.metrics:metrics-spring"
+    compile "org.hibernate:hibernate-core"
     compile "org.apache.commons:commons-lang3"
     compile "commons-io:commons-io"
     compile "javax.transaction:javax.transaction-api"
@@ -245,7 +246,10 @@ dependencies {
     testCompile "org.hamcrest:hamcrest-library"
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 
-    compile "com.icthh.xm.commons:xm-commons-logging-web:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-migration-db:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-tenant-endpoint:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-ms-web:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-lep:${xm_commons_version}"
     compile "com.icthh.xm.commons:xm-commons-i18n:${xm_commons_version}"
 
 }

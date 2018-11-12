@@ -127,7 +127,9 @@ logging:
         io.github.jhipster: DEBUG
 
 xm-config:
-    enabled: false
+    enabled: true
+    xm-config-url: http://config
+    kafka-config-topic: config_topic
 # ===================================================================
 # Application specific properties
 # Add your own application properties here, see the ApplicationProperties class
@@ -137,4 +139,7 @@ xm-config:
 # https://www.jhipster.tech/common-application-properties/
 # ===================================================================
 
-# application:
+application:
+    tenant-ignored-path-list: /v2/api-docs, /api/profile-info, /swagger-resources/configuration/ui, /management/health
+    lep:
+        tenant-script-storage: XM_MS_CONFIG
