@@ -20,6 +20,8 @@ logging:
         com.icthh.xm.tmf.ms.communication: DEBUG
 
 spring:
+    kafka:
+        bootstrap-servers: localhost:9093
     profiles:
         active: dev
         include:

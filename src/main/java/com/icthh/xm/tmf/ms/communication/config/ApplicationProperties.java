@@ -20,7 +20,8 @@ import java.util.List;
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
 public class ApplicationProperties {
     private final Lep lep = new Lep();
-
+    private String kafkaSystemTopic;
+    private String kafkaSystemQueue;
     private List<String> tenantIgnoredPathList = Collections.emptyList();
 
     @Getter

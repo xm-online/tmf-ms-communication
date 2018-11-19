@@ -20,6 +20,8 @@ logging:
         io.github.jhipster: INFO
 
 spring:
+    kafka:
+        bootstrap-servers: localhost:9093
     devtools:
         restart:
             enabled: false
