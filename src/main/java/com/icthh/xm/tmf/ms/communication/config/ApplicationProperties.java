@@ -1,6 +1,5 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
-//import com.icthh.xm.commons.lep.TenantScriptStorage;
 import com.icthh.xm.commons.lep.TenantScriptStorage;
 import lombok.Getter;
 import lombok.Setter;
