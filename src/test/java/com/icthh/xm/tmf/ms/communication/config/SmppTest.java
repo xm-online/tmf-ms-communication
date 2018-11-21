@@ -8,6 +8,7 @@ import com.github.dockerjava.api.model.Ports;
 import com.icthh.xm.tmf.ms.communication.CommunicationApp;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import lombok.extern.slf4j.Slf4j;
+import org.jsmpp.session.SMPPSession;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -18,6 +19,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.testcontainers.containers.GenericContainer;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static junit.framework.TestCase.assertTrue;
@@ -55,7 +58,15 @@ public class SmppTest {
 
     @Test
     public void testSendingSms() {
-        service.send("test", "test");
+        SMPPSession session = service.getSession();
+        service.send(session, "+380636666666", "test");
+        session.unbindAndClose();
+    }
+
+    @Test
+    public void testSendingMultipleMessages() {
+        List<String> phones = Arrays.asList("+380636666666", "+380636666665");
+        service.sendMultipleMessages(phones, "test");
     }
 
 }
