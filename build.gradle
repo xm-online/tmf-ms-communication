@@ -234,12 +234,8 @@ dependencies {
     compile "com.icthh.xm.commons:xm-commons-logging-web:${xm_commons_version}"
     compile "com.icthh.xm.commons:xm-commons-security:${xm_commons_version}"
     compile "com.icthh.xm.commons:xm-commons-lep:${xm_commons_version}"
-    compile("com.icthh.xm.commons:xm-commons-ms-web:${xm_commons_version}") {
-        exclude group: 'io.github.jhipster', module: 'jhipster'
-    }
-    compile("com.icthh.xm.commons:xm-commons-permission:${xm_commons_version}") {
-        exclude group: 'org.projectlombok', module: 'lombok'
-    }
+    compile("com.icthh.xm.commons:xm-commons-ms-web:${xm_commons_version}") 
+    compile("com.icthh.xm.commons:xm-commons-permission:${xm_commons_version}")
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor") {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
