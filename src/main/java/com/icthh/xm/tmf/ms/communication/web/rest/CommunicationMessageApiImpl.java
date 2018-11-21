@@ -20,17 +20,22 @@ public class CommunicationMessageApiImpl implements CommunicationMessageApiDeleg
         this.smppService = smppService;
     }
 
-
-    public ResponseEntity<CommunicationMessage> createsANewCommunicationMessageAndSendIt(CommunicationMessageCreate communicationMessageCreate) {
-        List<String> phoneNumbers = communicationMessageCreate.getReceiver().stream().map(Receiver::getPhoneNumber).collect(Collectors.toList());
+    public ResponseEntity<CommunicationMessage> createsANewCommunicationMessageAndSendIt(
+        CommunicationMessageCreate communicationMessageCreate) {
+        List<String> phoneNumbers = communicationMessageCreate
+            .getReceiver()
+            .stream()
+            .map(Receiver::getPhoneNumber)
+            .collect(Collectors.toList());
         smppService.sendMultipleMessages(phoneNumbers, communicationMessageCreate.getContent());
         return ResponseEntity.ok(null);
     }
 
     @Override
-    public ResponseEntity<List<CommunicationMessage>> listCommunicationMessage(String fields,
-                                                                        Integer offset,
-                                                                        Integer limit) {
+    public ResponseEntity<List<CommunicationMessage>> listCommunicationMessage(
+        String fields,
+        Integer offset,
+        Integer limit) {
         return ResponseEntity.ok(null);
     }
 
