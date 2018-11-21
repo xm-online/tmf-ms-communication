@@ -255,6 +255,7 @@ dependencies {
     testCompile "junit:junit"
     testCompile "org.mockito:mockito-core"
     testCompile "org.hamcrest:hamcrest-library"
+    testImplementation "org.testcontainers:testcontainers:${testcontainers_version}"
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 
 }
