@@ -22,13 +22,13 @@ public class SmppConfiguration {
         SMPPSession session = new SMPPSession();
         ApplicationProperties.Smpp smpp = appProps.getSmpp();
         BindParameter bindParam = new BindParameter(
-            BindType.BIND_TX,
+            smpp.getBindType(),
             smpp.getSystemId(),
             smpp.getPassword(),
-            "cp",
-            TypeOfNumber.UNKNOWN,
-            NumberingPlanIndicator.UNKNOWN,
-            null
+            smpp.getSystemType(),
+            smpp.getAddrTon(),
+            smpp.getAddrNpi(),
+            smpp.getAddressRange()
         );
         session.connectAndBind(smpp.getHost(), smpp.getPort(), bindParam);
         return session;

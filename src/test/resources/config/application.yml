@@ -154,3 +154,9 @@ application:
         port: 2775
         system-id: smppclient1
         password: password
+        bind-type: BIND_TX
+        system-type: cp
+        addr-ton: UNKNOWN
+        addr-npi: UNKNOWN
+        service-type: CMT
+        source-addr: 1616
