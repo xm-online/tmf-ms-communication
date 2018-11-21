@@ -19,6 +19,7 @@ import java.util.List;
 @ConfigurationProperties(prefix = "application", ignoreUnknownFields = false)
 public class ApplicationProperties {
     private final Lep lep = new Lep();
+    private final Smpp smpp = new Smpp();
     private String kafkaSystemTopic;
     private String kafkaSystemQueue;
     private List<String> tenantIgnoredPathList = Collections.emptyList();
@@ -28,5 +29,14 @@ public class ApplicationProperties {
     public static class Lep {
         private TenantScriptStorage tenantScriptStorage;
         private String lepResourcePathPattern;
+    }
+
+    @Getter
+    @Setter
+    public static class Smpp {
+        private String host;
+        private Integer port;
+        private String systemId;
+        private String password;
     }
 }
