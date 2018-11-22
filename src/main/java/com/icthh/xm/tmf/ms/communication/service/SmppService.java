@@ -73,21 +73,9 @@ public class SmppService {
                 message.getBytes()
             );
             log.info("Message submitted, message_id is {}", messageId);
-        } catch (PDUException e) {
-            log.error("Invalid PDU parameter {}", e);
-            throw new IllegalStateException("Invalid PDU parameter");
-        } catch (ResponseTimeoutException e) {
-            log.error("Response timeout {}", e);
-            throw new IllegalStateException("Response timeout");
-        } catch (InvalidResponseException e) {
-            log.error("Received invalid response {}", e);
-            throw new IllegalStateException("Received invalid response");
-        } catch (NegativeResponseException e) {
-            log.error("Receive negative response {}", e);
-            throw new IllegalStateException("Receive negative response");
-        } catch (IOException e) {
-            log.error("IO error occur {}", e);
-            throw new IllegalStateException("IO error occur");
+        } catch (Exception e) {
+            log.error("Exception during sending sms", e);
+            throw new IllegalStateException("Exception during sending sms", e);
         }
     }
 
