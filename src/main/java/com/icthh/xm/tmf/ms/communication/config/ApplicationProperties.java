@@ -56,5 +56,6 @@ public class ApplicationProperties {
         private int priorityFlag;
         private int replaceIfPresentFlag;
         private int smDefaultMsgId;
+        private String validityPeriod;
     }
 }

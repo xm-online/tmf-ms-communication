@@ -66,7 +66,7 @@ public class SmppService {
                 (byte) smpp.getProtocolId(),
                 (byte) smpp.getPriorityFlag(),
                 timeFormatter.format(new Date()),
-                null,
+                smpp.getValidityPeriod(),
                 new RegisteredDelivery(SMSCDeliveryReceipt.DEFAULT),
                 (byte) smpp.getReplaceIfPresentFlag(),
                 new GeneralDataCoding(Alphabet.ALPHA_DEFAULT, MessageClass.CLASS1, false),
