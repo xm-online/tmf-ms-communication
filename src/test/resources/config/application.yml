@@ -20,14 +20,6 @@
 spring:
     application:
         name: communication
-    cloud:
-        consul:
-            discovery:
-                healthCheckPath: /management/health
-                instanceId: ${spring.application.name}:${spring.application.instance-id:${random.value}}
-            config:
-                watch:
-                    enabled: false
     messages:
         basename: i18n/messages
     mvc:
@@ -37,10 +29,6 @@ spring:
         mode: HTML
     kafka:
         bootstrap-servers: localhost:9093
-security:
-    oauth2:
-        resource:
-            filter-order: 3
 
 server:
     servlet:
@@ -59,33 +47,6 @@ info:
 # Full reference is available at: https://www.jhipster.tech/common-application-properties/
 # ===================================================================
 
-jhipster:
-    async:
-        core-pool-size: 2
-        max-pool-size: 50
-        queue-capacity: 10000
-        # By default CORS is disabled. Uncomment to enable.
-        #cors:
-        #allowed-origins: "*"
-        #allowed-methods: "*"
-        #allowed-headers: "*"
-        #exposed-headers: "Authorization,Link,X-Total-Count"
-        #allow-credentials: true
-        #max-age: 1800
-    mail:
-        from: communication@localhost
-    swagger:
-        default-include-pattern: /api/.*
-        title: communication API
-        description: communication API documentation
-        version: 0.0.1
-        terms-of-service-url:
-        contact-name:
-        contact-url:
-        contact-email:
-        license:
-        license-url:
-
 logging:
     level:
         ROOT: DEBUG
@@ -94,8 +55,6 @@ logging:
 
 xm-config:
     enabled: false
-    xm-config-url: http://config
-    kafka-config-topic: config_topic
 # ===================================================================
 # Application specific properties
 # Add your own application properties here, see the ApplicationProperties class
