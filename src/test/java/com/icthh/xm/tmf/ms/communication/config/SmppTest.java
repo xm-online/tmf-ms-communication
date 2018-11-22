@@ -47,12 +47,6 @@ public class SmppTest {
     public static GenericContainer genericContainer = new GenericContainer(DOCKER_IMAGE_NAME)
         .withCreateContainerCmdModifier(getContainerModifier());
 
-
-    @Test
-    public void testIsDockerUp() {
-        assertTrue(genericContainer.isRunning());
-    }
-
     @Test
     public void testSendingSms() {
         SMPPSession session = service.getSession();
