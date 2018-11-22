@@ -17,8 +17,6 @@
 spring:
     application:
         name: communication
-    mail:
-        host: localhost
     messages:
         basename: i18n/messages
     mvc:
@@ -26,15 +24,14 @@ spring:
             enabled: false
     thymeleaf:
         mode: HTML
+    kafka:
+        bootstrap-servers: localhost:9093
 
-
-server:
-    port: 10344
-    address: localhost
-
-info:
-    project:
-        version: #project.version#
+logging:
+    level:
+        ROOT: DEBUG
+        com.icthh.xm: DEBUG
+        io.github.jhipster: DEBUG
 
 # ===================================================================
 # JHipster specific properties
@@ -71,6 +68,8 @@ jhipster:
         logs: # Reports Dropwizard metrics in the logs
             enabled: true
             report-frequency: 60 # in seconds
+xm-config:
+    enabled: false
 
 # ===================================================================
 # Application specific properties
@@ -79,6 +78,31 @@ jhipster:
 #
 # More documentation is available at:
 # https://www.jhipster.tech/common-application-properties/
-# ===================================================================
+# ==================================================================
+application:
+    kafka-system-topic: system_topic
+    kafka-system-queue: system_queue
+    tenant-ignored-path-list: /swagger-resources/configuration/ui, /management/health, /oauth/token_key, /h2-console
+    lep:
+        tenant-script-storage: XM_MS_CONFIG
+        lep-resource-path-pattern: /config/tenants/{tenantName}/entity/lep/resources/**/*
+    smpp:
+        host: localhost
+        port: 2775
+        system-id: smppclient1
+        password: password
+        bind-type: BIND_TX
+        system-type: cp
+        addr-ton: UNKNOWN
+        addr-npi: UNKNOWN
+        service-type: CMT
+        source-addr: 1616
+        source-addr-ton: INTERNATIONAL
+        source-addr-npi: UNKNOWN
+        dest-addr-ton: INTERNATIONAL
+        dest-addr-npi: UNKNOWN
+        protocol-id: 0
+        priority-flag: 1
+        replace-if-present-flag: 0
+        sm-default-msg-id: 0
 
-# application:
