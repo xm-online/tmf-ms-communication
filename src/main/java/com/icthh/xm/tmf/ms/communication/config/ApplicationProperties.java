@@ -48,5 +48,13 @@ public class ApplicationProperties {
         private String addressRange;
         private String serviceType;
         private String sourceAddr;
+        private TypeOfNumber sourceAddrTon;
+        private NumberingPlanIndicator sourceAddrNpi;
+        private TypeOfNumber destAddrTon;
+        private NumberingPlanIndicator destAddrNpi;
+        private int protocolId;
+        private int priorityFlag;
+        private int replaceIfPresentFlag;
+        private int smDefaultMsgId;
     }
 }

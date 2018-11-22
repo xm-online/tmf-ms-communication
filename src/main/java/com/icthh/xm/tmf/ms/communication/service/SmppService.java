@@ -34,42 +34,43 @@ public class SmppService {
     public SMPPSession getSession()  {
         SMPPSession session = new SMPPSession();
         try {
-        ApplicationProperties.Smpp smpp = appProps.getSmpp();
-        BindParameter bindParam = new BindParameter(
-            smpp.getBindType(),
-            smpp.getSystemId(),
-            smpp.getPassword(),
-            smpp.getSystemType(),
-            smpp.getAddrTon(),
-            smpp.getAddrNpi(),
-            smpp.getAddressRange()
-        );
+            ApplicationProperties.Smpp smpp = appProps.getSmpp();
+            BindParameter bindParam = new BindParameter(
+                smpp.getBindType(),
+                smpp.getSystemId(),
+                smpp.getPassword(),
+                smpp.getSystemType(),
+                smpp.getAddrTon(),
+                smpp.getAddrNpi(),
+                smpp.getAddressRange()
+            );
             session.connectAndBind(smpp.getHost(), smpp.getPort(), bindParam);
+            return session;
         } catch (IOException e) {
             throw new IllegalStateException("Can't connect to smsc server", e);
         }
-        return session;
     }
 
     public void send(SMPPSession session, String destAdrrs, String message) {
         try {
+            ApplicationProperties.Smpp smpp = appProps.getSmpp();
             String messageId = session.submitShortMessage(
-                appProps.getSmpp().getServiceType(),
-                INTERNATIONAL,
-                UNKNOWN,
-                appProps.getSmpp().getSourceAddr(),
-                INTERNATIONAL,
-                UNKNOWN,
+                smpp.getServiceType(),
+                smpp.getSourceAddrTon(),
+                smpp.getSourceAddrNpi(),
+                smpp.getSourceAddr(),
+                smpp.getDestAddrTon(),
+                smpp.getDestAddrNpi(),
                 destAdrrs,
                 new ESMClass(),
-                (byte) 0,
-                (byte) 1,
+                (byte) smpp.getProtocolId(),
+                (byte) smpp.getPriorityFlag(),
                 timeFormatter.format(new Date()),
                 null,
                 new RegisteredDelivery(SMSCDeliveryReceipt.DEFAULT),
-                (byte) 0,
+                (byte) smpp.getReplaceIfPresentFlag(),
                 new GeneralDataCoding(Alphabet.ALPHA_DEFAULT, MessageClass.CLASS1, false),
-                (byte) 0,
+                (byte) smpp.getSmDefaultMsgId(),
                 message.getBytes()
             );
             log.info("Message submitted, message_id is {}", messageId);
