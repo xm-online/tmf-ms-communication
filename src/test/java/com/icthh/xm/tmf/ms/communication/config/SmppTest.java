@@ -1,6 +1,5 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
-
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
@@ -37,14 +36,12 @@ public class SmppTest {
     @Autowired
     private SmppService service;
 
-
     private static Consumer<CreateContainerCmd> getContainerModifier() {
         return containerCmd -> containerCmd.withPortBindings(
             new PortBinding(Ports.Binding.bindPort(SMPP_PORT),
             new ExposedPort(SMPP_PORT))
         );
     }
-
 
     @ClassRule
     public static GenericContainer genericContainer = new GenericContainer(DOCKER_IMAGE_NAME)
