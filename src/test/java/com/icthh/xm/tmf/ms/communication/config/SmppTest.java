@@ -8,7 +8,6 @@ import com.icthh.xm.tmf.ms.communication.CommunicationApp;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import lombok.extern.slf4j.Slf4j;
 import org.jsmpp.session.SMPPSession;
-import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,6 +22,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static junit.framework.TestCase.assertNotNull;
+import static org.junit.Assert.assertEquals;
 
 @Slf4j
 @ContextConfiguration()
@@ -59,9 +59,9 @@ public class SmppTest {
     public void testSendingMultipleMessages() {
         List<String> phones = Arrays.asList("+380636666666", "+380636666665");
         List<String> mIds = service.sendMultipleMessages(phones, "test");
-        Assert.assertEquals(mIds.size(), 2);
-        Assert.assertNotNull(mIds.get(0));
-        Assert.assertNotNull(mIds.get(1));
+        assertEquals(mIds.size(), 2);
+        assertNotNull(mIds.get(0));
+        assertNotNull(mIds.get(1));
     }
 
 }
