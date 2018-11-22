@@ -1,6 +1,6 @@
 ## Build
 ```bash
-docker build -t smpp-sim .
+docker build -t smpp-emulator .
 ```
 ## Run
 ```bash

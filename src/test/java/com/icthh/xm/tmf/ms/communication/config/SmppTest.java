@@ -30,7 +30,7 @@ import static junit.framework.TestCase.assertTrue;
 @SpringBootTest(classes = {CommunicationApp.class})
 public class SmppTest {
 
-    public static final String DOCKER_IMAGE_NAME = "smpp-sim";
+    public static final String DOCKER_IMAGE_NAME = "smpp-emulator";
     public static final int SMPP_PORT = 2775;
 
     @Autowired
