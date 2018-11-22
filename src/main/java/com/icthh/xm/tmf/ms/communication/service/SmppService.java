@@ -2,22 +2,16 @@ package com.icthh.xm.tmf.ms.communication.service;
 
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import lombok.extern.slf4j.Slf4j;
-import org.jsmpp.InvalidResponseException;
-import org.jsmpp.PDUException;
 import org.jsmpp.bean.*;
-import org.jsmpp.extra.NegativeResponseException;
-import org.jsmpp.extra.ResponseTimeoutException;
 import org.jsmpp.session.BindParameter;
 import org.jsmpp.session.SMPPSession;
 import org.jsmpp.util.AbsoluteTimeFormatter;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-
-import static org.jsmpp.bean.NumberingPlanIndicator.UNKNOWN;
-import static org.jsmpp.bean.TypeOfNumber.INTERNATIONAL;
 
 @Slf4j
 @Component
@@ -51,7 +45,7 @@ public class SmppService {
         }
     }
 
-    public void send(SMPPSession session, String destAdrrs, String message) {
+    public String send(SMPPSession session, String destAdrrs, String message) {
         try {
             ApplicationProperties.Smpp smpp = appProps.getSmpp();
             String messageId = session.submitShortMessage(
@@ -74,24 +68,27 @@ public class SmppService {
                 message.getBytes()
             );
             log.info("Message submitted, message_id is {}", messageId);
+            return messageId;
         } catch (Exception e) {
             log.error("Exception during sending sms", e);
             throw new IllegalStateException("Exception during sending sms", e);
         }
     }
 
-    public void sendMultipleMessages(List<String> phones, String body) {
+    public List<String> sendMultipleMessages(List<String> phones, String body) {
         SMPPSession session = null;
+        List<String> results = new ArrayList<>();
         try {
             session = getSession();
             for (String phone : phones) {
-                send(session, phone, body);
+                results.add(send(session, phone, body));
             }
         } finally {
             if (session != null) {
                 session.unbindAndClose();
             }
         }
+        return results;
     }
 
 }
