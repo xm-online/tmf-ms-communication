@@ -11,8 +11,10 @@ addons:
     - master
 script:
 - set -e
+- "docker build -t smpp-emulator src/main/docker/smpp-emulator/Dockerfile ."
+- "docker run -p 2775:2775 smpp-emulator"
 - "./gradlew --no-daemon --refresh-dependencies clean test"
-- "./gradlew -x test -Pprod --no-daemon  clean bootWar"
+- "./gradlew -x test -Pprod --no-daemon bootWar"
 - docker login -u $DOCKER_USER -p $DOCKER_PASS
 - export DOCKER_REPO=$(echo  -n $TRAVIS_REPO_SLUG | sed -e 's/^xm-online\//xmonline\//g')
 - export IMAGE_BRANCH=$(echo -n $TRAVIS_BRANCH | sed -e 's/\//-/g')
