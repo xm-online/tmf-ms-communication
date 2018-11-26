@@ -11,7 +11,7 @@ addons:
     - master
 script:
 - set -e
-- "docker build -t smpp-emulator src/main/docker/smpp-emulator/Dockerfile ."
+- "docker build -t smpp-emulator -f src/main/docker/smpp-emulator/Dockerfile ."
 - "docker run -d smpp-emulator --name -p 2775:2775 smpp-emulator"
 - "./gradlew --no-daemon --refresh-dependencies clean test"
 - "docker rm -f smpp-emulator"
