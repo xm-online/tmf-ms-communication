@@ -1,0 +1,41 @@
+language: java
+jdk:
+- oraclejdk8
+install: true
+addons:
+  sonarcloud:
+    organization: xm-online
+    token:
+      secure: nkLw7Y0EnRjg2bt4aBN+8YVPjfO85xm8VAShmvwHK+DmBqImfw1bYhCANvwCIS/+aEbyvaXxfPIsUeLs5wVyyOs8O8fBzsP/OM2K/E/5kYdHk4p7jSLdFTwPp4rNW2SsALI2bDxdRvLsZMqbWr/7nA+EMA4T16rkPKNPdeyrhuY8eCDn0DHCTZ20ezXD5t7iv/itVTRXK4W4E5bvWgCK7VBy0ycJO04+6tETtqnrKF9Dc+xyLPSvcUi6cSBswAvncH09io3Yume51ZhhpKwJVhx793OP8fNFxW61DR+fAL4hJnhN4/Lr6eXOynukDbX6uHylNL9b2dHNFXY+6e6QoiPly9TFuf4x9zTCVpxJJVi8owmSxZKlOnFyVifWfwKgaRmFKDka6J8DprPGu4+ew33Fb6GN/Mkt8JXOIfJg1ObiKKqcA31Ym5hxFh4KSUr+XmVQh5Xw5DUtngSkrKo7pZtEUvyox5vaA3LueJSzpgd427aO24Y1/rVPW87i6tqsfxCfz5K2qIaoieW1QKX/GHHKr0v85M2bMaHmgPaHtUII2083CqGhmgMd5Mqsmk2ILEoIU0pTkShWp4cWLPkuoFs/veDrYEY7xLg48P9/dDuG2pbW8lC2Xf4MdtU7pQwSs+nJhJN20tFtDSjqzWptWgaRM8S6zuex8biphPt+hck=
+    branches:
+    - master
+script:
+- set -e
+- "docker build -t smpp-emulator -f src/main/docker/smpp-emulator/Dockerfile ."
+- "./gradlew --no-daemon --refresh-dependencies clean test"
+- "./gradlew -x test -Pprod --no-daemon bootWar"
+- docker login -u $DOCKER_USER -p $DOCKER_PASS
+- export DOCKER_REPO=$(echo  -n $TRAVIS_REPO_SLUG | sed -e 's/^xm-online\//xmonline\//g')
+- export IMAGE_BRANCH=$(echo -n $TRAVIS_BRANCH | sed -e 's/\//-/g')
+- docker build -t $DOCKER_REPO:$IMAGE_BRANCH -t $DOCKER_REPO:$IMAGE_BRANCH-$TRAVIS_BUILD_NUMBER
+  --label commit_id="$TRAVIS_COMMIT" --label commit_message="$TRAVIS_COMMIT_MESSAGE"
+  -f src/main/docker/Dockerfile .
+- docker push $DOCKER_REPO:$IMAGE_BRANCH
+- docker push $DOCKER_REPO:$IMAGE_BRANCH-$TRAVIS_BUILD_NUMBER
+- if [ "$IMAGE_BRANCH" == "master" ]; then docker tag $DOCKER_REPO:$IMAGE_BRANCH $DOCKER_REPO:latest;
+  docker push $DOCKER_REPO:latest; export SONAR_PK=$(echo  -n $TRAVIS_REPO_SLUG |
+  sed -e 's/\//:/g'); ./gradlew -x test --no-daemon sonarqube -Dsonar.projectKey="$SONAR_PK"
+  -Dsonar.projectName="$SONAR_PK" -Dsonar.java.binaries="." -Dsonar.projectVersion="$IMAGE_BRANCH";
+  fi
+cache:
+  directories:
+  - "~/.gradle"
+  - "~/.m2"
+env:
+  global:
+  - secure: en1I2Ds+kn3prZ7dFaRiSS+6Bxg3GRw6p0vaCCUZraVfNdzGsb3K6SXhnWc+sHDC26PvHd3M8iVDRk8mRQ9yXeKsGg2v2osgBmJtDMvUerpQoirbf+H6hC6vKt03hqIm4ss8gGoMcLR7aWwO0cBnbpZnvC2g1jrqq14Zy3Htn/1FMOugnQ5g1csz7PRe2rvbuY45y+edrnlW1xj5jXQ6/yANymQK80iOoeIjGBLb55A214efFQOCc5q3UMCe7Zq+SVfw68EjErEn619J3Wg6zYyxOHSTCFVw1db6iOdF2chYCNaNIvAxuWN14bDARDwlTYIC5aR+YtAVe3J5mz4GBRZf/EWdk8TgpOFQO8aZsDcEL2bQk/iHx5qZjhrVW8snMq+T+oMkb3Zq6AqqT50N3NARSD5T+8CGyrW9UwLGslDGgO51OCHYjoGY9v8T6DQlraV43wym6U5jBNG9tgUPy8NapFoP3Cy8OkrjQ6zjcrRXWcUlY5+naxTusoNT0VuvycAnkTJDV8AieeB+4NKKlVuttrSDCaxv0B/S55gqeDplOXbAxtq/x7ss4TK6d4DN4rh4sQV2YtANQi9KIBbImvCdhxwrTlY+T9uOqPCOZxUwh4yeomXd7JT4Zt4bReyqAl1fwkY9fW263esGagHLdPfw5pM7fnLkhjNVkOUDfqQ=
+  - secure: RzeGjpHfmsaop+cNxyVSvE5856WTx1FlkhOdmsssEcDg1pSy7hH5ELHUnTgt/E69/q8IGSza/IkTgDnBmZ7P/ejQ3hQnCkS8cQx7ENBYeOrlEBtyIysMZQnww2/25IoDkg6y63zWhy06+XbvsDyT5Hrnvnpqwr04l60iBiIJCXqzqvpGvXLtnNbew14eMt03zSoVfeXi7qF0bxNReuAHFu9ycQCMoeCIN2xtLLguL1sSeVlYWeAB948a3lW5D3sJRLtOckk5cbMeduYxG3A7mGRekba5F2tdIeolA5Tts6mT2ReA5qRUmPcsgfa69XqjUwELcSG5idc8nYoCpSLsq8GFjV22HnJcXzbMuvlpABX1otNOJd4kiFlskHEAyqoj+nTg0kxEB9zQeyHNX66C4fKhYn7FaOCNGslpqi4xvW+xd4BqB27og6v97AWmodHncvzoLrKRTglNkXaRoQp9DiF1NdFcatpkg166/qe489o6Ci/6ebiLYBgaZ0ci+zCTftL4C+EhR3xNYbghNduv6Fwhtjgz1cx6oPvjk8h5fHJuQGoKxCDmkZNKJtTGlUFaCVoHJEsi5J1zVyypGlhRQlnQPfEaq/7sj+hgJqTRIpJ6xlr8bZL/KUBIX84q9hBou3XREwF7MB89C+0GxJMS3vd3k5AkazOXyKJZ4ICYhxQ=
+notifications:
+  slack:
+    rooms:
+      secure: LOfHw42E0PR3O1eNXzb94x2Q2vYg07kjxxkLqtvt67hSvO50DuM2v0IENqFextYN+MAfShk5dm+keYfrgpw0rslyY95pN5jaVmLAksFzL+hznaKuLytuLr3oCOju1/27E0wUb7eu3VSREjecLdSoHLubqOa+FkFXZoB5lAwrOqr1w1+nvnB/8HNS7TNn0jKlvXv9nrFs7XRLzhpobqxWQ1kmqnhM/mweo+KPrzIH+/gWQhuGt/ecCUi+0pAMKCqabwhfITfZnj1OnmXdOlGZrkpbdQdMA40ugAboIMGHVxtA0alJyYM9HHJly9588cBVGfSmr+VQpm/kvgfWPRugZvZcxQriToJ8ScEXuaeBxTkrz2AgfMJvRU4n7PlBt9gt2vwxkcesMOoAjmqSa5rE3p5MKgeFwuKQIRnthqRaKcuOiCpP2jgAoLKzbH2JI6DM80UWzjZ35v0c7Bzl6o99d4HxYVercuo6AWgespFKLKulxlhH252RTAJjPUbM7/lbg7C5xlJoXt+Rz2VnO1zDd3v38rPYjU9IO75hddYiO0HZaprkyLBxUlFFKfIergpCIuY49Ye0KPvokMoOiG1lrVpVhTqTblHKje2Q/z/P2th9bGXO3J9MiMb/ch7iA3PMuNq0KAJqUjM4ChiBiZcOa2egf5ggFC2E3WLBq0QAnCw=

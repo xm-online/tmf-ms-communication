@@ -1,20 +1,15 @@
-FROM openjdk:8-jre-alpine
+FROM jbsukraine/oracle-jre:8
 
+ENV XMX=512m
+EXPOSE 8701 5701/udp
 ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
     JHIPSTER_SLEEP=0 \
-    JAVA_OPTS=""
+    JAVA_OPTS="-Xms128m -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.rmi.port=19999 -Dcom.sun.management.jmxremote.port=19999"
 
-# Add a jhipster user to run our application so that it doesn't need to run as root
-RUN adduser -D -s /bin/sh jhipster
-WORKDIR /home/jhipster
+# add directly the war
+ADD build/libs/*.war /app.war
 
-ADD entrypoint.sh entrypoint.sh
-RUN chmod 755 entrypoint.sh && chown jhipster:jhipster entrypoint.sh
-USER jhipster
 
-ENTRYPOINT ["./entrypoint.sh"]
-
-EXPOSE 8701
-
-ADD *.war app.war
-
+CMD echo "The application will start in ${JHIPSTER_SLEEP}s..." && \
+    sleep ${JHIPSTER_SLEEP} && \
+    exec java ${JAVA_OPTS} -Xmx$XMX -Djava.security.egd=file:/dev/./urandom -jar /app.war
