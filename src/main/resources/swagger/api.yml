@@ -4,7 +4,7 @@ info:
   description: This is Swagger UI environment generated for the TMF Communication Management specification
   version: '2.0'
 host: serverRoot
-basePath: /tmf-api/communicationManagement/v2/
+basePath: /api/communicationManagement/v2/
 schemes:
   - https
 consumes:
