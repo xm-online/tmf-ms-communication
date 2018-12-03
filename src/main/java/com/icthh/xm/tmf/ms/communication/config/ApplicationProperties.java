@@ -38,6 +38,7 @@ public class ApplicationProperties {
     @Setter
     public static class Smpp {
         private String host;
+        private Long connectionTimeout;
         private Integer port;
         private String systemId;
         private String password;

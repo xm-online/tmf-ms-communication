@@ -38,6 +38,7 @@ public class SmppService {
                 smpp.getAddrNpi(),
                 smpp.getAddressRange()
             );
+            session.setTransactionTimer(smpp.getConnectionTimeout());
             session.connectAndBind(smpp.getHost(), smpp.getPort(), bindParam);
             return session;
         } catch (IOException e) {
