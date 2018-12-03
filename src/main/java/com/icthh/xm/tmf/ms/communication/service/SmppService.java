@@ -17,6 +17,7 @@ import java.util.List;
 @Component
 public class SmppService {
 
+    public static final int CONNECT_TIMEOUT = 10000;
     private final AbsoluteTimeFormatter timeFormatter;
     private final ApplicationProperties appProps;
 
@@ -38,6 +39,7 @@ public class SmppService {
                 smpp.getAddrNpi(),
                 smpp.getAddressRange()
             );
+            session.setTransactionTimer(CONNECT_TIMEOUT);
             session.connectAndBind(smpp.getHost(), smpp.getPort(), bindParam);
             return session;
         } catch (IOException e) {
