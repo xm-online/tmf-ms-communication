@@ -1,7 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
+import static java.nio.charset.Charset.forName;
 import static java.nio.charset.StandardCharsets.UTF_16;
-import static org.apache.commons.lang3.StringUtils.isAlphanumericSpace;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.jsmpp.bean.Alphabet.ALPHA_DEFAULT;
 import static org.jsmpp.bean.Alphabet.ALPHA_UCS2;
@@ -11,7 +11,6 @@ import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Smpp;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.jsmpp.bean.Alphabet;
 import org.jsmpp.bean.ESMClass;
 import org.jsmpp.bean.GeneralDataCoding;
@@ -26,6 +25,7 @@ import org.jsmpp.util.AbsoluteTimeFormatter;
 import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
@@ -72,7 +72,7 @@ public class SmppService {
          return withSession(session -> {
              Smpp smpp = appProps.getSmpp();
 
-             Alphabet encoding = isAlphanumericSpace(message) ? ALPHA_DEFAULT : ALPHA_UCS2;
+             Alphabet encoding = isAlpha(message) ? ALPHA_DEFAULT : ALPHA_UCS2;
 
              OctetString payload = toPayload(message);
              OptionalParameter[] parameters = new OptionalParameter[]{payload};
@@ -105,9 +105,13 @@ public class SmppService {
          });
     }
 
+    private boolean isAlpha(String message) {
+        return StandardCharsets.ISO_8859_1.newEncoder().canEncode(message);
+    }
+
     private OctetString toPayload(String message) throws UnsupportedEncodingException {
-       if (isAlphanumericSpace(message)) {
-           return new OctetString(MESSAGE_PAYLOAD.code(), message)
+       if (isAlpha(message)) {
+           return new OctetString(MESSAGE_PAYLOAD.code(), message);
        } else {
            return new OctetString(MESSAGE_PAYLOAD.code(), message, UTF_16.name());
        }
