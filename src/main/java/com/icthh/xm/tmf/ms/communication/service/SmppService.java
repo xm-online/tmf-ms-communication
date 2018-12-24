@@ -1,6 +1,5 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
-import static java.nio.charset.Charset.forName;
 import static java.nio.charset.StandardCharsets.UTF_16;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.jsmpp.bean.Alphabet.ALPHA_DEFAULT;
@@ -25,7 +24,6 @@ import org.jsmpp.util.AbsoluteTimeFormatter;
 import org.springframework.stereotype.Component;
 
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
