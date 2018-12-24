@@ -9,12 +9,10 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component

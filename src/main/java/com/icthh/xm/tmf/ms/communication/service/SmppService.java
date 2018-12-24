@@ -1,27 +1,33 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
+import static java.nio.charset.StandardCharsets.UTF_16;
+import static org.apache.commons.lang3.StringUtils.isAlphanumericSpace;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.jsmpp.bean.Alphabet.ALPHA_DEFAULT;
+import static org.jsmpp.bean.Alphabet.ALPHA_UCS2;
 import static org.jsmpp.bean.OptionalParameter.Tag.MESSAGE_PAYLOAD;
 
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Smpp;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.jsmpp.bean.Alphabet;
 import org.jsmpp.bean.ESMClass;
 import org.jsmpp.bean.GeneralDataCoding;
 import org.jsmpp.bean.MessageClass;
 import org.jsmpp.bean.OptionalParameter;
+import org.jsmpp.bean.OptionalParameter.OctetString;
 import org.jsmpp.bean.RegisteredDelivery;
 import org.jsmpp.bean.SMSCDeliveryReceipt;
 import org.jsmpp.session.BindParameter;
 import org.jsmpp.session.SMPPSession;
-import org.jsmpp.bean.OptionalParameter.Tag;
 import org.jsmpp.util.AbsoluteTimeFormatter;
 import org.springframework.stereotype.Component;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -65,9 +71,14 @@ public class SmppService {
     public String send(String destAdrrs, String message, String senderId) {
          return withSession(session -> {
              Smpp smpp = appProps.getSmpp();
-             log.info("Start send messate with text {} and senderId {} to {}", message, senderId, destAdrrs);
 
-             OptionalParameter[] parameters = new OptionalParameter[]{new OptionalParameter.OctetString(MESSAGE_PAYLOAD.code(), message)};
+             Alphabet encoding = isAlphanumericSpace(message) ? ALPHA_DEFAULT : ALPHA_UCS2;
+
+             OctetString payload = toPayload(message);
+             OptionalParameter[] parameters = new OptionalParameter[]{payload};
+
+             log.info("Start send messate with text {} and senderId {} to {} in encoding {}", message,
+                 senderId, destAdrrs, encoding);
 
              String messageId = session.submitShortMessage(
                  smpp.getServiceType(),
@@ -84,13 +95,22 @@ public class SmppService {
                  smpp.getValidityPeriod(),
                  new RegisteredDelivery(SMSCDeliveryReceipt.DEFAULT),
                  (byte) smpp.getReplaceIfPresentFlag(),
-                 new GeneralDataCoding(Alphabet.ALPHA_DEFAULT, MessageClass.CLASS1, false),
+                 new GeneralDataCoding(encoding, MessageClass.CLASS1, false),
                  (byte) smpp.getSmDefaultMsgId(),
-                 message.getBytes()
+                 EMPTY_MESSAGE,
+                 parameters
              );
              log.info("Message submitted, message_id is {}", messageId);
              return messageId;
          });
+    }
+
+    private OctetString toPayload(String message) throws UnsupportedEncodingException {
+       if (isAlphanumericSpace(message)) {
+           return new OctetString(MESSAGE_PAYLOAD.code(), message)
+       } else {
+           return new OctetString(MESSAGE_PAYLOAD.code(), message, UTF_16.name());
+       }
     }
 
     private String getSourceAddr(String senderId, Smpp smpp) {
@@ -104,44 +124,6 @@ public class SmppService {
         }
         return results;
     }
-
-
-
-//    private void submitSm() {
-//        OptionalParameter[] parameters;
-//        parameters = (OptionalParameter[]) ArrayUtils
-//            .add(optionalParameters, new OptionalParameter.OctetString(Tag.MESSAGE_PAYLOAD.code(),
-//                message));
-//        return submitSm(EMPTY_MESSAGE,
-//            dataCoding,
-//            destAddress,
-//            sendDeliveryReport,
-//            transformResult,
-//            validityPeriod,
-//            parameters);
-//    }
-//
-//    public String submitSm(
-//        final byte[] message,
-//        final DataCoding dataCoding,
-//        final String destAddress,
-//        final Boolean sendDeliveryReport,
-//        final TransformResult transformResult,
-//        final String validityPeriod,
-//        final OptionalParameter... optionalParameters) throws SmppChannelException {
-//
-//        try {
-//            ensureConnectionExists();
-//            return this.getSmppConnection().submitShortMessage(transformResult.getSourceAddress(), destAddress, dataCoding,
-//                message, sendDeliveryReport, transformResult.getTon(), transformResult.getNpi(), validityPeriod, optionalParameters);
-//
-//        } catch (Exception e) {
-//            //LOGGER.error("Failed to sumbitSm.", e);
-//            throw new SmppChannelException(String.format("because error: %s",
-//                e.getMessage()), e);
-//
-//        }
-//    }
 
     @FunctionalInterface
     private interface Task {

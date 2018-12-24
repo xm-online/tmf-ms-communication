@@ -49,16 +49,14 @@ public class SmppTest {
 
     @Test
     public void testSendingSms() {
-        SMPPSession session = service.getSession();
-        String messageId = service.send(session, "+380636666666", "test", senderId);
+        String messageId = service.send("+380636666666", "test", "1616");
         assertNotNull(messageId);
-        session.unbindAndClose();
     }
 
     @Test
     public void testSendingMultipleMessages() {
         List<String> phones = Arrays.asList("+380636666666", "+380636666665");
-        List<String> mIds = service.sendMultipleMessages(phones, "test", senderId);
+        List<String> mIds = service.sendMultipleMessages(phones, "test", "1616");
         assertEquals(mIds.size(), 2);
         assertNotNull(mIds.get(0));
         assertNotNull(mIds.get(1));
