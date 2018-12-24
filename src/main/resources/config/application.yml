@@ -150,8 +150,8 @@ application:
     smpp:
         connection-timeout: 10000
         host: localhost
-        port: 2775
-        system-id: smppclient1
+        port: 2777
+        system-id: mnp_lbd
         password: password
         bind-type: BIND_TX
         system-type: cp
@@ -159,10 +159,10 @@ application:
         addr-npi: UNKNOWN
         service-type: CMT
         source-addr: 1616
-        source-addr-ton: INTERNATIONAL
-        source-addr-npi: UNKNOWN
+        source-addr-ton: ALPHANUMERIC
+        source-addr-npi: ISDN
         dest-addr-ton: INTERNATIONAL
-        dest-addr-npi: UNKNOWN
+        dest-addr-npi: ISDN
         protocol-id: 0
         priority-flag: 1
         replace-if-present-flag: 0

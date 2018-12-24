@@ -50,7 +50,7 @@ public class SmppTest {
     @Test
     public void testSendingSms() {
         SMPPSession session = service.getSession();
-        String messageId = service.send(session, "+380636666666", "test");
+        String messageId = service.send(session, "+380636666666", "test", senderId);
         assertNotNull(messageId);
         session.unbindAndClose();
     }
@@ -58,7 +58,7 @@ public class SmppTest {
     @Test
     public void testSendingMultipleMessages() {
         List<String> phones = Arrays.asList("+380636666666", "+380636666665");
-        List<String> mIds = service.sendMultipleMessages(phones, "test");
+        List<String> mIds = service.sendMultipleMessages(phones, "test", senderId);
         assertEquals(mIds.size(), 2);
         assertNotNull(mIds.get(0));
         assertNotNull(mIds.get(1));
