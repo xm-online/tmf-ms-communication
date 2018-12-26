@@ -23,6 +23,7 @@ import org.jsmpp.session.SMPPSession;
 import org.jsmpp.util.AbsoluteTimeFormatter;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
@@ -43,11 +44,11 @@ public class SmppService {
     public SmppService(ApplicationProperties appProps) {
         this.appProps = appProps;
         this.timeFormatter = new AbsoluteTimeFormatter();
-        this.session = createSession();
+        this.session = getSession(appProps);
     }
 
     @SneakyThrows
-    private SMPPSession createSession()  {
+    private SMPPSession getSession(ApplicationProperties appProps)  {
         SMPPSession session = new SMPPSession();
         Smpp smpp = appProps.getSmpp();
         BindParameter bindParam = new BindParameter(
