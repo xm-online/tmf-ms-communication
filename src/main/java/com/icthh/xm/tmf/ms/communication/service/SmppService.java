@@ -23,6 +23,7 @@ import org.jsmpp.session.SMPPSession;
 import org.jsmpp.util.AbsoluteTimeFormatter;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PreDestroy;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -123,6 +124,11 @@ public class SmppService {
             results.add(send(phone, body, senderId));
         }
         return results;
+    }
+
+    @PreDestroy
+    public void onDestroy() throws Exception {
+        session.unbindAndClose();
     }
 
 }
