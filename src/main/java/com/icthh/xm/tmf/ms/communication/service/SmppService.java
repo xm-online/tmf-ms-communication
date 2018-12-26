@@ -23,6 +23,8 @@ import org.jsmpp.session.SMPPSession;
 import org.jsmpp.util.AbsoluteTimeFormatter;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -37,70 +39,68 @@ public class SmppService {
 
     private final AbsoluteTimeFormatter timeFormatter;
     private final ApplicationProperties appProps;
+    private final SMPPSession session;
 
     public SmppService(ApplicationProperties appProps) {
         this.appProps = appProps;
         this.timeFormatter = new AbsoluteTimeFormatter();
+        this.session = getSession(appProps);
     }
 
     @SneakyThrows
-    private String withSession(Task task)  {
+    private SMPPSession getSession(ApplicationProperties appProps)  {
         SMPPSession session = new SMPPSession();
-        try {
-            Smpp smpp = appProps.getSmpp();
-            BindParameter bindParam = new BindParameter(
-                smpp.getBindType(),
-                smpp.getSystemId(),
-                smpp.getPassword(),
-                smpp.getSystemType(),
-                smpp.getAddrTon(),
-                smpp.getAddrNpi(),
-                smpp.getAddressRange()
-            );
-            session.setTransactionTimer(smpp.getConnectionTimeout());
-            session.connectAndBind(smpp.getHost(), smpp.getPort(), bindParam);
-            return task.doWork(session);
-        } finally {
-            session.unbindAndClose();
-        }
+        Smpp smpp = appProps.getSmpp();
+        BindParameter bindParam = new BindParameter(
+            smpp.getBindType(),
+            smpp.getSystemId(),
+            smpp.getPassword(),
+            smpp.getSystemType(),
+            smpp.getAddrTon(),
+            smpp.getAddrNpi(),
+            smpp.getAddressRange()
+        );
+        session.setTransactionTimer(smpp.getConnectionTimeout());
+        session.connectAndBind(smpp.getHost(), smpp.getPort(), bindParam);
+        return session;
     }
 
     @SneakyThrows
     public String send(String destAdrrs, String message, String senderId) {
-         return withSession(session -> {
-             Smpp smpp = appProps.getSmpp();
 
-             Alphabet encoding = isAlpha(message) ? ALPHA_DEFAULT : ALPHA_UCS2;
+        Smpp smpp = appProps.getSmpp();
 
-             OctetString payload = toPayload(message);
-             OptionalParameter[] parameters = new OptionalParameter[]{payload};
+        Alphabet encoding = isAlpha(message) ? ALPHA_DEFAULT : ALPHA_UCS2;
 
-             log.info("Start send messate with text {} and senderId {} to {} in encoding {}", message,
-                 senderId, destAdrrs, encoding);
+        OctetString payload = toPayload(message);
+        OptionalParameter[] parameters = new OptionalParameter[]{payload};
 
-             String messageId = session.submitShortMessage(
-                 smpp.getServiceType(),
-                 smpp.getSourceAddrTon(),
-                 smpp.getSourceAddrNpi(),
-                 getSourceAddr(senderId, smpp),
-                 smpp.getDestAddrTon(),
-                 smpp.getDestAddrNpi(),
-                 destAdrrs,
-                 new ESMClass(),
-                 (byte) smpp.getProtocolId(),
-                 (byte) smpp.getPriorityFlag(),
-                 timeFormatter.format(new Date()),
-                 smpp.getValidityPeriod(),
-                 new RegisteredDelivery(SMSCDeliveryReceipt.DEFAULT),
-                 (byte) smpp.getReplaceIfPresentFlag(),
-                 new GeneralDataCoding(encoding, MessageClass.CLASS1, false),
-                 (byte) smpp.getSmDefaultMsgId(),
-                 EMPTY_MESSAGE,
-                 parameters
-             );
-             log.info("Message submitted, message_id is {}", messageId);
-             return messageId;
-         });
+        log.info("Start send messate with text {} and senderId {} to {} in encoding {}", message,
+            senderId, destAdrrs, encoding);
+
+        String messageId = session.submitShortMessage(
+            smpp.getServiceType(),
+            smpp.getSourceAddrTon(),
+            smpp.getSourceAddrNpi(),
+            getSourceAddr(senderId, smpp),
+            smpp.getDestAddrTon(),
+            smpp.getDestAddrNpi(),
+            destAdrrs,
+            new ESMClass(),
+            (byte) smpp.getProtocolId(),
+            (byte) smpp.getPriorityFlag(),
+            timeFormatter.format(new Date()),
+            smpp.getValidityPeriod(),
+            new RegisteredDelivery(SMSCDeliveryReceipt.DEFAULT),
+            (byte) smpp.getReplaceIfPresentFlag(),
+            new GeneralDataCoding(encoding, MessageClass.CLASS1, false),
+            (byte) smpp.getSmDefaultMsgId(),
+            EMPTY_MESSAGE,
+            parameters
+        );
+        log.info("Message submitted, message_id is {}", messageId);
+        return messageId;
+
     }
 
     private boolean isAlpha(String message) {
@@ -127,9 +127,9 @@ public class SmppService {
         return results;
     }
 
-    @FunctionalInterface
-    private interface Task {
-       String doWork(SMPPSession session) throws Exception;
+    @PreDestroy
+    public void onDestroy() throws Exception {
+        session.unbindAndClose();
     }
 
 }

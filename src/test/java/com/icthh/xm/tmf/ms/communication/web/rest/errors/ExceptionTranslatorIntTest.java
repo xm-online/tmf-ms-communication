@@ -2,11 +2,13 @@ package com.icthh.xm.tmf.ms.communication.web.rest.errors;
 
 import com.icthh.xm.tmf.ms.communication.CommunicationApp;
 import com.icthh.xm.tmf.ms.communication.config.SecurityBeanOverrideConfiguration;
+import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -36,6 +38,9 @@ public class ExceptionTranslatorIntTest {
 
     @Autowired
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
+
+    @MockBean
+    private SmppService smppService;
 
     private MockMvc mockMvc;
 
