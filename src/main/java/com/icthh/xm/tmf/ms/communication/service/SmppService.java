@@ -23,7 +23,6 @@ import org.jsmpp.session.SMPPSession;
 import org.jsmpp.util.AbsoluteTimeFormatter;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
@@ -39,16 +38,16 @@ public class SmppService {
 
     private final AbsoluteTimeFormatter timeFormatter;
     private final ApplicationProperties appProps;
-    private final SMPPSession session;
+    private volatile SMPPSession session;
 
     public SmppService(ApplicationProperties appProps) {
         this.appProps = appProps;
         this.timeFormatter = new AbsoluteTimeFormatter();
-        this.session = getSession(appProps);
+        this.session = createSession(appProps);
     }
 
     @SneakyThrows
-    private SMPPSession getSession(ApplicationProperties appProps)  {
+    private SMPPSession createSession(ApplicationProperties appProps)  {
         SMPPSession session = new SMPPSession();
         Smpp smpp = appProps.getSmpp();
         BindParameter bindParam = new BindParameter(
@@ -78,6 +77,8 @@ public class SmppService {
         log.info("Start send messate with text {} and senderId {} to {} in encoding {}", message,
             senderId, destAdrrs, encoding);
 
+        SMPPSession session = getActualSession();
+
         String messageId = session.submitShortMessage(
             smpp.getServiceType(),
             smpp.getSourceAddrTon(),
@@ -101,6 +102,23 @@ public class SmppService {
         log.info("Message submitted, message_id is {}", messageId);
         return messageId;
 
+    }
+
+    private SMPPSession getActualSession() {
+        SMPPSession session = this.session;
+        if (session.getSessionState().isBound()) {
+            return session;
+        }
+
+        synchronized (this) {
+            session = this.session;
+            if (!session.getSessionState().isBound()) {
+                session.unbindAndClose();
+                session = createSession(appProps);
+                this.session = session;
+            }
+        }
+        return session;
     }
 
     private boolean isAlpha(String message) {
