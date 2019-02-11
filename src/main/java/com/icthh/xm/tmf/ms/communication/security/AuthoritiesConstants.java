@@ -5,7 +5,7 @@ package com.icthh.xm.tmf.ms.communication.security;
  */
 public final class AuthoritiesConstants {
 
-    public static final String ADMIN = "ROLE_ADMIN";
+    public static final String ADMIN = "SUPER-ADMIN";
 
     public static final String USER = "ROLE_USER";
 

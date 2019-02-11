@@ -236,8 +236,9 @@ dependencies {
     compile "com.icthh.xm.commons:xm-commons-logging-web:${xm_commons_version}"
     compile "com.icthh.xm.commons:xm-commons-security:${xm_commons_version}"
     compile "com.icthh.xm.commons:xm-commons-lep:${xm_commons_version}"
-    compile("com.icthh.xm.commons:xm-commons-ms-web:${xm_commons_version}")
-    compile("com.icthh.xm.commons:xm-commons-permission:${xm_commons_version}")
+    compile "com.icthh.xm.commons:xm-commons-ms-web:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-permission:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-metric:${xm_commons_version}"
 
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor") {
