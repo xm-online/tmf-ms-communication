@@ -3,6 +3,7 @@ package com.icthh.xm.tmf.ms.communication.web.rest;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
+import com.codahale.metrics.annotation.Timed;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.api.CommunicationMessageApiDelegate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
@@ -24,6 +25,7 @@ public class CommunicationMessageApiImpl implements CommunicationMessageApiDeleg
         this.smppService = smppService;
     }
 
+    @Timed
     public ResponseEntity<CommunicationMessage> createsANewCommunicationMessageAndSendIt(
         CommunicationMessageCreate communicationMessageCreate) {
 
