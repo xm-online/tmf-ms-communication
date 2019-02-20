@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/xm-online/tmf-ms-communication.svg?branch=master)](https://travis-ci.org/xm-online/tmf-ms-communication) [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?&metric=sqale_index&branch=master&project=xm-online:tmf-ms-communication)](https://sonarcloud.io/dashboard/index/xm-online:tmf-ms-communication) [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?&metric=ncloc&branch=master&project=xm-online:tmf-ms-communication)](https://sonarcloud.io/dashboard/index/xm-online:tmf-ms-communication) [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?&metric=coverage&branch=master&project=xm-online:tmf-ms-communication)](https://sonarcloud.io/dashboard/index/xm-online:tmf-ms-communication)
+
 # communication
 This application was generated using JHipster 5.5.0, you can find documentation and help at [https://www.jhipster.tech/documentation-archive/v5.5.0](https://www.jhipster.tech/documentation-archive/v5.5.0).
 
