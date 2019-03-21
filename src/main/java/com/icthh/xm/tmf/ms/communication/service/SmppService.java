@@ -6,11 +6,17 @@ import static org.jsmpp.bean.Alphabet.ALPHA_DEFAULT;
 import static org.jsmpp.bean.Alphabet.ALPHA_UCS2;
 import static org.jsmpp.bean.OptionalParameter.Tag.MESSAGE_PAYLOAD;
 
+import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Smpp;
+import com.icthh.xm.tmf.ms.communication.messaging.MessageReceiverListenerAdapter;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jsmpp.bean.AlertNotification;
 import org.jsmpp.bean.Alphabet;
+import org.jsmpp.bean.DataSm;
+import org.jsmpp.bean.DeliverSm;
 import org.jsmpp.bean.ESMClass;
 import org.jsmpp.bean.GeneralDataCoding;
 import org.jsmpp.bean.MessageClass;
@@ -18,8 +24,12 @@ import org.jsmpp.bean.OptionalParameter;
 import org.jsmpp.bean.OptionalParameter.OctetString;
 import org.jsmpp.bean.RegisteredDelivery;
 import org.jsmpp.bean.SMSCDeliveryReceipt;
+import org.jsmpp.extra.ProcessRequestException;
 import org.jsmpp.session.BindParameter;
+import org.jsmpp.session.DataSmResult;
+import org.jsmpp.session.MessageReceiverListener;
 import org.jsmpp.session.SMPPSession;
+import org.jsmpp.session.Session;
 import org.jsmpp.util.AbsoluteTimeFormatter;
 import org.springframework.stereotype.Component;
 
@@ -32,19 +42,16 @@ import java.util.List;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class SmppService {
 
     private static final byte[] EMPTY_MESSAGE = "".getBytes();
 
-    private final AbsoluteTimeFormatter timeFormatter;
+    private final AbsoluteTimeFormatter timeFormatter = new AbsoluteTimeFormatter();
     private final ApplicationProperties appProps;
-    private volatile SMPPSession session;
+    private final List<DeliveryReportListener> deliveryReportListeners;
 
-    public SmppService(ApplicationProperties appProps) {
-        this.appProps = appProps;
-        this.timeFormatter = new AbsoluteTimeFormatter();
-        this.session = createSession(appProps);
-    }
+    private volatile SMPPSession session;
 
     @SneakyThrows
     private SMPPSession createSession(ApplicationProperties appProps)  {
@@ -61,6 +68,16 @@ public class SmppService {
         );
         session.setTransactionTimer(smpp.getConnectionTimeout());
         session.connectAndBind(smpp.getHost(), smpp.getPort(), bindParam);
+        session.setMessageReceiverListener((MessageReceiverListenerAdapter) (deliverySm) -> {
+            try {
+                MdcUtils.putRid(MdcUtils.generateRid());
+                deliveryReportListeners.forEach(it -> it.onAcceptDeliverSm(deliverySm));
+            } catch (Exception e) {
+                log.error("Error process delivery report", e);
+            } finally {
+                MdcUtils.removeRid();
+            }
+        });
         return session;
     }
 
@@ -92,7 +109,7 @@ public class SmppService {
             (byte) smpp.getPriorityFlag(),
             timeFormatter.format(new Date()),
             smpp.getValidityPeriod(),
-            new RegisteredDelivery(SMSCDeliveryReceipt.DEFAULT),
+            new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE),
             (byte) smpp.getReplaceIfPresentFlag(),
             new GeneralDataCoding(encoding, MessageClass.CLASS1, false),
             (byte) smpp.getSmDefaultMsgId(),
@@ -106,13 +123,16 @@ public class SmppService {
 
     private SMPPSession getActualSession() {
         SMPPSession session = this.session;
-        if (session.getSessionState().isBound()) {
+        if (session != null && session.getSessionState().isBound()) {
             return session;
         }
 
         synchronized (this) {
             session = this.session;
-            if (!session.getSessionState().isBound()) {
+            if (session == null) {
+                session = createSession(appProps);
+                this.session = session;
+            } else if (!session.getSessionState().isBound()) {
                 session.unbindAndClose();
                 session = createSession(appProps);
                 this.session = session;
@@ -149,5 +169,4 @@ public class SmppService {
     public void onDestroy() throws Exception {
         session.unbindAndClose();
     }
-
 }
