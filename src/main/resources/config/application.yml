@@ -183,7 +183,7 @@ application:
       send-failed-queue-name: failed_sms
       delivery-failed-queue-name: delivery_failed
       delivered-queue-name: delivered_reports
-      deliveryProcessorThreadCount: 4
+      deliveryProcessorThreadCount: 16
       deliveryMessageQueueMaxSize: 16000
     tenant-ignored-path-list: /swagger-resources/configuration/ui, /management/health, /oauth/token_key, /h2-console
     lep:

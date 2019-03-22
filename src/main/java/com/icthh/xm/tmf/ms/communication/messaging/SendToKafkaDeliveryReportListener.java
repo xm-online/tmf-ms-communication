@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jsmpp.bean.DeliverSm;
 import org.jsmpp.bean.MessageState;
 import org.jsmpp.bean.OptionalParameter;
@@ -36,6 +37,8 @@ public class SendToKafkaDeliveryReportListener implements DeliveryReportListener
     }
 
     private void processDeliveryReport(DeliverSm deliverSm) {
+        final StopWatch stopWatch = StopWatch.createStarted();
+
         if (deliverSm.getOptionalParameters() == null) {
             log.warn("Delivery report is not has option parameters.");
             return;
@@ -70,5 +73,7 @@ public class SendToKafkaDeliveryReportListener implements DeliveryReportListener
 
         MessageState status = MessageState.valueOf(state.value());
         messagingAdapter.deliveryReport(deliveryReport(id, status.name()));
+
+        log.info("Delivery report processed, time = {}", stopWatch.getTime());
     }
 }

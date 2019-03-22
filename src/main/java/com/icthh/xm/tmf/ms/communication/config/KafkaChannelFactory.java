@@ -13,13 +13,15 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
+import org.springframework.boot.actuate.health.CompositeHealthIndicator;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.cloud.stream.binder.ConsumerProperties;
 import org.springframework.cloud.stream.binder.HeaderMode;
+import org.springframework.cloud.stream.binder.kafka.KafkaBinderHealthIndicator;
+import org.springframework.cloud.stream.binder.kafka.KafkaMessageChannelBinder;
 import org.springframework.cloud.stream.binder.kafka.properties.KafkaBindingProperties;
 import org.springframework.cloud.stream.binder.kafka.properties.KafkaExtendedBindingProperties;
 import org.springframework.cloud.stream.binding.BindingService;
@@ -40,6 +42,8 @@ import org.springframework.messaging.SubscribableChannel;
 @Slf4j
 public class KafkaChannelFactory {
 
+    private static final String KAFKA = "kafka";
+
     private final BindingServiceProperties bindingServiceProperties;
     private final SubscribableChannelBindingTargetFactory bindingTargetFactory;
     private final BindingService bindingService;
@@ -48,12 +52,16 @@ public class KafkaChannelFactory {
     private final ApplicationProperties applicationProperties;
     private final KafkaProperties kafkaProperties;
     private final MessagingHandler messagingHandler;
+    private CompositeHealthIndicator bindersHealthIndicator;
+    private KafkaBinderHealthIndicator kafkaBinderHealthIndicator;
 
     public KafkaChannelFactory(BindingServiceProperties bindingServiceProperties,
                                SubscribableChannelBindingTargetFactory bindingTargetFactory,
                                BindingService bindingService, ObjectMapper objectMapper,
                                ApplicationProperties applicationProperties, KafkaProperties kafkaProperties,
-                               MessagingHandler messagingHandler) {
+                               KafkaMessageChannelBinder kafkaMessageChannelBinder, MessagingHandler messagingHandler,
+                               CompositeHealthIndicator bindersHealthIndicator,
+                               KafkaBinderHealthIndicator kafkaBinderHealthIndicator) {
         this.bindingServiceProperties = bindingServiceProperties;
         this.bindingTargetFactory = bindingTargetFactory;
         this.bindingService = bindingService;
@@ -61,9 +69,13 @@ public class KafkaChannelFactory {
         this.applicationProperties = applicationProperties;
         this.kafkaProperties = kafkaProperties;
         this.messagingHandler = messagingHandler;
-        createHandler();
+        this.bindersHealthIndicator = bindersHealthIndicator;
+        this.kafkaBinderHealthIndicator = kafkaBinderHealthIndicator;
+
+        kafkaMessageChannelBinder.setExtendedBindingProperties(kafkaExtendedBindingProperties);
     }
 
+    @PostConstruct
     public void createHandler() {
 
         String chanelName = applicationProperties.getMessaging().getToSendQueueName();
@@ -90,6 +102,8 @@ public class KafkaChannelFactory {
         SubscribableChannel channel = bindingTargetFactory.createInput(chanelName);
         bindingService.bindConsumer(channel, chanelName);
 
+        bindersHealthIndicator.addHealthIndicator(KAFKA, kafkaBinderHealthIndicator);
+
         channel.subscribe(message -> {
             try {
                 MdcUtils.putRid(MdcUtils.generateRid());
@@ -110,16 +124,17 @@ public class KafkaChannelFactory {
         // ACKNOWLEDGMENT before processing (important, for avoid duplicate sms)
         message.getHeaders().get(ACKNOWLEDGMENT, Acknowledgment.class).acknowledge();
 
-        String payloadString = (String) message.getPayload();
-        log.info("start processign message, base64 body = {}, headers = {}", payloadString, getHeaders(message));
-
-        payloadString = decodeBase64(payloadString);
-
-        log.info("start processign message, json body = {}", payloadString);
-        CommunicationMessageCreate communicationMessage = mapToCommunicationMessage(payloadString);
-
-        messagingHandler.receiveMessage(communicationMessage);
-        log.info("stop processign message, time = {}", stopWatch.getTime());
+        try {
+            String payloadString = (String) message.getPayload();
+            log.info("start processign message, base64 body = {}, headers = {}", payloadString, getHeaders(message));
+            payloadString = decodeBase64(payloadString);
+            log.info("start processign message, json body = {}", payloadString);
+            CommunicationMessageCreate communicationMessage = mapToCommunicationMessage(payloadString);
+            messagingHandler.receiveMessage(communicationMessage);
+            log.info("stop processign message, time = {}", stopWatch.getTime());
+        } catch (Exception e) {
+            log.error("Error process event", e);
+        }
     }
 
     private String decodeBase64(String payloadString) {

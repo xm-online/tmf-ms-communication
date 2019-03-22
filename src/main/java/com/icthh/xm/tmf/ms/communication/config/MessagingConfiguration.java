@@ -10,9 +10,12 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.actuate.health.CompositeHealthIndicator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.cloud.stream.annotation.EnableBinding;
+import org.springframework.cloud.stream.binder.kafka.KafkaBinderHealthIndicator;
+import org.springframework.cloud.stream.binder.kafka.KafkaMessageChannelBinder;
 import org.springframework.cloud.stream.binder.kafka.config.KafkaBinderConfiguration;
 import org.springframework.cloud.stream.binding.BinderAwareChannelResolver;
 import org.springframework.cloud.stream.binding.BindingService;
@@ -32,6 +35,7 @@ import org.springframework.integration.config.EnableIntegration;
 @EnableBinding
 @EnableIntegration
 @RequiredArgsConstructor
+@Import( {KafkaBinderConfiguration.class})
 @ConditionalOnProperty("application.stream-binding-enabled")
 public class MessagingConfiguration {
 
@@ -46,11 +50,13 @@ public class MessagingConfiguration {
                                                    SubscribableChannelBindingTargetFactory bindingTargetFactory,
                                                    BindingService bindingService, ObjectMapper objectMapper,
                                                    ApplicationProperties applicationProperties,
-                                                   KafkaProperties kafkaProperties, MessagingHandler messageHandler) {
-        // resolve destination for force init binding health check
-        // channelResolver.resolveDestination(applicationProperties.getMessaging().getToSendQueueName());
+                                                   KafkaMessageChannelBinder kafkaMessageChannelBinder,
+                                                   KafkaProperties kafkaProperties, MessagingHandler messageHandler,
+                                                   CompositeHealthIndicator bindersHealthIndicator,
+                                                   KafkaBinderHealthIndicator kafkaBinderHealthIndicator) {
         return new KafkaChannelFactory(bindingServiceProperties, bindingTargetFactory, bindingService, objectMapper,
-                                       applicationProperties, kafkaProperties, messageHandler);
+                                       applicationProperties, kafkaProperties, kafkaMessageChannelBinder,
+                                       messageHandler, bindersHealthIndicator, kafkaBinderHealthIndicator);
     }
 
     @Bean
