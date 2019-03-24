@@ -29,9 +29,9 @@ public class ApplicationProperties {
     private String kafkaSystemTopic;
     private String kafkaSystemQueue;
     private List<String> tenantIgnoredPathList = Collections.emptyList();
-    private boolean streamBindingEnabled = true;
+    private boolean streamBindingEnabled;
 
-    private Messaging messaging;
+    private Messaging messaging = new Messaging();
 
     @Data
     public static class Messaging {
@@ -42,8 +42,6 @@ public class ApplicationProperties {
         private String deliveredQueueName;
         private Integer deliveryProcessorThreadCount;
         private Integer deliveryMessageQueueMaxSize;
-        private Integer operationRetryBackOff;
-        private Integer operationRetryMaxBackOff;
     }
 
     @Getter

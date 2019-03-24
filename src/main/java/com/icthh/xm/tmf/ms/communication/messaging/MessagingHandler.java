@@ -45,7 +45,7 @@ public class MessagingHandler {
                 log.info("Message success sended to {}", queueName);
             } catch (Exception e) {
                 log.error("Error process message ", e);
-                String failedQueueName = messaging.getDeliveryFailedQueueName();
+                String failedQueueName = messaging.getSendFailedQueueName();
                 sendMessage(failed(message, e), failedQueueName);
                 log.warn("Message about erro sended to {}", failedQueueName);
             }
