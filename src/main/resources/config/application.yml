@@ -178,11 +178,11 @@ application:
     kafka-concurrency-count: 16
     stream-binding-enabled: true
     messaging:
-      to-send-queue-name: to_send_sms
-      sent-queue-name: sent_sms
-      send-failed-queue-name: failed_sms
-      delivery-failed-queue-name: delivery_failed
-      delivered-queue-name: delivered_reports
+      to-send-queue-name: communication_to_send_sms
+      sent-queue-name: communication_sent_sms
+      send-failed-queue-name: communication_failed_sms
+      delivery-failed-queue-name: communication_delivery_failed
+      delivered-queue-name: communication_delivered_reports
       deliveryProcessorThreadCount: 16
       deliveryMessageQueueMaxSize: 16000
     tenant-ignored-path-list: /swagger-resources/configuration/ui, /management/health, /oauth/token_key, /h2-console
