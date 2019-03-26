@@ -1,6 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
 import com.icthh.xm.commons.lep.TenantScriptStorage;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.jsmpp.bean.BindType;
@@ -23,9 +24,25 @@ import java.util.List;
 public class ApplicationProperties {
     private final Lep lep = new Lep();
     private final Smpp smpp = new Smpp();
+    private final Retry retry = new Retry();
+    private int kafkaConcurrencyCount;
     private String kafkaSystemTopic;
     private String kafkaSystemQueue;
     private List<String> tenantIgnoredPathList = Collections.emptyList();
+    private boolean streamBindingEnabled;
+
+    private Messaging messaging = new Messaging();
+
+    @Data
+    public static class Messaging {
+        private String toSendQueueName;
+        private String sendFailedQueueName;
+        private String sentQueueName;
+        private String deliveryFailedQueueName;
+        private String deliveredQueueName;
+        private Integer deliveryProcessorThreadCount;
+        private Integer deliveryMessageQueueMaxSize;
+    }
 
     @Getter
     @Setter
@@ -58,5 +75,14 @@ public class ApplicationProperties {
         private int replaceIfPresentFlag;
         private int smDefaultMsgId;
         private String validityPeriod;
+    }
+
+    @Getter
+    @Setter
+    private static class Retry {
+
+        private int maxAttempts;
+        private long delay;
+        private int multiplier;
     }
 }

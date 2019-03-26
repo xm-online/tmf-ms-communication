@@ -64,6 +64,17 @@ spring:
             config:
                 watch:
                     enabled: false
+        stream:
+            default-binder: kafka
+            kafka:
+                binder:
+                    brokers: localhost:9092
+                    defaultBrokerPort: 9092
+                    autoCreateTopics: true
+                    autoAddPartitions: true
+                    minPartitionCount: 16
+                    healthTimeout: 2
+
     messages:
         basename: i18n/messages
     mvc:
@@ -71,6 +82,23 @@ spring:
             enabled: false
     thymeleaf:
         mode: HTML
+
+    kafka:
+        bootstrap-servers: localhost:9092
+        consumer:
+            group-id: communication
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+        listener:
+            concurrency: 16
+            ack-mode: manual_immediate
+        producer:
+            key-serializer: org.apache.kafka.common.serialization.StringSerializer
+            value-serializer: com.icthh.xm.tmf.ms.communication.messaging.RoutingSerializer
+        properties:
+            reconnect.backoff.ms: 1000
+            partition.assignment.strategy: org.apache.kafka.clients.consumer.RangeAssignor
+
 security:
     oauth2:
         resource:
@@ -143,6 +171,20 @@ xm-config:
 application:
     kafka-system-topic: system_topic
     kafka-system-queue: system_queue
+    # The concurrency of the inbound consumer.
+    # Shows how many messages the consumer can process at the same time.
+    # The number of created partitions in the Kafka same topic is equal to
+    # application.kafka-concurrency-count * spring.cloud.stream.instance-count
+    kafka-concurrency-count: 16
+    stream-binding-enabled: true
+    messaging:
+      to-send-queue-name: communication_to_send_sms
+      sent-queue-name: communication_sent_sms
+      send-failed-queue-name: communication_failed_sms
+      delivery-failed-queue-name: communication_delivery_failed
+      delivered-queue-name: communication_delivered_reports
+      deliveryProcessorThreadCount: 16
+      deliveryMessageQueueMaxSize: 16000
     tenant-ignored-path-list: /swagger-resources/configuration/ui, /management/health, /oauth/token_key, /h2-console
     lep:
         tenant-script-storage: XM_MS_CONFIG
@@ -153,7 +195,7 @@ application:
         port: 2775
         system-id: smppclient1
         password: password
-        bind-type: BIND_TX
+        bind-type: BIND_TRX
         system-type: cp
         addr-ton: UNKNOWN
         addr-npi: UNKNOWN
@@ -167,3 +209,7 @@ application:
         priority-flag: 1
         replace-if-present-flag: 0
         sm-default-msg-id: 0
+    retry:
+        max-attempts: 3
+        delay: 1000 #in milliseconds
+        multiplier: 2
