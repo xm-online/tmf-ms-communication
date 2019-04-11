@@ -116,7 +116,7 @@ public class MessagingTest {
         ArgumentCaptor<Message> argumentCaptor = ArgumentCaptor.forClass(Message.class);
         verify(messageChannel).send(argumentCaptor.capture());
         MessageResponse payload = (MessageResponse) argumentCaptor.getValue().getPayload();
-
+        assertThat(payload.getDistributionId(), equalTo("TEST_D_ID-SMS-ID"));
         assertThat(payload, equalTo(messageResponse));
     }
 
