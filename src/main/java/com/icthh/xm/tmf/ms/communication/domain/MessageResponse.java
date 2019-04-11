@@ -1,16 +1,23 @@
 package com.icthh.xm.tmf.ms.communication.domain;
 
 import static com.google.common.base.Predicates.not;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
+import static java.util.Collections.emptyList;
 
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import javax.annotation.Nullable;
 import lombok.Data;
 
 @Data
 public class MessageResponse {
+
+    public static final String DISTRIBUTION_ID = "DISTRIBUTION.ID";
 
     private Status status;
     private String errorCode;
@@ -22,18 +29,41 @@ public class MessageResponse {
 
     private CommunicationMessage responseTo;
 
-    public enum Status {
-        SUCCESS, FAILED;
+    public MessageResponse(Status status, CommunicationMessage responseTo) {
+        this.status = status;
+        this.responseTo = responseTo;
+        String distributionId = getDistributionId(responseTo);
+        this.distributionId = distributionId;
+        this.id = buildId(responseTo, distributionId);
     }
 
     public static MessageResponse success(String messageId, CommunicationMessage responseTo) {
-        MessageResponse messageResponse = new MessageResponse();
-        messageResponse.responseTo = responseTo;
-        messageResponse.status = Status.SUCCESS;
+        MessageResponse messageResponse = new MessageResponse(SUCCESS, responseTo);
         messageResponse.messageId = messageId;
-        messageResponse.distributionId =
-        messageResponse.id = messageResponse.distributionId + "-" +  responseTo.getType() + "-" + getFirstReceiverId(responseTo);
         return messageResponse;
+    }
+
+    public static String buildId(CommunicationMessage responseTo, String distributionId) {
+        return distributionId + "-" + responseTo.getType() + "-" + getFirstReceiverId(responseTo);
+    }
+
+    public static MessageResponse failed(CommunicationMessage responseTo, Exception e) {
+        MessageResponse messageResponse = new MessageResponse(FAILED, responseTo);
+        messageResponse.errorCode = e.getClass().getSimpleName();
+        messageResponse.errorMessage = e.getMessage();
+        return messageResponse;
+    }
+
+    private static String getDistributionId(CommunicationMessage responseTo) {
+        return nullSafe(responseTo).stream()
+                                   .filter(it -> it.getName().equals(DISTRIBUTION_ID))
+                                   .findFirst()
+                                   .map(CommunicationRequestCharacteristic::getValue)
+                                   .orElse(UUID.randomUUID().toString());
+    }
+
+    private static List<CommunicationRequestCharacteristic> nullSafe(CommunicationMessage responseTo) {
+        return responseTo.getCharacteristic() == null ? emptyList() : responseTo.getCharacteristic();
     }
 
     private static String getFirstReceiverId(CommunicationMessage responseTo) {
@@ -44,12 +74,8 @@ public class MessageResponse {
                        .orElse(null);
     }
 
-    public static MessageResponse failed(CommunicationMessage responseTo, Exception e) {
-        MessageResponse messageResponse = new MessageResponse();
-        messageResponse.responseTo = responseTo;
-        messageResponse.status = Status.FAILED;
-        messageResponse.errorCode = e.getClass().getSimpleName();
-        messageResponse.errorMessage = e.getMessage();
-        return messageResponse;
+    public enum Status {
+        SUCCESS, FAILED;
     }
+
 }

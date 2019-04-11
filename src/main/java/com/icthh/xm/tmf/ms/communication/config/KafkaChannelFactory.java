@@ -8,6 +8,7 @@ import static org.springframework.kafka.support.KafkaHeaders.ACKNOWLEDGMENT;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import java.util.Base64;
 import java.util.HashMap;
@@ -129,7 +130,7 @@ public class KafkaChannelFactory {
             log.info("start processign message, base64 body = {}, headers = {}", payloadString, getHeaders(message));
             payloadString = decodeBase64(payloadString);
             log.info("start processign message, json body = {}", payloadString);
-            CommunicationMessageCreate communicationMessage = mapToCommunicationMessage(payloadString);
+            CommunicationMessage communicationMessage = mapToCommunicationMessage(payloadString);
             messagingHandler.receiveMessage(communicationMessage);
             log.info("stop processign message, time = {}", stopWatch.getTime());
         } catch (Exception e) {
@@ -156,8 +157,8 @@ public class KafkaChannelFactory {
     }
 
     @SneakyThrows
-    private CommunicationMessageCreate mapToCommunicationMessage(String eventBody) {
-        return objectMapper.readValue(eventBody, CommunicationMessageCreate.class);
+    private CommunicationMessage mapToCommunicationMessage(String eventBody) {
+        return objectMapper.readValue(eventBody, CommunicationMessage.class);
     }
 
 }
