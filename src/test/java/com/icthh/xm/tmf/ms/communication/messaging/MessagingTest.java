@@ -116,7 +116,8 @@ public class MessagingTest {
         ArgumentCaptor<Message> argumentCaptor = ArgumentCaptor.forClass(Message.class);
         verify(messageChannel).send(argumentCaptor.capture());
         MessageResponse payload = (MessageResponse) argumentCaptor.getValue().getPayload();
-        assertThat(payload.getDistributionId(), equalTo("TEST_D_ID-SMS-ID"));
+        assertThat(payload.getId(), equalTo("TEST_D_ID-SMS-ID"));
+        assertThat(payload.getDistributionId(), equalTo("TEST_D_ID"));
         assertThat(payload, equalTo(messageResponse));
     }
 
@@ -145,7 +146,12 @@ public class MessagingTest {
 
         ArgumentCaptor<Message> argumentCaptor = ArgumentCaptor.forClass(Message.class);
         verify(messageChannel).send(argumentCaptor.capture());
-        assertThat(argumentCaptor.getValue().getPayload(), equalTo(messageResponse));
+        MessageResponse payload = (MessageResponse) argumentCaptor.getValue().getPayload();
+        payload.setId(null);
+        payload.setDistributionId(null);
+        messageResponse.setId(null);
+        messageResponse.setDistributionId(null);
+        assertThat(payload, equalTo(messageResponse));
     }
 
 
