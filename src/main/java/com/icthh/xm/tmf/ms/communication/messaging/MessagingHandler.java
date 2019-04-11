@@ -9,6 +9,7 @@ import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Messaging;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
@@ -33,10 +34,9 @@ public class MessagingHandler {
         channelResolver.resolveDestination(topic).send(MessageBuilder.withPayload(messageResponse).build());
     }
 
-    public void receiveMessage(CommunicationMessageCreate message) {
+    public void receiveMessage(CommunicationMessage message) {
         Messaging messaging = applicationProperties.getMessaging();
-        List<String> phoneNumbers = new ArrayList<>();
-        phoneNumbers.addAll(from(message).getPhoneNumbers());
+        List<String> phoneNumbers = new ArrayList<>(from(message).getPhoneNumbers());
         for (String phoneNumber : phoneNumbers) {
             try {
                 String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId());

@@ -1,6 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.utils;
 
-import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -8,13 +8,13 @@ import lombok.RequiredArgsConstructor;
 
 public class ApiMapper {
 
-    public static CommunicationMessageCreateWeapper from(CommunicationMessageCreate messageCreate) {
-        return new CommunicationMessageCreateWeapper(messageCreate);
+    public static CommunicationMessageWeapper from(CommunicationMessage message) {
+        return new CommunicationMessageWeapper(message);
     }
 
     @RequiredArgsConstructor
-    public static class CommunicationMessageCreateWeapper {
-        private final CommunicationMessageCreate message;
+    public static class CommunicationMessageWeapper {
+        private final CommunicationMessage message;
         public List<String> getPhoneNumbers() {
             return message.getReceiver().stream()
                           .map(Receiver::getPhoneNumber)
