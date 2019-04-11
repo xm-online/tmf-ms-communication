@@ -196,6 +196,7 @@ public class MessagingTest {
         receiver.setId("ID");
         Sender sender = new Sender();
         sender.setId("TestSender");
+        message.setId("TEST_D_ID-SMS-ID");
         message.setSender(sender);
         message.setContent("TestContext");
         message.setReceiver(singletonList(receiver));

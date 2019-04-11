@@ -34,17 +34,13 @@ public class MessageResponse {
         this.responseTo = responseTo;
         String distributionId = getDistributionId(responseTo);
         this.distributionId = distributionId;
-        this.id = buildId(responseTo, distributionId);
+        this.id = responseTo.getId();
     }
 
     public static MessageResponse success(String messageId, CommunicationMessage responseTo) {
         MessageResponse messageResponse = new MessageResponse(SUCCESS, responseTo);
         messageResponse.messageId = messageId;
         return messageResponse;
-    }
-
-    public static String buildId(CommunicationMessage responseTo, String distributionId) {
-        return distributionId + "-" + responseTo.getType() + "-" + getFirstReceiverId(responseTo);
     }
 
     public static MessageResponse failed(CommunicationMessage responseTo, Exception e) {
