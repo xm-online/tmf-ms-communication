@@ -1,6 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.messaging;
 
 import static com.icthh.xm.tmf.ms.communication.domain.DeliveryReport.deliveryReport;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.DISTRIBUTION_ID;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
 import static java.util.Collections.singletonList;
@@ -19,10 +20,12 @@ import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Messaging;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
-import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
 import io.netty.util.concurrent.ImmediateEventExecutor;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import org.jsmpp.bean.DeliverSm;
 import org.jsmpp.bean.OptionalParameter;
@@ -85,13 +88,44 @@ public class MessagingTest {
         messagingHandler.receiveMessage(message());
         verify(channelResolver).resolveDestination(SUCCESS_SENT);
 
-        MessageResponse messageResponse = new MessageResponse();
-        messageResponse.setResponseTo(message());
-        messageResponse.setStatus(SUCCESS);
+        MessageResponse messageResponse = new MessageResponse(SUCCESS, message());
 
         ArgumentCaptor<Message> argumentCaptor = ArgumentCaptor.forClass(Message.class);
         verify(messageChannel).send(argumentCaptor.capture());
-        assertThat(argumentCaptor.getValue().getPayload(), equalTo(messageResponse));
+        MessageResponse payload = (MessageResponse) argumentCaptor.getValue().getPayload();
+        payload.setId(null);
+        payload.setDistributionId(null);
+        messageResponse.setId(null);
+        messageResponse.setDistributionId(null);
+        assertThat(payload, equalTo(messageResponse));
+    }
+
+    @Test
+    public void receiveMessageSuccessWithDistributionIdTest() {
+        MessageChannel messageChannel = mock(MessageChannel.class);
+        when(channelResolver.resolveDestination(SUCCESS_SENT)).thenReturn(messageChannel);
+        CommunicationMessage message = message();
+        addDistributionId(message);
+        messagingHandler.receiveMessage(message);
+        verify(channelResolver).resolveDestination(SUCCESS_SENT);
+
+        CommunicationMessage assertMessage = message();
+        addDistributionId(assertMessage);
+        MessageResponse messageResponse = new MessageResponse(SUCCESS, assertMessage);
+
+        ArgumentCaptor<Message> argumentCaptor = ArgumentCaptor.forClass(Message.class);
+        verify(messageChannel).send(argumentCaptor.capture());
+        MessageResponse payload = (MessageResponse) argumentCaptor.getValue().getPayload();
+        assertThat(payload.getId(), equalTo("TEST_D_ID-SMS-ID"));
+        assertThat(payload.getDistributionId(), equalTo("TEST_D_ID"));
+        assertThat(payload, equalTo(messageResponse));
+    }
+
+    private void addDistributionId(CommunicationMessage message) {
+        message.setCharacteristic(new ArrayList<>());
+        CommunicationRequestCharacteristic disctributionId = new CommunicationRequestCharacteristic().name(DISTRIBUTION_ID)
+                                                                                                     .value("TEST_D_ID");
+        message.getCharacteristic().add(disctributionId);
     }
 
     @Test
@@ -106,15 +140,18 @@ public class MessagingTest {
 
         verify(channelResolver).resolveDestination(FAIL_SEND);
 
-        MessageResponse messageResponse = new MessageResponse();
-        messageResponse.setResponseTo(message());
-        messageResponse.setStatus(FAILED);
+        MessageResponse messageResponse = new MessageResponse(FAILED, message());
         messageResponse.setErrorCode("BusinessException");
         messageResponse.setErrorMessage("TestMessage");
 
         ArgumentCaptor<Message> argumentCaptor = ArgumentCaptor.forClass(Message.class);
         verify(messageChannel).send(argumentCaptor.capture());
-        assertThat(argumentCaptor.getValue().getPayload(), equalTo(messageResponse));
+        MessageResponse payload = (MessageResponse) argumentCaptor.getValue().getPayload();
+        payload.setId(null);
+        payload.setDistributionId(null);
+        messageResponse.setId(null);
+        messageResponse.setDistributionId(null);
+        assertThat(payload, equalTo(messageResponse));
     }
 
 
@@ -152,16 +189,18 @@ public class MessagingTest {
         assertThat(argumentCaptor.getValue().getPayload(), equalTo(deliveryReport("messagenumber", "DELIVERED")));
     }
 
-    private CommunicationMessageCreate message() {
-        CommunicationMessageCreate message = new CommunicationMessageCreate();
+    private CommunicationMessage message() {
+        CommunicationMessage message = new CommunicationMessage();
         Receiver receiver = new Receiver();
         receiver.setPhoneNumber("PH");
         receiver.setId("ID");
         Sender sender = new Sender();
         sender.setId("TestSender");
+        message.setId("TEST_D_ID-SMS-ID");
         message.setSender(sender);
         message.setContent("TestContext");
         message.setReceiver(singletonList(receiver));
+        message.setType("SMS");
         return message;
     }
 }
