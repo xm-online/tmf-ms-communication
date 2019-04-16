@@ -128,7 +128,7 @@ public class KafkaChannelFactory {
         try {
             String payloadString = (String) message.getPayload();
             log.info("start processign message, base64 body = {}, headers = {}", payloadString, getHeaders(message));
-            payloadString = decodeBase64(payloadString);
+            payloadString = unwrap(payloadString, "\"");
             log.info("start processign message, json body = {}", payloadString);
             CommunicationMessage communicationMessage = mapToCommunicationMessage(payloadString);
             messagingHandler.receiveMessage(communicationMessage);
@@ -136,16 +136,6 @@ public class KafkaChannelFactory {
         } catch (Exception e) {
             log.error("Error process event", e);
         }
-    }
-
-    private String decodeBase64(String payloadString) {
-        try {
-            payloadString = unwrap(payloadString, "\"");
-            payloadString = new String(Base64.getDecoder().decode(payloadString), UTF_8);
-        } catch (IllegalArgumentException e) {
-            log.error("Message is not base64", e);
-        }
-        return payloadString;
     }
 
     private Map<String, Object> getHeaders(Message<?> message) {

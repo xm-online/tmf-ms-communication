@@ -1,6 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.icthh.xm.tmf.ms.communication.domain.DeliveryReport;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingAdapter;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaDeliveryReportListener;
@@ -17,13 +18,13 @@ import org.springframework.cloud.stream.annotation.EnableBinding;
 import org.springframework.cloud.stream.binder.kafka.KafkaBinderHealthIndicator;
 import org.springframework.cloud.stream.binder.kafka.KafkaMessageChannelBinder;
 import org.springframework.cloud.stream.binder.kafka.config.KafkaBinderConfiguration;
-import org.springframework.cloud.stream.binding.BinderAwareChannelResolver;
 import org.springframework.cloud.stream.binding.BindingService;
 import org.springframework.cloud.stream.binding.SubscribableChannelBindingTargetFactory;
 import org.springframework.cloud.stream.config.BindingServiceProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.integration.config.EnableIntegration;
+import org.springframework.kafka.core.KafkaTemplate;
 
 /**
  * Configures Spring Cloud Stream support.
@@ -40,7 +41,7 @@ import org.springframework.integration.config.EnableIntegration;
 public class MessagingConfiguration {
 
     @Bean
-    public MessagingHandler messagingHandler(BinderAwareChannelResolver channelResolver, SmppService smppService,
+    public MessagingHandler messagingHandler(KafkaTemplate<String, Object> channelResolver, SmppService smppService,
                                              ApplicationProperties applicationProperties) {
         return new MessagingHandler(channelResolver, smppService, applicationProperties);
     }
@@ -60,7 +61,7 @@ public class MessagingConfiguration {
     }
 
     @Bean
-    public MessagingAdapter messagingAdapter(BinderAwareChannelResolver channelResolver,
+    public MessagingAdapter messagingAdapter(KafkaTemplate<String, Object> channelResolver,
                                              ApplicationProperties applicationProperties) {
         return new MessagingAdapter(channelResolver, applicationProperties);
     }
