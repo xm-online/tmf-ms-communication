@@ -14,18 +14,19 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.stream.binding.BinderAwareChannelResolver;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.support.MessageBuilder;
 
 @Slf4j
 @RequiredArgsConstructor
 public class MessagingHandler {
 
-    private final BinderAwareChannelResolver channelResolver;
+    private final KafkaTemplate<String, Object> channelResolver;
     private final SmppService smppService;
     private final ApplicationProperties applicationProperties;
 
     private void sendMessage(MessageResponse messageResponse, String topic) {
-        channelResolver.resolveDestination(topic).send(MessageBuilder.withPayload(messageResponse).build());
+        channelResolver.send(topic, messageResponse);
     }
 
     public void receiveMessage(CommunicationMessage message) {

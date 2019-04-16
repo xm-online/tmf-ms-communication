@@ -11,6 +11,7 @@ import static org.jsmpp.bean.MessageState.UNDELIVERABLE;
 import static org.jsmpp.bean.OptionalParameter.Tag.MESSAGE_STATE;
 import static org.jsmpp.bean.OptionalParameter.Tag.RECEIPTED_MESSAGE_ID;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -18,6 +19,7 @@ import static org.mockito.Mockito.when;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Messaging;
+import com.icthh.xm.tmf.ms.communication.domain.DeliveryReport;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
@@ -38,7 +40,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.cloud.stream.binding.BinderAwareChannelResolver;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 
@@ -54,7 +56,7 @@ public class MessagingTest {
     @InjectMocks
     private MessagingHandler messagingHandler;
     @Mock
-    private BinderAwareChannelResolver channelResolver;
+    private KafkaTemplate<String, Object> kafkaTemplate;
     @Mock
     private SmppService smppService;
     @Spy
@@ -65,7 +67,7 @@ public class MessagingTest {
     @Before
     public void setUp() {
         ExecutorService executorService = ImmediateEventExecutor.INSTANCE;
-        MessagingAdapter messagingAdapter = new MessagingAdapter(channelResolver, applicationProperties);
+        MessagingAdapter messagingAdapter = new MessagingAdapter(kafkaTemplate, applicationProperties);
         sendToKafkaDeliveryReportListener = new SendToKafkaDeliveryReportListener(messagingAdapter, executorService);
     }
 
@@ -83,16 +85,13 @@ public class MessagingTest {
 
     @Test
     public void receiveMessageSuccessTest() {
-        MessageChannel messageChannel = mock(MessageChannel.class);
-        when(channelResolver.resolveDestination(SUCCESS_SENT)).thenReturn(messageChannel);
         messagingHandler.receiveMessage(message());
-        verify(channelResolver).resolveDestination(SUCCESS_SENT);
 
         MessageResponse messageResponse = new MessageResponse(SUCCESS, message());
 
-        ArgumentCaptor<Message> argumentCaptor = ArgumentCaptor.forClass(Message.class);
-        verify(messageChannel).send(argumentCaptor.capture());
-        MessageResponse payload = (MessageResponse) argumentCaptor.getValue().getPayload();
+        ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
+        verify(kafkaTemplate).send(eq(SUCCESS_SENT), argumentCaptor.capture());
+        MessageResponse payload = argumentCaptor.getValue();
         payload.setId(null);
         payload.setDistributionId(null);
         messageResponse.setId(null);
@@ -102,20 +101,17 @@ public class MessagingTest {
 
     @Test
     public void receiveMessageSuccessWithDistributionIdTest() {
-        MessageChannel messageChannel = mock(MessageChannel.class);
-        when(channelResolver.resolveDestination(SUCCESS_SENT)).thenReturn(messageChannel);
         CommunicationMessage message = message();
         addDistributionId(message);
         messagingHandler.receiveMessage(message);
-        verify(channelResolver).resolveDestination(SUCCESS_SENT);
 
         CommunicationMessage assertMessage = message();
         addDistributionId(assertMessage);
         MessageResponse messageResponse = new MessageResponse(SUCCESS, assertMessage);
 
-        ArgumentCaptor<Message> argumentCaptor = ArgumentCaptor.forClass(Message.class);
-        verify(messageChannel).send(argumentCaptor.capture());
-        MessageResponse payload = (MessageResponse) argumentCaptor.getValue().getPayload();
+        ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
+        verify(kafkaTemplate).send(eq(SUCCESS_SENT), argumentCaptor.capture());
+        MessageResponse payload = (MessageResponse) argumentCaptor.getValue();
         assertThat(payload.getId(), equalTo("TEST_D_ID-SMS-ID"));
         assertThat(payload.getDistributionId(), equalTo("TEST_D_ID"));
         assertThat(payload, equalTo(messageResponse));
@@ -130,23 +126,21 @@ public class MessagingTest {
 
     @Test
     public void receiveMessageFailTest() {
-        MessageChannel messageChannel = mock(MessageChannel.class);
-        when(channelResolver.resolveDestination(FAIL_SEND)).thenReturn(messageChannel);
 
         when(smppService.send("PH", "TestContext", "TestSender"))
             .thenThrow(new BusinessException("TestMessage"));
 
         messagingHandler.receiveMessage(message());
 
-        verify(channelResolver).resolveDestination(FAIL_SEND);
 
         MessageResponse messageResponse = new MessageResponse(FAILED, message());
         messageResponse.setErrorCode("BusinessException");
         messageResponse.setErrorMessage("TestMessage");
 
-        ArgumentCaptor<Message> argumentCaptor = ArgumentCaptor.forClass(Message.class);
-        verify(messageChannel).send(argumentCaptor.capture());
-        MessageResponse payload = (MessageResponse) argumentCaptor.getValue().getPayload();
+        ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
+
+        verify(kafkaTemplate).send(eq(FAIL_SEND), argumentCaptor.capture());
+        MessageResponse payload = argumentCaptor.getValue();
         payload.setId(null);
         payload.setDistributionId(null);
         messageResponse.setId(null);
@@ -157,8 +151,6 @@ public class MessagingTest {
 
     @Test
     public void messageUndeliveredTest() {
-        MessageChannel messageChannel = mock(MessageChannel.class);
-        when(channelResolver.resolveDestination(FAILED_DELIVERY)).thenReturn(messageChannel);
         DeliverSm deliverSm = new DeliverSm();
         OctetString messageId = new OctetString(RECEIPTED_MESSAGE_ID, "messagenumber");
         OptionalParameter.Byte messageState = new OptionalParameter.Byte(MESSAGE_STATE, UNDELIVERABLE.value());
@@ -166,16 +158,14 @@ public class MessagingTest {
 
         sendToKafkaDeliveryReportListener.onAcceptDeliverSm(deliverSm);
 
-        verify(channelResolver).resolveDestination(FAILED_DELIVERY);
-        ArgumentCaptor<Message> argumentCaptor = ArgumentCaptor.forClass(Message.class);
-        verify(messageChannel).send(argumentCaptor.capture());
-        assertThat(argumentCaptor.getValue().getPayload(), equalTo(deliveryReport("messagenumber", "UNDELIVERABLE")));
+        ArgumentCaptor<DeliveryReport> argumentCaptor = ArgumentCaptor.forClass(DeliveryReport.class);
+        verify(kafkaTemplate).send(eq(FAILED_DELIVERY), argumentCaptor.capture());
+        assertThat(argumentCaptor.getValue(), equalTo(deliveryReport("messagenumber", "UNDELIVERABLE")));
     }
 
     @Test
     public void messageDeliveredTest() {
         MessageChannel messageChannel = mock(MessageChannel.class);
-        when(channelResolver.resolveDestination(SUCCESS_DELIVERY)).thenReturn(messageChannel);
         DeliverSm deliverSm = new DeliverSm();
         OctetString messageId = new OctetString(RECEIPTED_MESSAGE_ID, "messagenumber");
         OptionalParameter.Byte messageState = new OptionalParameter.Byte(MESSAGE_STATE, DELIVERED.value());
@@ -183,10 +173,10 @@ public class MessagingTest {
 
         sendToKafkaDeliveryReportListener.onAcceptDeliverSm(deliverSm);
 
-        verify(channelResolver).resolveDestination(SUCCESS_DELIVERY);
-        ArgumentCaptor<Message> argumentCaptor = ArgumentCaptor.forClass(Message.class);
-        verify(messageChannel).send(argumentCaptor.capture());
-        assertThat(argumentCaptor.getValue().getPayload(), equalTo(deliveryReport("messagenumber", "DELIVERED")));
+
+        ArgumentCaptor<DeliveryReport> argumentCaptor = ArgumentCaptor.forClass(DeliveryReport.class);
+        verify(kafkaTemplate).send(eq(SUCCESS_DELIVERY), argumentCaptor.capture());
+        assertThat(argumentCaptor.getValue(), equalTo(deliveryReport("messagenumber", "DELIVERED")));
     }
 
     private CommunicationMessage message() {
