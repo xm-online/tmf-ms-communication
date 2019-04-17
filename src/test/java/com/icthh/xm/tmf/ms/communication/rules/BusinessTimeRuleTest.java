@@ -1,7 +1,9 @@
-package com.icthh.xm.tmf.ms.communication.messaging;
+package com.icthh.xm.tmf.ms.communication.rules;
 
-import static com.google.common.collect.ImmutableMap.*;
+import static com.google.common.collect.ImmutableMap.of;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
+import static com.icthh.xm.tmf.ms.communication.messaging.MessagingTest.FAIL_SEND;
 import static com.icthh.xm.tmf.ms.communication.messaging.MessagingTest.SUCCESS_SENT;
 import static com.icthh.xm.tmf.ms.communication.messaging.MessagingTest.createApplicationProperties;
 import static com.icthh.xm.tmf.ms.communication.messaging.MessagingTest.message;
@@ -14,16 +16,16 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
-import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
-import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
-import com.icthh.xm.tmf.ms.communication.rules.BusinessTimeRule;
+import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import java.time.Clock;
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,11 +34,15 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.kafka.core.KafkaTemplate;
 
+@Slf4j
 @RunWith(MockitoJUnitRunner.class)
 public class BusinessTimeRuleTest {
 
-    private final static LocalDate LOCAL_DATE = LocalDate.of(2019, 04, 15);
-
+    private static final String BUSINESS_TIME = "2019-04-15T10:15:30.00Z";
+    private static final String NOT_BUSINESS_TIME = "2019-04-15T02:15:30.00Z";
+    private static final String EXCEPTION_DATE = "2019-03-17";
+    private static final String EXCEPTION_DATE_BUSINESS_TIME = EXCEPTION_DATE + "T14:15:30.00Z";
+    private static final String EXCEPTION_DATE_NOT_BUSINESS_TIME = EXCEPTION_DATE + "T16:15:30.00Z";
     @Mock
     private KafkaTemplate<String, Object> kafkaTemplate;
 
@@ -47,39 +53,55 @@ public class BusinessTimeRuleTest {
     private TenantConfigService tenantConfigService;
 
     @Mock
-    private BusinessRuleValidator businessRuleValidator;
-
-    @Mock
-    Clock clock;
-
-    private Clock fixedClock;
+    private Clock clock;
 
     private MessagingHandler messagingHandler;
-    private ApplicationProperties applicationProperties;
 
     @Before
     public void setUp() {
-
-        fixedClock = Clock.fixed(LOCAL_DATE.atStartOfDay(ZoneId.systemDefault()).toInstant(), ZoneId.systemDefault());
-        doReturn(fixedClock.instant()).when(clock).instant();
-        doReturn(fixedClock.getZone()).when(clock).getZone();
-
         when(tenantConfigService.getConfig()).thenReturn(createTenantConfig());
-
-        applicationProperties = createApplicationProperties();
         BusinessTimeRule businessTimeRule = new BusinessTimeRule(tenantConfigService, clock);
-        businessRuleValidator = new BusinessRuleValidator(singletonList(businessTimeRule));
 
-        messagingHandler = new MessagingHandler(kafkaTemplate, smppService, applicationProperties,
-            businessRuleValidator);
+        BusinessRuleValidator businessRuleValidator = new BusinessRuleValidator(singletonList(businessTimeRule));
+        messagingHandler = new MessagingHandler(kafkaTemplate,
+                                                smppService,
+                                                createApplicationProperties(),
+                                                businessRuleValidator);
     }
 
     @Test
-    public void receiveMessageSuccessTest() {
-        messagingHandler.receiveMessage(message());
+    public void validateMessageWithIdBusinessTimeTest() {
+        configLocalTime(BUSINESS_TIME);
+        successCheck(message());
+    }
 
-        MessageResponse messageResponse = new MessageResponse(SUCCESS, message());
+    @Test
+    public void validateMessageNotBusinessTimeTest() {
+        configLocalTime(NOT_BUSINESS_TIME);
+        failureCheck();
+    }
 
+    @Test
+    public void validateTimeMessageWithoutIdNotBusinessTimeTest() {
+        configLocalTime(NOT_BUSINESS_TIME);
+        successCheck(message().id(null));
+    }
+
+    @Test
+    public void validateMessageExceptionDateTest() {
+        configLocalTime(EXCEPTION_DATE_BUSINESS_TIME);
+        successCheck(message());
+    }
+
+    @Test
+    public void validateMessageExceptionDateNotBusinessTimeTest() {
+        configLocalTime(EXCEPTION_DATE_NOT_BUSINESS_TIME);
+        failureCheck();
+    }
+
+    private void successCheck(CommunicationMessage message) {
+        messagingHandler.receiveMessage(message);
+        MessageResponse messageResponse = new MessageResponse(SUCCESS, message);
         ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
         verify(kafkaTemplate).send(eq(SUCCESS_SENT), argumentCaptor.capture());
         MessageResponse payload = argumentCaptor.getValue();
@@ -90,12 +112,35 @@ public class BusinessTimeRuleTest {
         assertThat(payload, equalTo(messageResponse));
     }
 
-    private Map<String, Object> createTenantConfig() {
-        Map<String, Object> tenantConfig = new HashMap<>();
-        tenantConfig.put("monday", of("startTime", "00:00:00", "endTime", "23:59:59"));
-        tenantConfig.put("2019-03-17", of("startTime", "00:00:00", "endTime", "23:59:59"));
+    private void failureCheck() {
+        messagingHandler.receiveMessage(message());
+        MessageResponse messageResponse = new MessageResponse(FAILED, message());
+        messageResponse.setErrorCode("BusinessException");
+        messageResponse.setErrorMessage("error.business.sending.notBusinessTime");
+        ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
+        verify(kafkaTemplate).send(eq(FAIL_SEND), argumentCaptor.capture());
+        MessageResponse payload = argumentCaptor.getValue();
+        payload.setId(null);
+        payload.setDistributionId(null);
+        messageResponse.setId(null);
+        messageResponse.setDistributionId(null);
+        assertThat(payload, equalTo(messageResponse));
+    }
 
-        return tenantConfig;
+    private void configLocalTime(String localTime) {
+        Clock fixedClock = Clock.fixed(Instant.parse(localTime), ZoneOffset.UTC);
+        doReturn(fixedClock.instant()).when(clock).instant();
+        doReturn(fixedClock.getZone()).when(clock).getZone();
+    }
+
+    private Map<String, Object> createTenantConfig() {
+        Map<String, Object> businessTimeConfig = new HashMap<>();
+        Map<String, Object> exceptionDayConfig = new HashMap<>();
+        exceptionDayConfig.put(EXCEPTION_DATE, of("startTime", "13:00:00", "endTime", "15:30:00"));
+        businessTimeConfig.put("monday", of("startTime", "08:30:00", "endTime", "12:30:30"));
+        businessTimeConfig.put("exception", exceptionDayConfig);
+
+        return of("businessTime", businessTimeConfig);
     }
 
 }

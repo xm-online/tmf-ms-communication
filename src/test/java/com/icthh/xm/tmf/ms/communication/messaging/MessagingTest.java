@@ -21,6 +21,7 @@ import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Messaging;
 import com.icthh.xm.tmf.ms.communication.domain.DeliveryReport;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
+import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
@@ -41,7 +42,6 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -59,6 +59,8 @@ public class MessagingTest {
     private KafkaTemplate<String, Object> kafkaTemplate;
     @Mock
     private SmppService smppService;
+    @Mock
+    private BusinessRuleValidator businessRuleValidator;
     @Spy
     private ApplicationProperties applicationProperties = createApplicationProperties();
 
@@ -71,7 +73,7 @@ public class MessagingTest {
         sendToKafkaDeliveryReportListener = new SendToKafkaDeliveryReportListener(messagingAdapter, executorService);
     }
 
-    private ApplicationProperties createApplicationProperties() {
+    public static ApplicationProperties createApplicationProperties() {
         ApplicationProperties applicationProperties = new ApplicationProperties();
         Messaging messaging = new Messaging();
         applicationProperties.setMessaging(messaging);
@@ -179,7 +181,7 @@ public class MessagingTest {
         assertThat(argumentCaptor.getValue(), equalTo(deliveryReport("messagenumber", "DELIVERED")));
     }
 
-    private CommunicationMessage message() {
+    public static CommunicationMessage message() {
         CommunicationMessage message = new CommunicationMessage();
         Receiver receiver = new Receiver();
         receiver.setPhoneNumber("PH");
