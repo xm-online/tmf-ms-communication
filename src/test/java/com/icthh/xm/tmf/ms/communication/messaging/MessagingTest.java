@@ -29,6 +29,7 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
+import lombok.SneakyThrows;
 import org.jsmpp.bean.DeliverSm;
 import org.jsmpp.bean.OptionalParameter;
 import org.jsmpp.bean.OptionalParameter.OctetString;
@@ -125,6 +126,7 @@ public class MessagingTest {
     }
 
     @Test
+    @SneakyThrows
     public void receiveMessageFailTest() {
 
         when(smppService.send("PH", "TestContext", "TestSender"))
