@@ -215,4 +215,4 @@ application:
         multiplier: 2
 
     businessRule:
-        enableBusinessTimeRule: true
+        enableBusinessTimeRule: false
