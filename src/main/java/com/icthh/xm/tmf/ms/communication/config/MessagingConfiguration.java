@@ -1,10 +1,10 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.icthh.xm.tmf.ms.communication.domain.DeliveryReport;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingAdapter;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaDeliveryReportListener;
+import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -42,8 +42,9 @@ public class MessagingConfiguration {
 
     @Bean
     public MessagingHandler messagingHandler(KafkaTemplate<String, Object> channelResolver, SmppService smppService,
-                                             ApplicationProperties applicationProperties) {
-        return new MessagingHandler(channelResolver, smppService, applicationProperties);
+                                             ApplicationProperties applicationProperties,
+                                             BusinessRuleValidator businessRuleValidator) {
+        return new MessagingHandler(channelResolver, smppService, applicationProperties, businessRuleValidator);
     }
 
     @Bean

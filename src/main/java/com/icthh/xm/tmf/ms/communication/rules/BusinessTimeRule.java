@@ -1,4 +1,4 @@
-package com.icthh.xm.tmf.ms.communication.service;
+package com.icthh.xm.tmf.ms.communication.rules;
 
 import static java.util.Optional.of;
 import static java.util.Optional.ofNullable;
@@ -12,13 +12,9 @@ import java.time.LocalTime;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
 
 @Slf4j
-@ConditionalOnProperty(name = "application.businessRule.enableBusinessTimeRule", havingValue = "true")
 @RequiredArgsConstructor
-@Component
 public class BusinessTimeRule implements BusinessRule {
 
     private static final String NOT_BUSINESS_TIME_CODE = "error.business.sending.notBusinessTime";
@@ -44,7 +40,7 @@ public class BusinessTimeRule implements BusinessRule {
 
             if (startTime.toSecondOfDay() > currentTime.toSecondOfDay()
                 || endTime.toSecondOfDay() < currentTime.toSecondOfDay()) {
-                throw new BusinessException(NOT_BUSINESS_TIME_CODE, "not business time");
+                throw new BusinessException(NOT_BUSINESS_TIME_CODE);
             }
         }
     }
