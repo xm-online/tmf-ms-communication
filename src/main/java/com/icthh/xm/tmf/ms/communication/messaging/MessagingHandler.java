@@ -4,6 +4,7 @@ import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.failed;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.success;
 import static com.icthh.xm.tmf.ms.communication.utils.ApiMapper.from;
 
+import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Messaging;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
@@ -20,6 +21,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 @RequiredArgsConstructor
 public class MessagingHandler {
 
+    private static final String NOT_BUSINESS_TIME_CODE = "error.business.sending.notBusinessTime";
+
     private final KafkaTemplate<String, Object> channelResolver;
     private final SmppService smppService;
     private final ApplicationProperties applicationProperties;
@@ -34,11 +37,17 @@ public class MessagingHandler {
         List<String> phoneNumbers = new ArrayList<>(from(message).getPhoneNumbers());
         for (String phoneNumber : phoneNumbers) {
             try {
-                businessRuleValidator.validate(message);
-                String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId());
-                String queueName = messaging.getSentQueueName();
-                sendMessage(success(messageId, message), queueName);
-                log.info("Message success sent to {}", queueName);
+                List<String> validationResult = businessRuleValidator.validate(message);
+                if (validationResult.contains(NOT_BUSINESS_TIME_CODE)) {
+                    log.error(NOT_BUSINESS_TIME_CODE);
+                    String failedQueueName = messaging.getSendFailedQueueName();
+                    sendMessage(failed(message, new BusinessException(NOT_BUSINESS_TIME_CODE)), failedQueueName);
+                } else {
+                    String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId());
+                    String queueName = messaging.getSentQueueName();
+                    sendMessage(success(messageId, message), queueName);
+                    log.info("Message success sent to {}", queueName);
+                }
             } catch (Exception e) {
                 log.error("Error process message ", e);
                 String failedQueueName = messaging.getSendFailedQueueName();

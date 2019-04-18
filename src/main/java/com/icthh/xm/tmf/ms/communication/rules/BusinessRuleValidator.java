@@ -1,10 +1,11 @@
 package com.icthh.xm.tmf.ms.communication.rules;
 
+import static java.util.Collections.emptyList;
+
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
+import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -16,17 +17,12 @@ public class BusinessRuleValidator {
         this.businessRules = businessRules;
     }
 
-    @PostConstruct
-    public void init() {
-        if (businessRules != null) {
-            businessRules.sort(AnnotationAwareOrderComparator.INSTANCE);
-        }
-    }
-
-    public void validate(CommunicationMessage message) {
+    public List<String> validate(CommunicationMessage message) {
         if (businessRules != null && businessRules.size() > 0) {
-            businessRules.forEach(rule -> rule.validate(message));
+            List<String> result = new ArrayList<>();
+            businessRules.forEach(rule -> result.add(rule.validate(message)));
         }
+        return emptyList();
     }
 
 }
