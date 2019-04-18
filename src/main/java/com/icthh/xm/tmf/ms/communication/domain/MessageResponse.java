@@ -43,10 +43,10 @@ public class MessageResponse {
         return messageResponse;
     }
 
-    public static MessageResponse failed(CommunicationMessage responseTo, Exception e) {
+    public static MessageResponse failed(CommunicationMessage responseTo, String code, String message) {
         MessageResponse messageResponse = new MessageResponse(FAILED, responseTo);
-        messageResponse.errorCode = e.getClass().getSimpleName();
-        messageResponse.errorMessage = e.getMessage();
+        messageResponse.errorCode = code;
+        messageResponse.errorMessage = message;
         return messageResponse;
     }
 
@@ -60,14 +60,6 @@ public class MessageResponse {
 
     private static List<CommunicationRequestCharacteristic> nullSafe(CommunicationMessage responseTo) {
         return responseTo.getCharacteristic() == null ? emptyList() : responseTo.getCharacteristic();
-    }
-
-    private static String getFirstReceiverId(CommunicationMessage responseTo) {
-        return Optional.ofNullable(responseTo.getReceiver())
-                       .filter(not(List::isEmpty))
-                       .map(list -> list.get(0))
-                       .map(Receiver::getId)
-                       .orElse(null);
     }
 
     public enum Status {
