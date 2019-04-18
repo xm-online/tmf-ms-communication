@@ -3,7 +3,6 @@ package com.icthh.xm.tmf.ms.communication.rules;
 import static java.util.Optional.of;
 
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
-import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import java.time.Clock;
 import java.time.LocalDateTime;

@@ -21,6 +21,7 @@ public class BusinessRuleValidator {
         if (businessRules != null && businessRules.size() > 0) {
             List<String> result = new ArrayList<>();
             businessRules.forEach(rule -> result.add(rule.validate(message)));
+            return result;
         }
         return emptyList();
     }
