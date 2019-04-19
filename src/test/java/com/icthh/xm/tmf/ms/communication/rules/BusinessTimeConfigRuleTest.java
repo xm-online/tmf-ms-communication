@@ -15,9 +15,10 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
+import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessTimeConfigService;
+import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessTimeRule;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import java.time.Clock;
@@ -36,7 +37,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 
 @Slf4j
 @RunWith(MockitoJUnitRunner.class)
-public class BusinessTimeRuleTest {
+public class BusinessTimeConfigRuleTest {
 
     private static final String BUSINESS_TIME = "2019-04-15T10:15:30.00Z";
     private static final String NOT_BUSINESS_TIME = "2019-04-15T02:15:30.00Z";
@@ -50,7 +51,7 @@ public class BusinessTimeRuleTest {
     private SmppService smppService;
 
     @Mock
-    private TenantConfigService tenantConfigService;
+    private BusinessTimeConfigService tenantConfigService;
 
     @Mock
     private Clock clock;
@@ -137,10 +138,12 @@ public class BusinessTimeRuleTest {
         Map<String, Object> businessTimeConfig = new HashMap<>();
         Map<String, Object> exceptionDayConfig = new HashMap<>();
         exceptionDayConfig.put(EXCEPTION_DATE, of("startTime", "13:00:00", "endTime", "15:30:00"));
-        businessTimeConfig.put("monday", of("startTime", "08:30:00", "endTime", "12:30:30"));
-        businessTimeConfig.put("exception", exceptionDayConfig);
+        Map<String, Object> businessDay = new HashMap<>();
+        businessDay.put("monday", of("startTime", "08:30:00", "endTime", "12:30:30"));
+        businessTimeConfig.put("exceptionDate", exceptionDayConfig);
+        businessTimeConfig.put("businessDay", businessDay);
 
-        return of("businessTime", businessTimeConfig);
+        return of("businessDayConfig", businessTimeConfig);
     }
 
 }

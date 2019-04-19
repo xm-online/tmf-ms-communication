@@ -1,7 +1,7 @@
-package com.icthh.xm.tmf.ms.communication.rules;
+package com.icthh.xm.tmf.ms.communication.rules.businesstime;
 
-import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import java.time.Clock;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,13 +11,15 @@ import org.springframework.context.annotation.Configuration;
 public class BusinessTimeRuleConfiguration {
 
     @Bean
+    @Qualifier("clock")
     public Clock clock() {
-        return Clock.systemDefaultZone();
+        return Clock.systemUTC();
     }
 
     @Bean
-    public BusinessTimeRule businessTimeRule(TenantConfigService tenantConfigService, Clock clock) {
+    public BusinessTimeRule businessTimeRule(BusinessTimeConfigService tenantConfigService, @Qualifier("clock") Clock clock) {
         return new BusinessTimeRule(tenantConfigService, clock);
     }
+
 
 }

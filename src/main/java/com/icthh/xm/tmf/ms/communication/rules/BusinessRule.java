@@ -4,6 +4,6 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 
 public interface BusinessRule {
 
-    String validate(CommunicationMessage message);
+    RuleResponse validate(CommunicationMessage message);
 
 }

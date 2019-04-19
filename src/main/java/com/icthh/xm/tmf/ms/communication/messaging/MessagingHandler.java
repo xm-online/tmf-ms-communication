@@ -9,6 +9,7 @@ import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Messaging;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
 import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
+import com.icthh.xm.tmf.ms.communication.rules.RuleResponse;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import java.util.ArrayList;
@@ -20,8 +21,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 @Slf4j
 @RequiredArgsConstructor
 public class MessagingHandler {
-
-    private static final String NOT_BUSINESS_TIME_CODE = "error.business.sending.notBusinessTime";
 
     private final KafkaTemplate<String, Object> channelResolver;
     private final SmppService smppService;
@@ -37,12 +36,16 @@ public class MessagingHandler {
         List<String> phoneNumbers = new ArrayList<>(from(message).getPhoneNumbers());
         for (String phoneNumber : phoneNumbers) {
             try {
-                List<String> validationResult = businessRuleValidator.validate(message);
-                if (validationResult.contains(NOT_BUSINESS_TIME_CODE)) {
-                    log.error(NOT_BUSINESS_TIME_CODE);
-                    String failedQueueName = messaging.getSendFailedQueueName();
-                    sendMessage(failed(message, new BusinessException(NOT_BUSINESS_TIME_CODE)), failedQueueName);
-                } else {
+                RuleResponse validationResult = businessRuleValidator.validate(message);
+
+               if (!validationResult.isSuccess()) {
+                   String responseCode = validationResult.getResponseCode();
+                   log.error("Validation error");
+                   String failedQueueName = messaging.getSendFailedQueueName();
+                   sendMessage(failed(message, new BusinessException(responseCode)), failedQueueName);
+                   log.warn("Message about error sent to {}", failedQueueName);
+               }
+                else {
                     String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId());
                     String queueName = messaging.getSentQueueName();
                     sendMessage(success(messageId, message), queueName);
