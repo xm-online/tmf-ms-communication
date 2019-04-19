@@ -1,5 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.rules.businesstime;
 
+import static org.springframework.util.StringUtils.isEmpty;
+
 import com.icthh.xm.tmf.ms.communication.rules.BusinessRule;
 import com.icthh.xm.tmf.ms.communication.rules.RuleResponse;
 import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessDayConfig.BusinessTime;
@@ -9,6 +11,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StringUtils;
 
 
 @Slf4j
@@ -27,7 +30,7 @@ public class BusinessTimeRule implements BusinessRule {
         RuleResponse ruleResponse = new RuleResponse();
         ruleResponse.setRuleType(BUSINESS_TIME_RULE);
         ruleResponse.setSuccess(true);
-        if (message.getId() != null && !message.getId().isEmpty()) {
+        if (!isEmpty(message.getId())) {
             LocalDateTime currentDateTime = LocalDateTime.now(clock);
 
             BusinessDayConfig businessDayConfig = timeConfigService.getBusinessDayConfig();

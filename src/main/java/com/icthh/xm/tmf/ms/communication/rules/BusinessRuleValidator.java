@@ -15,16 +15,15 @@ public class BusinessRuleValidator {
     }
 
     public RuleResponse validate(CommunicationMessage message) {
-        if (businessRules != null && businessRules.size() > 0) {
-            for (BusinessRule businessRule : businessRules) {
-                RuleResponse response = businessRule.validate(message);
-                if (!response.isSuccess()) {
-                    return response;
-                }
-            }
+        if (businessRules == null) {
+            return new RuleResponse();
         }
-        RuleResponse ruleResponse = new RuleResponse();
-        ruleResponse.setSuccess(true);
-        return ruleResponse;
+        for (BusinessRule businessRule : businessRules) {
+            RuleResponse response = businessRule.validate(message);
+            if (!response.isSuccess()) {
+                return response;
+            }
+        }  
+        return new RuleResponse();
     }
 }

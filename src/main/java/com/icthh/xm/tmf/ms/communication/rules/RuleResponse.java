@@ -8,7 +8,7 @@ import lombok.Data;
 public class RuleResponse {
 
     private String ruleType;
-    private boolean success;
+    private boolean success = true;
     private String responseCode;
     Map<String, Object> context;
 }
