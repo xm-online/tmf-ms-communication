@@ -21,5 +21,4 @@ public class BusinessTimeRuleConfiguration {
         return new BusinessTimeRule(tenantConfigService, clock);
     }
 
-
 }

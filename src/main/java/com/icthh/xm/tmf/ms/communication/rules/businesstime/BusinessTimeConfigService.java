@@ -20,12 +20,10 @@ import org.springframework.stereotype.Component;
 public class BusinessTimeConfigService extends TenantConfigService {
 
     private BusinessDayConfig businessDayConfig;
-    private final ObjectMapper objectMapper;
 
     public BusinessTimeConfigService(XmConfigProperties xmConfigProperties,
-        TenantContextHolder tenantContextHolder, ObjectMapper objectMapper) {
+        TenantContextHolder tenantContextHolder) {
         super(xmConfigProperties, tenantContextHolder);
-        this.objectMapper = objectMapper;
     }
 
     @SneakyThrows

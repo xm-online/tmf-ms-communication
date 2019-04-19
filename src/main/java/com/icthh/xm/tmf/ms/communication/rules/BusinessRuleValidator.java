@@ -17,9 +17,9 @@ public class BusinessRuleValidator {
     public RuleResponse validate(CommunicationMessage message) {
         if (businessRules != null && businessRules.size() > 0) {
             for (BusinessRule businessRule : businessRules) {
-                RuleResponse validate = businessRule.validate(message);
-                if (!validate.isSuccess()) {
-                    return validate;
+                RuleResponse response = businessRule.validate(message);
+                if (!response.isSuccess()) {
+                    return response;
                 }
             }
         }
