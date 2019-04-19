@@ -41,7 +41,7 @@ public class BusinessTimeRule implements BusinessRule {
             LocalTime endTime = businessTime.getEndTime();
             log.debug("start time: {}, end time: {}, current time: {}", startTime, endTime, currentTime);
 
-            if (startTime.isAfter(currentTime) || endTime.isBefore(currentTime)) {
+            if (startTime.isAfter(currentTime) || startTime.equals(currentTime) || endTime.isBefore(currentTime)) {
                 ruleResponse.setSuccess(false);
                 ruleResponse.setResponseCode(NOT_BUSINESS_TIME_CODE);
                 return ruleResponse;
