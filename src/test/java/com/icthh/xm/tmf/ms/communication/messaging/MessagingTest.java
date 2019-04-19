@@ -13,6 +13,7 @@ import static org.jsmpp.bean.OptionalParameter.Tag.RECEIPTED_MESSAGE_ID;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,15 +31,19 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
+import lombok.SneakyThrows;
+import org.jsmpp.PDUException;
 import org.jsmpp.bean.DeliverSm;
 import org.jsmpp.bean.OptionalParameter;
 import org.jsmpp.bean.OptionalParameter.OctetString;
+import org.jsmpp.extra.NegativeResponseException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -127,17 +132,28 @@ public class MessagingTest {
     }
 
     @Test
+    @SneakyThrows
     public void receiveMessageFailTest() {
+        failMessage(new RuntimeException("TestMessage"),
+                    "error.system.general.internalServerError", "java.lang.RuntimeException: TestMessage");
+        reset(smppService, kafkaTemplate);
+        failMessage(new BusinessException("TestCode", "TestMessage"), "TestCode", "TestMessage");
+        reset(smppService, kafkaTemplate);
+        failMessage(new PDUException("TestMessage"), "error.system.sending.pdu", "TestMessage");
+        reset(smppService, kafkaTemplate);
+        failMessage(new NegativeResponseException(20), "error.system.sending.smpp.20", "Negative response 00000014 (Message Queue Full) found");
 
-        when(smppService.send("PH", "TestContext", "TestSender"))
-            .thenThrow(new BusinessException("TestMessage"));
+    }
+
+    @SneakyThrows
+    private void failMessage(Exception e, String errorCode, String testMessage) {
+        when(smppService.send("PH", "TestContext", "TestSender")).thenThrow(e);
 
         messagingHandler.receiveMessage(message());
 
-
         MessageResponse messageResponse = new MessageResponse(FAILED, message());
-        messageResponse.setErrorCode("BusinessException");
-        messageResponse.setErrorMessage("TestMessage");
+        messageResponse.setErrorCode(errorCode);
+        messageResponse.setErrorMessage(testMessage);
 
         ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
 
@@ -149,7 +165,6 @@ public class MessagingTest {
         messageResponse.setDistributionId(null);
         assertThat(payload, equalTo(messageResponse));
     }
-
 
     @Test
     public void messageUndeliveredTest() {

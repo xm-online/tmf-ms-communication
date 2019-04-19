@@ -6,6 +6,7 @@ import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.icthh.xm.tmf.ms.communication.CommunicationApp;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jsmpp.session.SMPPSession;
 import org.junit.ClassRule;
@@ -48,6 +49,7 @@ public class SmppTest {
         .withCreateContainerCmdModifier(getContainerModifier());
 
     @Test
+    @SneakyThrows
     public void testSendingSms() {
         String messageId = service.send("+380636666666", "test", "1616");
         assertNotNull(messageId);

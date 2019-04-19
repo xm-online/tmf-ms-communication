@@ -10,9 +10,12 @@ import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Smpp;
 import com.icthh.xm.tmf.ms.communication.messaging.MessageReceiverListenerAdapter;
+import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jsmpp.InvalidResponseException;
+import org.jsmpp.PDUException;
 import org.jsmpp.bean.AlertNotification;
 import org.jsmpp.bean.Alphabet;
 import org.jsmpp.bean.DataSm;
@@ -24,7 +27,9 @@ import org.jsmpp.bean.OptionalParameter;
 import org.jsmpp.bean.OptionalParameter.OctetString;
 import org.jsmpp.bean.RegisteredDelivery;
 import org.jsmpp.bean.SMSCDeliveryReceipt;
+import org.jsmpp.extra.NegativeResponseException;
 import org.jsmpp.extra.ProcessRequestException;
+import org.jsmpp.extra.ResponseTimeoutException;
 import org.jsmpp.session.BindParameter;
 import org.jsmpp.session.DataSmResult;
 import org.jsmpp.session.MessageReceiverListener;
@@ -81,8 +86,10 @@ public class SmppService {
         return session;
     }
 
-    @SneakyThrows
-    public String send(String destAdrrs, String message, String senderId) {
+    public String send(String destAdrrs, String message, String senderId) throws PDUException, IOException,
+                                                                                 InvalidResponseException,
+                                                                                 NegativeResponseException,
+                                                                                 ResponseTimeoutException {
 
         Smpp smpp = appProps.getSmpp();
 
@@ -157,6 +164,7 @@ public class SmppService {
         return isBlank(senderId) ? smpp.getSourceAddr() : senderId;
     }
 
+    @SneakyThrows
     public List<String> sendMultipleMessages(List<String> phones, String body, String senderId) {
         List<String> results = new ArrayList<>();
         for (String phone : phones) {

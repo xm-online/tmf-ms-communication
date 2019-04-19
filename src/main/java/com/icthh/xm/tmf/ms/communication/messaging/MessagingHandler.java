@@ -16,12 +16,17 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jsmpp.InvalidResponseException;
+import org.jsmpp.PDUException;
+import org.jsmpp.extra.NegativeResponseException;
+import org.jsmpp.extra.ResponseTimeoutException;
 import org.springframework.kafka.core.KafkaTemplate;
 
 @Slf4j
 @RequiredArgsConstructor
 public class MessagingHandler {
 
+    public static final String ERROR_PROCESS_COMMUNICATION_MESSAGE = "Error process communicationMessage ";
     private final KafkaTemplate<String, Object> channelResolver;
     private final SmppService smppService;
     private final ApplicationProperties applicationProperties;
@@ -36,28 +41,37 @@ public class MessagingHandler {
         List<String> phoneNumbers = new ArrayList<>(from(message).getPhoneNumbers());
         for (String phoneNumber : phoneNumbers) {
             try {
-                RuleResponse validationResult = businessRuleValidator.validate(message);
-
-               if (!validationResult.isSuccess()) {
-                   String responseCode = validationResult.getResponseCode();
-                   log.error("Validation error");
-                   String failedQueueName = messaging.getSendFailedQueueName();
-                   sendMessage(failed(message, new BusinessException(responseCode)), failedQueueName);
-                   log.warn("Message about error sent to {}", failedQueueName);
-               }
-                else {
-                    String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId());
-                    String queueName = messaging.getSentQueueName();
-                    sendMessage(success(messageId, message), queueName);
-                    log.info("Message success sent to {}", queueName);
-                }
+                String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId());
+                String queueName = messaging.getSentQueueName();
+                sendMessage(success(messageId, message), queueName);
+                log.info("Message success sended to {}", queueName);
+            } catch (NegativeResponseException e) {
+                log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
+                failMessage(message, "error.system.sending.smpp." + e.getCommandStatus(), e.getMessage());
+            } catch (InvalidResponseException e) {
+                log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
+                failMessage(message, "error.system.sending.invalidResponse", e.getMessage());
+            } catch (ResponseTimeoutException e) {
+                log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
+                failMessage(message, "error.system.sending.responseTimeout", e.getMessage());
+            } catch (PDUException e) {
+                log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
+                failMessage(message, "error.system.sending.pdu", e.getMessage());
+            } catch (BusinessException e) {
+                log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
+                failMessage(message, e.getCode(), e.getMessage());
             } catch (Exception e) {
-                log.error("Error process message ", e);
-                String failedQueueName = messaging.getSendFailedQueueName();
-                sendMessage(failed(message, e), failedQueueName);
-                log.warn("Message about error sent to {}", failedQueueName);
+                log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
+                failMessage(message, "error.system.general.internalServerError", e.toString());
             }
         }
+    }
+
+    private void failMessage(CommunicationMessage communicationMessage, String code, String message) {
+        Messaging messaging = applicationProperties.getMessaging();
+        String failedQueueName = messaging.getSendFailedQueueName();
+        sendMessage(failed(communicationMessage, code, message), failedQueueName);
+        log.warn("Message about error sended to {}", failedQueueName);
     }
 
 }
