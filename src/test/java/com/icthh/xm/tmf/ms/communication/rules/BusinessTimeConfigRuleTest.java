@@ -1,6 +1,5 @@
 package com.icthh.xm.tmf.ms.communication.rules;
 
-import static com.google.common.collect.ImmutableMap.of;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
 import static com.icthh.xm.tmf.ms.communication.messaging.MessagingTest.FAIL_SEND;
@@ -17,12 +16,17 @@ import static org.mockito.Mockito.when;
 
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
+import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessDayConfig;
+import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessDayConfig.BusinessTime;
+import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessDayConfig.BusinessTimeConfig;
 import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessTimeConfigService;
 import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessTimeRule;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,7 +55,7 @@ public class BusinessTimeConfigRuleTest {
     private SmppService smppService;
 
     @Mock
-    private BusinessTimeConfigService tenantConfigService;
+    private BusinessTimeConfigService businessTimeConfigService;
 
     @Mock
     private Clock clock;
@@ -60,8 +64,8 @@ public class BusinessTimeConfigRuleTest {
 
     @Before
     public void setUp() {
-        when(tenantConfigService.getConfig()).thenReturn(createTenantConfig());
-        BusinessTimeRule businessTimeRule = new BusinessTimeRule(tenantConfigService, clock);
+        when(businessTimeConfigService.getBusinessDayConfig()).thenReturn(createTenantConfig());
+        BusinessTimeRule businessTimeRule = new BusinessTimeRule(businessTimeConfigService, clock);
 
         BusinessRuleValidator businessRuleValidator = new BusinessRuleValidator(singletonList(businessTimeRule));
         messagingHandler = new MessagingHandler(kafkaTemplate,
@@ -116,8 +120,8 @@ public class BusinessTimeConfigRuleTest {
     private void failureCheck() {
         messagingHandler.receiveMessage(message());
         MessageResponse messageResponse = new MessageResponse(FAILED, message());
-        messageResponse.setErrorCode("BusinessException");
-        messageResponse.setErrorMessage("error.business.sending.notBusinessTime");
+        messageResponse.setErrorCode("error.business.sending.notBusinessTime");
+        messageResponse.setErrorMessage(MessagingHandler.ERROR_BUSINESS_RULE_VALIDATION);
         ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
         verify(kafkaTemplate).send(eq(FAIL_SEND), argumentCaptor.capture());
         MessageResponse payload = argumentCaptor.getValue();
@@ -134,16 +138,21 @@ public class BusinessTimeConfigRuleTest {
         doReturn(fixedClock.getZone()).when(clock).getZone();
     }
 
-    private Map<String, Object> createTenantConfig() {
-        Map<String, Object> businessTimeConfig = new HashMap<>();
-        Map<String, Object> exceptionDayConfig = new HashMap<>();
-        exceptionDayConfig.put(EXCEPTION_DATE, of("startTime", "13:00:00", "endTime", "15:30:00"));
-        Map<String, Object> businessDay = new HashMap<>();
-        businessDay.put("monday", of("startTime", "08:30:00", "endTime", "12:30:30"));
-        businessTimeConfig.put("exceptionDate", exceptionDayConfig);
-        businessTimeConfig.put("businessDay", businessDay);
+    private BusinessDayConfig createTenantConfig() {
+        Map<LocalDate, BusinessTime> exceptionDates = new HashMap<>();
+        exceptionDates.put(LocalDate.parse(EXCEPTION_DATE),
+                           new BusinessTime(LocalTime.parse("13:00:00"), LocalTime.parse("15:30:00")));
 
-        return of("businessDayConfig", businessTimeConfig);
+        Map<String, BusinessTime> businessDays = new HashMap<>();
+        businessDays.put("monday", new BusinessTime(LocalTime.parse("08:30:00"), LocalTime.parse("12:30:30")));
+
+        BusinessTimeConfig businessTimeConfig = new BusinessTimeConfig();
+        businessTimeConfig.setBusinessDay(businessDays);
+        businessTimeConfig.setExceptionDate(exceptionDates);
+
+        BusinessDayConfig businessDayConfig = new BusinessDayConfig();
+        businessDayConfig.setBusinessTime(businessTimeConfig);
+
+        return businessDayConfig;
     }
-
 }

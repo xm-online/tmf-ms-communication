@@ -19,7 +19,7 @@ public class BusinessTimeRule implements BusinessRule {
     private static final String BUSINESS_TIME = "businessDayConfig";
     private static final String BUSINESS_TIME_RULE = BUSINESS_TIME + "Rule";
 
-    private final BusinessTimeConfigService businessTimeConfigService;
+    private final BusinessTimeConfigService timeConfigService;
     private final Clock clock;
 
     @Override
@@ -30,12 +30,12 @@ public class BusinessTimeRule implements BusinessRule {
         if (message.getId() != null && !message.getId().isEmpty()) {
             LocalDateTime currentDateTime = LocalDateTime.now(clock);
 
-            BusinessDayConfig currentBusinessTimeConfig = businessTimeConfigService.getBusinessDayConfig();
-            BusinessTime businessTimeConfig = currentBusinessTimeConfig.getBusinessTimeConfig(currentDateTime);
+            BusinessDayConfig businessDayConfig = timeConfigService.getBusinessDayConfig();
+            BusinessTime businessTime = businessDayConfig.getCurrentBusinessTime(currentDateTime);
 
             LocalTime currentTime = currentDateTime.toLocalTime();
-            LocalTime startTime = businessTimeConfig.getStartTime();
-            LocalTime endTime = businessTimeConfig.getEndTime();
+            LocalTime startTime = businessTime.getStartTime();
+            LocalTime endTime = businessTime.getEndTime();
             log.debug("start time: {}, end time: {}, current time: {}", startTime, endTime, currentTime);
 
             if (startTime.isAfter(currentTime) || endTime.isBefore(currentTime)) {

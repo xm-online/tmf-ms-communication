@@ -5,11 +5,12 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Map;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-
+import lombok.NoArgsConstructor;
 
 @Data
-class BusinessDayConfig {
+public class BusinessDayConfig {
 
     private BusinessTimeConfig businessTime;
 
@@ -19,20 +20,21 @@ class BusinessDayConfig {
         private Map<LocalDate, BusinessTime> exceptionDate;
     }
 
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Data
     public static class BusinessTime {
         private LocalTime startTime;
         private LocalTime endTime;
     }
 
-    BusinessTime getBusinessTimeConfig(LocalDateTime localDateTime) {
+    public BusinessTime getCurrentBusinessTime(LocalDateTime localDateTime) {
         BusinessTime exceptionDateConfig = getExceptionDateConfig(localDateTime.toLocalDate());
 
         if (exceptionDateConfig != null) {
             return createBusinessTimeConfig(exceptionDateConfig);
         }
         return createBusinessTimeConfig(getBusinessDayConfig(localDateTime.getDayOfWeek()));
-
     }
 
     private BusinessTime getExceptionDateConfig(LocalDate localDate) {

@@ -27,6 +27,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 public class MessagingHandler {
 
     public static final String ERROR_PROCESS_COMMUNICATION_MESSAGE = "Error process communicationMessage ";
+    public static final String ERROR_BUSINESS_RULE_VALIDATION = "Error business rule validation";
     private final KafkaTemplate<String, Object> channelResolver;
     private final SmppService smppService;
     private final ApplicationProperties applicationProperties;
@@ -41,6 +42,10 @@ public class MessagingHandler {
         List<String> phoneNumbers = new ArrayList<>(from(message).getPhoneNumbers());
         for (String phoneNumber : phoneNumbers) {
             try {
+                RuleResponse ruleResponse = businessRuleValidator.validate(message);
+                if (!ruleResponse.isSuccess()) {
+                    failMessage(message, ruleResponse.getResponseCode(), ERROR_BUSINESS_RULE_VALIDATION);
+                }
                 String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId());
                 String queueName = messaging.getSentQueueName();
                 sendMessage(success(messageId, message), queueName);

@@ -1,7 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.rules;
 
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
-import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,7 +16,6 @@ public class BusinessRuleValidator {
 
     public RuleResponse validate(CommunicationMessage message) {
         if (businessRules != null && businessRules.size() > 0) {
-            List<RuleResponse> result = new ArrayList<>();
             for (BusinessRule businessRule : businessRules) {
                 RuleResponse validate = businessRule.validate(message);
                 if (!validate.isSuccess()) {
