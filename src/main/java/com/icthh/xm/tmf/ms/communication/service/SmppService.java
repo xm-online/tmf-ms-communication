@@ -122,7 +122,7 @@ public class SmppService {
             (byte) smpp.getSmDefaultMsgId(),
             EMPTY_MESSAGE,
             parameters
-                                                     );
+        );
         log.info("Message submitted, message_id is {}", messageId);
         return messageId;
 
