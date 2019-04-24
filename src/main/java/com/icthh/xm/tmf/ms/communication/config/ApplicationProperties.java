@@ -76,7 +76,7 @@ public class ApplicationProperties {
         private int smDefaultMsgId;
         private String validityPeriod;
         private Byte alphaEncoding;
-        private Byte cyrillicEncoding;
+        private Byte notAlphaEncoding;
     }
 
     @Getter

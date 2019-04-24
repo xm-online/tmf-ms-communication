@@ -130,7 +130,7 @@ public class SmppService {
 
     private DataCoding getDataConding(String message) {
         DataCoding alphaConding = createEncoding(ALPHA_DEFAULT, appProps.getSmpp().getAlphaEncoding());
-        DataCoding cyrillicConding = createEncoding(ALPHA_UCS2, appProps.getSmpp().getCyrillicEncoding());
+        DataCoding cyrillicConding = createEncoding(ALPHA_UCS2, appProps.getSmpp().getNotAlphaEncoding());
         return isAlpha(message) ? alphaConding : cyrillicConding;
     }
 
