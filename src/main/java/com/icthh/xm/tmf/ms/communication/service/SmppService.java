@@ -14,10 +14,12 @@ import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.jsmpp.InvalidResponseException;
 import org.jsmpp.PDUException;
 import org.jsmpp.bean.AlertNotification;
 import org.jsmpp.bean.Alphabet;
+import org.jsmpp.bean.DataCoding;
 import org.jsmpp.bean.DataSm;
 import org.jsmpp.bean.DeliverSm;
 import org.jsmpp.bean.ESMClass;
@@ -93,13 +95,12 @@ public class SmppService {
 
         Smpp smpp = appProps.getSmpp();
 
-        Alphabet encoding = isAlpha(message) ? ALPHA_DEFAULT : ALPHA_UCS2;
+        DataCoding dataCoding = getDataConding(message);
+        log.info("Start send messate with text {} and senderId {} to {} in encoding {}", message,
+                 senderId, destAdrrs, dataCoding);
 
         OctetString payload = toPayload(message);
         OptionalParameter[] parameters = new OptionalParameter[]{payload};
-
-        log.info("Start send messate with text {} and senderId {} to {} in encoding {}", message,
-            senderId, destAdrrs, encoding);
 
         SMPPSession session = getActualSession();
 
@@ -117,15 +118,24 @@ public class SmppService {
             timeFormatter.format(new Date()),
             smpp.getValidityPeriod(),
             new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE),
-            (byte) smpp.getReplaceIfPresentFlag(),
-            new GeneralDataCoding(encoding, MessageClass.CLASS1, false),
+            (byte) smpp.getReplaceIfPresentFlag(), dataCoding,
             (byte) smpp.getSmDefaultMsgId(),
             EMPTY_MESSAGE,
             parameters
-        );
+                                                     );
         log.info("Message submitted, message_id is {}", messageId);
         return messageId;
 
+    }
+
+    private DataCoding getDataConding(String message) {
+        DataCoding alphaConding = createEncoding(ALPHA_DEFAULT, appProps.getSmpp().getAlphaEncoding());
+        DataCoding cyrillicConding = createEncoding(ALPHA_UCS2, appProps.getSmpp().getCyrillicEncoding());
+        return isAlpha(message) ? alphaConding : cyrillicConding;
+    }
+
+    private DataCoding createEncoding(Alphabet defaultEncoding, Byte encoding) {
+        return encoding == null ? new GeneralDataCoding(defaultEncoding, MessageClass.CLASS1, false) : () -> encoding;
     }
 
     private SMPPSession getActualSession() {
