@@ -88,7 +88,7 @@ public class SmppService {
         return session;
     }
 
-    public String send(String destAdrrs, String message, String senderId) throws PDUException, IOException,
+    public String send(String destAddrs, String message, String senderId) throws PDUException, IOException,
                                                                                  InvalidResponseException,
                                                                                  NegativeResponseException,
                                                                                  ResponseTimeoutException {
@@ -96,8 +96,8 @@ public class SmppService {
         Smpp smpp = appProps.getSmpp();
 
         DataCoding dataCoding = getDataConding(message);
-        log.info("Start send messate with text {} and senderId {} to {} in encoding {}", message,
-                 senderId, destAdrrs, dataCoding);
+        log.info("Start send message from: {} to: {} with encoding [{}] and content.size: {}", senderId, destAddrs,
+                 dataCoding, message.length());
 
         OctetString payload = toPayload(message);
         OptionalParameter[] parameters = new OptionalParameter[]{payload};
@@ -111,7 +111,7 @@ public class SmppService {
             getSourceAddr(senderId, smpp),
             smpp.getDestAddrTon(),
             smpp.getDestAddrNpi(),
-            destAdrrs,
+            destAddrs,
             new ESMClass(),
             (byte) smpp.getProtocolId(),
             (byte) smpp.getPriorityFlag(),
