@@ -75,6 +75,8 @@ public class ApplicationProperties {
         private int replaceIfPresentFlag;
         private int smDefaultMsgId;
         private String validityPeriod;
+        private Byte alphaEncoding;
+        private Byte notAlphaEncoding;
     }
 
     @Getter

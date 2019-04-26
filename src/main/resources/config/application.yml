@@ -209,6 +209,8 @@ application:
         priority-flag: 1
         replace-if-present-flag: 0
         sm-default-msg-id: 0
+        alphaEncoding:
+        notAlphaEncoding:
     retry:
         max-attempts: 3
         delay: 1000 #in milliseconds
