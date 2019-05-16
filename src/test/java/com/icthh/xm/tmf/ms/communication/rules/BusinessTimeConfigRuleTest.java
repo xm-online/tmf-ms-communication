@@ -6,17 +6,21 @@ import static com.icthh.xm.tmf.ms.communication.messaging.MessagingTest.FAIL_SEN
 import static com.icthh.xm.tmf.ms.communication.messaging.MessagingTest.SUCCESS_SENT;
 import static com.icthh.xm.tmf.ms.communication.messaging.MessagingTest.createApplicationProperties;
 import static com.icthh.xm.tmf.ms.communication.messaging.MessagingTest.message;
+import static java.nio.charset.Charset.defaultCharset;
+import static java.time.LocalDate.parse;
 import static java.util.Collections.singletonList;
+import static java.util.Objects.requireNonNull;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
+import com.icthh.xm.commons.config.client.config.XmConfigProperties;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
-import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessDayConfig;
 import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessDayConfig.BusinessTime;
 import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessDayConfig.BusinessTimeConfig;
 import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessTimeConfigService;
@@ -25,22 +29,25 @@ import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneOffset;
-import java.util.HashMap;
-import java.util.Map;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 
 @Slf4j
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(SpringRunner.class)
+@ContextConfiguration(classes = {BusinessTimeConfigService.class})
 public class BusinessTimeConfigRuleTest {
 
     private static final String BUSINESS_TIME = "2019-04-15T10:15:30.00Z";
@@ -48,6 +55,8 @@ public class BusinessTimeConfigRuleTest {
     private static final String EXCEPTION_DATE = "2019-03-17";
     private static final String EXCEPTION_DATE_BUSINESS_TIME = EXCEPTION_DATE + "T14:15:30.00Z";
     private static final String EXCEPTION_DATE_NOT_BUSINESS_TIME = EXCEPTION_DATE + "T16:15:30.00Z";
+    private static final String UPDATED_KEY = "/config/tenants/xm/tenant-config.yml";
+
     @Mock
     private KafkaTemplate<String, Object> kafkaTemplate;
 
@@ -55,23 +64,55 @@ public class BusinessTimeConfigRuleTest {
     private SmppService smppService;
 
     @Mock
-    private BusinessTimeConfigService businessTimeConfigService;
-
-    @Mock
     private Clock clock;
+
+    @MockBean
+    private XmConfigProperties xmConfigProperties;
+
+    @MockBean
+    private TenantContextHolder tenantContextHolder;
+
+    @Autowired
+    private BusinessTimeConfigService businessTimeConfigService;
 
     private MessagingHandler messagingHandler;
 
+    @SneakyThrows
     @Before
     public void setUp() {
-        when(businessTimeConfigService.getBusinessDayConfig()).thenReturn(createTenantConfig());
-        BusinessTimeRule businessTimeRule = new BusinessTimeRule(businessTimeConfigService, clock);
+        businessTimeConfigService.onRefresh(UPDATED_KEY, IOUtils.toString(
+            requireNonNull(getClass().getClassLoader().getResourceAsStream("businessTimeConfig.yml")),
+            defaultCharset()));
 
+        BusinessTimeRule businessTimeRule = new BusinessTimeRule(businessTimeConfigService, clock);
         BusinessRuleValidator businessRuleValidator = new BusinessRuleValidator(singletonList(businessTimeRule));
         messagingHandler = new MessagingHandler(kafkaTemplate,
                                                 smppService,
                                                 createApplicationProperties(),
                                                 businessRuleValidator);
+    }
+
+    @Test
+    public void getBusinessTimeConfigTest() {
+        BusinessTimeConfig businessTimeConfig = businessTimeConfigService.getBusinessDayConfig()
+                                                                         .getBusinessTime();
+
+        BusinessTime mondayBusinessTime = businessTimeConfig.getBusinessDay().get("monday");
+        assertEquals(mondayBusinessTime.getStartTime(), LocalTime.of(8, 30));
+        assertEquals(mondayBusinessTime.getEndTime(), LocalTime.of(12, 30, 30));
+
+        BusinessTime tuesdayBusinessTime = businessTimeConfig.getBusinessDay().get("tuesday");
+        assertEquals(tuesdayBusinessTime.getEndTime(), LocalTime.MAX);
+
+        BusinessTime wednesdayBusinessTime = businessTimeConfig.getBusinessDay().get("wednesday");
+        assertEquals(wednesdayBusinessTime.getStartTime(), LocalTime.MIN);
+
+        System.out.println(businessTimeConfig.getExceptionDate());
+
+        BusinessTime exceptionDateBusinessTime = businessTimeConfig.getExceptionDate().get(parse("2019-03-17"));
+        assertEquals(exceptionDateBusinessTime.getStartTime(), LocalTime.of(13, 00));
+        assertEquals(exceptionDateBusinessTime.getEndTime(), LocalTime.of(15, 30));
+
     }
 
     @Test
@@ -136,23 +177,5 @@ public class BusinessTimeConfigRuleTest {
         Clock fixedClock = Clock.fixed(Instant.parse(localTime), ZoneOffset.UTC);
         doReturn(fixedClock.instant()).when(clock).instant();
         doReturn(fixedClock.getZone()).when(clock).getZone();
-    }
-
-    private BusinessDayConfig createTenantConfig() {
-        Map<LocalDate, BusinessTime> exceptionDates = new HashMap<>();
-        exceptionDates.put(LocalDate.parse(EXCEPTION_DATE),
-                           new BusinessTime(LocalTime.parse("13:00:00"), LocalTime.parse("15:30:00")));
-
-        Map<String, BusinessTime> businessDays = new HashMap<>();
-        businessDays.put("monday", new BusinessTime(LocalTime.parse("08:30:00"), LocalTime.parse("12:30:30")));
-
-        BusinessTimeConfig businessTimeConfig = new BusinessTimeConfig();
-        businessTimeConfig.setBusinessDay(businessDays);
-        businessTimeConfig.setExceptionDate(exceptionDates);
-
-        BusinessDayConfig businessDayConfig = new BusinessDayConfig();
-        businessDayConfig.setBusinessTime(businessTimeConfig);
-
-        return businessDayConfig;
     }
 }

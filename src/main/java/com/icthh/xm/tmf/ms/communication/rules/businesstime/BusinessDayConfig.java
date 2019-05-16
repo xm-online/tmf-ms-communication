@@ -5,25 +5,21 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Map;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Value;
 
-@Data
+@Value
 public class BusinessDayConfig {
 
     private BusinessTimeConfig businessTime;
 
-    @Data
+    @Value
     public static class BusinessTimeConfig {
 
         private Map<String, BusinessTime> businessDay;
         private Map<LocalDate, BusinessTime> exceptionDate;
     }
 
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @Data
+    @Value
     public static class BusinessTime {
 
         private LocalTime startTime = LocalTime.MIN;
