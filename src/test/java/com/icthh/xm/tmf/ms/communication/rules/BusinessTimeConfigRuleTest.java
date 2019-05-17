@@ -8,6 +8,9 @@ import static com.icthh.xm.tmf.ms.communication.messaging.MessagingTest.createAp
 import static com.icthh.xm.tmf.ms.communication.messaging.MessagingTest.message;
 import static java.nio.charset.Charset.defaultCharset;
 import static java.time.LocalDate.parse;
+import static java.time.LocalTime.MAX;
+import static java.time.LocalTime.MIN;
+import static java.time.LocalTime.of;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -29,7 +32,6 @@ import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import java.time.Clock;
 import java.time.Instant;
-import java.time.LocalTime;
 import java.time.ZoneOffset;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -98,21 +100,18 @@ public class BusinessTimeConfigRuleTest {
                                                                          .getBusinessTime();
 
         BusinessTime mondayBusinessTime = businessTimeConfig.getBusinessDay().get("monday");
-        assertEquals(mondayBusinessTime.getStartTime(), LocalTime.of(8, 30));
-        assertEquals(mondayBusinessTime.getEndTime(), LocalTime.of(12, 30, 30));
+        assertEquals(mondayBusinessTime.getStartTime(), of(8, 30));
+        assertEquals(mondayBusinessTime.getEndTime(), of(12, 30, 30));
 
         BusinessTime tuesdayBusinessTime = businessTimeConfig.getBusinessDay().get("tuesday");
-        assertEquals(tuesdayBusinessTime.getEndTime(), LocalTime.MAX);
+        assertEquals(tuesdayBusinessTime.getEndTime(), MAX);
 
         BusinessTime wednesdayBusinessTime = businessTimeConfig.getBusinessDay().get("wednesday");
-        assertEquals(wednesdayBusinessTime.getStartTime(), LocalTime.MIN);
-
-        System.out.println(businessTimeConfig.getExceptionDate());
+        assertEquals(wednesdayBusinessTime.getStartTime(), MIN);
 
         BusinessTime exceptionDateBusinessTime = businessTimeConfig.getExceptionDate().get(parse("2019-03-17"));
-        assertEquals(exceptionDateBusinessTime.getStartTime(), LocalTime.of(13, 00));
-        assertEquals(exceptionDateBusinessTime.getEndTime(), LocalTime.of(15, 30));
-
+        assertEquals(exceptionDateBusinessTime.getStartTime(), of(13, 00));
+        assertEquals(exceptionDateBusinessTime.getEndTime(), of(15, 30));
     }
 
     @Test
