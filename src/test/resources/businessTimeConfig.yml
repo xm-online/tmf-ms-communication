@@ -1,0 +1,27 @@
+---
+businessTime:
+  businessDay:
+    monday:
+      startTime: '08:30:00'
+      endTime: '12:30:30'
+    tuesday:
+      startTime: '08:30:00'
+    wednesday:
+      endTime: '23:59:00'
+    thursday:
+      startTime: '00:00:00'
+      endTime: '23:59:59'
+    friday:
+      startTime: '00:00:00'
+    saturday:
+      startTime: '00:00:00'
+      endTime: '23:59:59'
+    sunday:
+      startTime: '00:00:00'
+  exceptionDate:
+    "2019-03-17":
+      startTime: '13:00:00'
+      endTime: '15:30:00'
+    "2019-02-17":
+      startTime: '00:00:00'
+      endTime: '23:59:59'
