@@ -45,6 +45,7 @@ public class MessagingHandler {
                 RuleResponse ruleResponse = businessRuleValidator.validate(message);
                 if (!ruleResponse.isSuccess()) {
                     failMessage(message, ruleResponse.getResponseCode(), ERROR_BUSINESS_RULE_VALIDATION);
+                    return;
                 }
                 String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId());
                 String queueName = messaging.getSentQueueName();

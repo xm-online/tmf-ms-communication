@@ -18,6 +18,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import com.icthh.xm.commons.config.client.config.XmConfigProperties;
@@ -164,6 +165,7 @@ public class BusinessTimeConfigRuleTest {
         messageResponse.setErrorMessage(MessagingHandler.ERROR_BUSINESS_RULE_VALIDATION);
         ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
         verify(kafkaTemplate).send(eq(FAIL_SEND), argumentCaptor.capture());
+        verify(kafkaTemplate, never()).send(eq(SUCCESS_SENT), argumentCaptor.capture());
         MessageResponse payload = argumentCaptor.getValue();
         payload.setId(null);
         payload.setDistributionId(null);
