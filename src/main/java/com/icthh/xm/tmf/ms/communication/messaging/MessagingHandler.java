@@ -8,8 +8,6 @@ import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Messaging;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
-import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
-import com.icthh.xm.tmf.ms.communication.rules.RuleResponse;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import java.util.ArrayList;
@@ -27,11 +25,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 public class MessagingHandler {
 
     public static final String ERROR_PROCESS_COMMUNICATION_MESSAGE = "Error process communicationMessage ";
-    public static final String ERROR_BUSINESS_RULE_VALIDATION = "Error business rule validation";
     private final KafkaTemplate<String, Object> channelResolver;
     private final SmppService smppService;
     private final ApplicationProperties applicationProperties;
-    private final BusinessRuleValidator businessRuleValidator;
 
     private void sendMessage(MessageResponse messageResponse, String topic) {
         channelResolver.send(topic, messageResponse);
@@ -42,11 +38,6 @@ public class MessagingHandler {
         List<String> phoneNumbers = new ArrayList<>(from(message).getPhoneNumbers());
         for (String phoneNumber : phoneNumbers) {
             try {
-                RuleResponse ruleResponse = businessRuleValidator.validate(message);
-                if (!ruleResponse.isSuccess()) {
-                    failMessage(message, ruleResponse.getResponseCode(), ERROR_BUSINESS_RULE_VALIDATION);
-                    return;
-                }
                 String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId());
                 String queueName = messaging.getSentQueueName();
                 sendMessage(success(messageId, message), queueName);

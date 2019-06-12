@@ -32,7 +32,6 @@ public class ApplicationProperties {
     private boolean streamBindingEnabled;
 
     private Messaging messaging = new Messaging();
-    private BusinessRule businessRule = new BusinessRule();
 
     @Data
     public static class Messaging {
@@ -50,12 +49,6 @@ public class ApplicationProperties {
     public static class Lep {
         private TenantScriptStorage tenantScriptStorage;
         private String lepResourcePathPattern;
-    }
-
-    @Getter
-    @Setter
-    public static class BusinessRule {
-        private boolean enableBusinessTimeRule;
     }
 
     @Getter
@@ -82,8 +75,6 @@ public class ApplicationProperties {
         private int replaceIfPresentFlag;
         private int smDefaultMsgId;
         private String validityPeriod;
-        private Byte alphaEncoding;
-        private Byte notAlphaEncoding;
     }
 
     @Getter
