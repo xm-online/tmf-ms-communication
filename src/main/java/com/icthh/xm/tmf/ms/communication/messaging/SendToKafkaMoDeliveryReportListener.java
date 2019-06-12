@@ -1,26 +1,18 @@
 package com.icthh.xm.tmf.ms.communication.messaging;
 
-import static com.icthh.xm.tmf.ms.communication.domain.DeliveryReport.deliveryReport;
-import static org.jsmpp.bean.OptionalParameter.Tag.MESSAGE_STATE;
-import static org.jsmpp.bean.OptionalParameter.Tag.RECEIPTED_MESSAGE_ID;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.charset.Charset;
 import java.util.concurrent.ExecutorService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jsmpp.bean.DeliverSm;
-import org.jsmpp.bean.MessageState;
-import org.jsmpp.bean.OptionalParameter;
 
 @Slf4j
-public class SendToKafkaOmDeliveryReportListener extends AbstractDeliveryReportListener {
+public class SendToKafkaMoDeliveryReportListener extends AbstractDeliveryReportListener {
 
     private final MessagingAdapter messagingAdapter;
 
-    public SendToKafkaOmDeliveryReportListener(MessagingAdapter messagingAdapter, ExecutorService executorService) {
+    public SendToKafkaMoDeliveryReportListener(MessagingAdapter messagingAdapter, ExecutorService executorService) {
         super(executorService);
         this.messagingAdapter = messagingAdapter;
     }
@@ -32,7 +24,7 @@ public class SendToKafkaOmDeliveryReportListener extends AbstractDeliveryReportL
 
         if (getState(deliverSm) == null) {
             ObjectMapper objectMapper = new ObjectMapper();
-            messagingAdapter.omDeliveryReport(objectMapper.writeValueAsString(deliverSm));
+            messagingAdapter.moDeliveryReport(objectMapper.writeValueAsString(deliverSm));
         }
 
         log.info("Delivery report processed, time = {}", stopWatch.getTime());

@@ -26,6 +26,8 @@ public abstract class AbstractDeliveryReportListener implements DeliveryReportLi
             try {
                 MdcUtils.putRid(rid);
                 processDeliveryReport(deliverSm);
+            } catch (Throwable t) {
+                log.error("Error process delivery report ", t);
             } finally {
                 MdcUtils.removeRid();
             }
@@ -33,24 +35,34 @@ public abstract class AbstractDeliveryReportListener implements DeliveryReportLi
     }
 
     protected String getMessageId(DeliverSm deliverSm) {
-        return getTagValue(deliverSm, RECEIPTED_MESSAGE_ID);
+        OptionalParameter op = getTagValue(deliverSm, RECEIPTED_MESSAGE_ID);
+        if (op == null) {
+            return null;
+        }
+
+        byte[] value = ((OptionalParameter.OctetString) op).getValue();
+        String tagValue = new String(value, Charset.defaultCharset());
+        return StringUtils.trim(tagValue);
     }
 
     protected MessageState getState(DeliverSm deliverSm) {
-        String messageState = getTagValue(deliverSm, MESSAGE_STATE);
-        return messageState == null ? null : MessageState.valueOf(messageState);
+        OptionalParameter op = getTagValue(deliverSm, RECEIPTED_MESSAGE_ID);
+        if (op == null) {
+            return null;
+        }
+
+        byte value = ((OptionalParameter.Byte) op).getValue();
+        return MessageState.valueOf(value);
     }
 
-    protected String getTagValue(DeliverSm deliverSm, OptionalParameter.Tag tag) {
+    protected OptionalParameter getTagValue(DeliverSm deliverSm, OptionalParameter.Tag tag) {
         if (deliverSm.getOptionalParameters() == null) {
             log.warn("Delivery report is not has option parameters.");
             return null;
         }
         for (OptionalParameter op : deliverSm.getOptionalParameters()) {
             if (op.tag == tag.code()) {
-                byte[] value = ((OptionalParameter.OctetString) op).getValue();
-                String tagValue = new String(value, Charset.defaultCharset());
-                return StringUtils.trim(tagValue);
+                return op;
             }
         }
         return null;
