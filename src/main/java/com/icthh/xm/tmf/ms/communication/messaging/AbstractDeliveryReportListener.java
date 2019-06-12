@@ -44,7 +44,7 @@ public abstract class AbstractDeliveryReportListener implements DeliveryReportLi
     }
 
     protected MessageState getState(DeliverSm deliverSm) {
-        return getTagValue(deliverSm, RECEIPTED_MESSAGE_ID, op -> {
+        return getTagValue(deliverSm, MESSAGE_STATE, op -> {
             return MessageState.valueOf(((OptionalParameter.Byte) op).getValue());
         });
     }
