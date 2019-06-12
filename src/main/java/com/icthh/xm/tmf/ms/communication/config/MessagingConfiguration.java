@@ -78,5 +78,4 @@ public class MessagingConfiguration {
                                                                             TimeUnit.MILLISECONDS,
                                                                             new LinkedBlockingQueue<>()));
     }
-
 }
