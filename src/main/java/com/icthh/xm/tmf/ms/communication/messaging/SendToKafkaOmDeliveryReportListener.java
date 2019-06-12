@@ -29,8 +29,13 @@ public class SendToKafkaOmDeliveryReportListener extends AbstractDeliveryReportL
     @SneakyThrows
     public void processDeliveryReport(DeliverSm deliverSm) {
         final StopWatch stopWatch = StopWatch.createStarted();
-        ObjectMapper objectMapper = new ObjectMapper();
-        messagingAdapter.omDeliveryReport(objectMapper.writeValueAsString(deliverSm));
+
+        if (getState(deliverSm) == null) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            messagingAdapter.omDeliveryReport(objectMapper.writeValueAsString(deliverSm));
+        }
+
         log.info("Delivery report processed, time = {}", stopWatch.getTime());
+
     }
 }
