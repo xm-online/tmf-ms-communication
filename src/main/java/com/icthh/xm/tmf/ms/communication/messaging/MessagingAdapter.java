@@ -24,4 +24,9 @@ public class MessagingAdapter {
         kafkaTemplate.send(topic, deliveryReport);
     }
 
+    public void omDeliveryReport(String message) {
+        String topic = applicationProperties.getMessaging().getDeliveredOmQueueName();
+        kafkaTemplate.send(topic, message);
+    }
+
 }

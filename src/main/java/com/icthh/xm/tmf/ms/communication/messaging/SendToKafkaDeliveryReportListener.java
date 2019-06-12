@@ -4,11 +4,8 @@ import static com.icthh.xm.tmf.ms.communication.domain.DeliveryReport.deliveryRe
 import static org.jsmpp.bean.OptionalParameter.Tag.MESSAGE_STATE;
 import static org.jsmpp.bean.OptionalParameter.Tag.RECEIPTED_MESSAGE_ID;
 
-import com.icthh.xm.commons.logging.util.MdcUtils;
-import com.icthh.xm.tmf.ms.communication.service.DeliveryReportListener;
 import java.nio.charset.Charset;
 import java.util.concurrent.ExecutorService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -17,26 +14,17 @@ import org.jsmpp.bean.MessageState;
 import org.jsmpp.bean.OptionalParameter;
 
 @Slf4j
-@RequiredArgsConstructor
-public class SendToKafkaDeliveryReportListener implements DeliveryReportListener {
+public class SendToKafkaDeliveryReportListener extends AbstractDeliveryReportListener {
 
     private final MessagingAdapter messagingAdapter;
-    private final ExecutorService executorService;
 
-    @Override
-    public void onAcceptDeliverSm(DeliverSm deliverSm) {
-        String rid = MdcUtils.getRid();
-        executorService.submit(() -> {
-            try {
-                MdcUtils.putRid(rid);
-                processDeliveryReport(deliverSm);
-            } finally {
-                MdcUtils.removeRid();
-            }
-        });
+    public SendToKafkaDeliveryReportListener(MessagingAdapter messagingAdapter, ExecutorService executorService) {
+        super(executorService);
+        this.messagingAdapter = messagingAdapter;
     }
 
-    private void processDeliveryReport(DeliverSm deliverSm) {
+    @Override
+    public void processDeliveryReport(DeliverSm deliverSm) {
         final StopWatch stopWatch = StopWatch.createStarted();
 
         if (deliverSm.getOptionalParameters() == null) {

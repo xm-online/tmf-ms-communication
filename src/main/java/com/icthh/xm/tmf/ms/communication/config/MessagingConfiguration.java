@@ -1,9 +1,11 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.icthh.xm.tmf.ms.communication.domain.DeliveryReport;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingAdapter;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaDeliveryReportListener;
+import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaOmDeliveryReportListener;
 import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -77,6 +79,18 @@ public class MessagingConfiguration {
                                                                             deliveryMessageQueueMaxSize, 0L,
                                                                             TimeUnit.MILLISECONDS,
                                                                             new LinkedBlockingQueue<>()));
+    }
+
+    @Bean
+    public SendToKafkaOmDeliveryReportListener deliveryOmReportListener(MessagingAdapter messagingAdapter,
+                                                                        ApplicationProperties applicationProperties) {
+        int deliveryProcessorThreadCount = applicationProperties.getMessaging().getDeliveryProcessorThreadCount();
+        int deliveryMessageQueueMaxSize = applicationProperties.getMessaging().getDeliveryMessageQueueMaxSize();
+        return new SendToKafkaOmDeliveryReportListener(messagingAdapter,
+                                                       new ThreadPoolExecutor(deliveryProcessorThreadCount,
+                                                                              deliveryMessageQueueMaxSize, 0L,
+                                                                              TimeUnit.MILLISECONDS,
+                                                                              new LinkedBlockingQueue<>()));
     }
 
 }

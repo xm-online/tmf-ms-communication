@@ -38,6 +38,8 @@ import org.jsmpp.session.MessageReceiverListener;
 import org.jsmpp.session.SMPPSession;
 import org.jsmpp.session.Session;
 import org.jsmpp.util.AbsoluteTimeFormatter;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PreDestroy;
@@ -85,7 +87,17 @@ public class SmppService {
                 MdcUtils.removeRid();
             }
         });
+        session.addSessionStateListener((newState, oldState, source) -> {
+            if (!newState.isBound()) {
+                getActualSession();
+            }
+        });
         return session;
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void init() {
+        getActualSession();
     }
 
     public String send(String destAddrs, String message, String senderId) throws PDUException, IOException,
