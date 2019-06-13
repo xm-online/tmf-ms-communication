@@ -5,6 +5,7 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import static java.nio.charset.StandardCharsets.UTF_16;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.jsmpp.bean.Alphabet.ALPHA_UCS2;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.MapType;
@@ -69,7 +70,7 @@ public class SendToKafkaMoDeliveryReportListener extends AbstractDeliveryReportL
 
     @SneakyThrows
     private String decodeContent(byte[] content, byte dataConding) {
-        return new String(content, dataConding == 8 ? UTF_16 : UTF_8);
+        return new String(content, dataConding == ALPHA_UCS2.value() ? UTF_16 : UTF_8);
     }
 
 }
