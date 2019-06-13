@@ -4,6 +4,9 @@ import static com.icthh.xm.tmf.ms.communication.domain.DeliveryReport.deliveryRe
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.DISTRIBUTION_ID;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.UTF_16;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.jsmpp.bean.MessageState.DELIVERED;
@@ -35,6 +38,7 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import lombok.SneakyThrows;
+import org.apache.commons.io.IOUtils;
 import org.jsmpp.PDUException;
 import org.jsmpp.bean.DeliverSm;
 import org.jsmpp.bean.OptionalParameter;
@@ -46,7 +50,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -60,6 +63,7 @@ public class MessagingTest {
     public static final String TO_SEND = "to_send";
     public static final String SUCCESS_DELIVERY = "delivery_success";
     public static final String FAILED_DELIVERY = "delivery_failed";
+    public static final String MO_QUEUE = "MO-QUEUE";
 
     @InjectMocks
     private MessagingHandler messagingHandler;
@@ -73,12 +77,14 @@ public class MessagingTest {
     private ApplicationProperties applicationProperties = createApplicationProperties();
 
     private SendToKafkaDeliveryReportListener sendToKafkaDeliveryReportListener;
+    private SendToKafkaMoDeliveryReportListener sendToKafkaMoDeliveryReportListener;
 
     @Before
     public void setUp() {
         ExecutorService executorService = ImmediateEventExecutor.INSTANCE;
         MessagingAdapter messagingAdapter = new MessagingAdapter(kafkaTemplate, applicationProperties);
         sendToKafkaDeliveryReportListener = new SendToKafkaDeliveryReportListener(messagingAdapter, executorService);
+        sendToKafkaMoDeliveryReportListener = new SendToKafkaMoDeliveryReportListener(messagingAdapter, executorService);
         RuleResponse response = new RuleResponse();
         response.setSuccess(true);
         when(businessRuleValidator.validate(any())).thenReturn(response);
@@ -93,6 +99,7 @@ public class MessagingTest {
         messaging.setSendFailedQueueName(FAIL_SEND);
         messaging.setDeliveryFailedQueueName(FAILED_DELIVERY);
         messaging.setDeliveredQueueName(SUCCESS_DELIVERY);
+        messaging.setDeliveredMoQueueName(MO_QUEUE);
         BusinessRule businessRule = new BusinessRule();
         businessRule.setEnableBusinessTimeRule(false);
         applicationProperties.setBusinessRule(businessRule);
@@ -203,6 +210,38 @@ public class MessagingTest {
         ArgumentCaptor<DeliveryReport> argumentCaptor = ArgumentCaptor.forClass(DeliveryReport.class);
         verify(kafkaTemplate).send(eq(SUCCESS_DELIVERY), argumentCaptor.capture());
         assertThat(argumentCaptor.getValue(), equalTo(deliveryReport("messagenumber", "DELIVERED")));
+    }
+
+    @Test
+    @SneakyThrows
+    public void messageMoDeliveredTest() {
+        String messageJson = IOUtils.toString(getClass().getClassLoader().getResourceAsStream("message.json"), UTF_8);
+
+        DeliverSm deliverSm = new DeliverSm();
+        deliverSm.setShortMessage("firstMessage".getBytes(ISO_8859_1));
+        deliverSm.setDataCoding((byte)0);
+
+        sendToKafkaMoDeliveryReportListener.onAcceptDeliverSm(deliverSm);
+
+        ArgumentCaptor<DeliveryReport> argumentCaptor = ArgumentCaptor.forClass(DeliveryReport.class);
+        verify(kafkaTemplate).send(eq(MO_QUEUE), argumentCaptor.capture());
+        assertThat(argumentCaptor.getValue(), equalTo(messageJson.trim()));
+    }
+
+    @Test
+    @SneakyThrows
+    public void messageMoDeliveredWithCirilicTest() {
+        String messageJson = IOUtils.toString(getClass().getClassLoader().getResourceAsStream("message-with-cirilic.json"), UTF_8);
+
+        DeliverSm deliverSm = new DeliverSm();
+        deliverSm.setShortMessage("secondMessage с русскими символами".getBytes(UTF_16));
+        deliverSm.setDataCoding((byte) 8);
+
+        sendToKafkaMoDeliveryReportListener.onAcceptDeliverSm(deliverSm);
+
+        ArgumentCaptor<DeliveryReport> argumentCaptor = ArgumentCaptor.forClass(DeliveryReport.class);
+        verify(kafkaTemplate).send(eq(MO_QUEUE), argumentCaptor.capture());
+        assertThat(argumentCaptor.getValue(), equalTo(messageJson.trim()));
     }
 
     public static CommunicationMessage message() {
