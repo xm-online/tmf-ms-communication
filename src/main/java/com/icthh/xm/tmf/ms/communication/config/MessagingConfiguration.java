@@ -81,7 +81,7 @@ public class MessagingConfiguration {
     }
 
     @Bean
-    public SendToKafkaMoDeliveryReportListener deliveryOmReportListener(MessagingAdapter messagingAdapter,
+    public SendToKafkaMoDeliveryReportListener deliveryMoReportListener(MessagingAdapter messagingAdapter,
                                                                         ApplicationProperties applicationProperties) {
         int deliveryProcessorThreadCount = applicationProperties.getMessaging().getDeliveryProcessorThreadCount();
         int deliveryMessageQueueMaxSize = applicationProperties.getMessaging().getDeliveryMessageQueueMaxSize();
