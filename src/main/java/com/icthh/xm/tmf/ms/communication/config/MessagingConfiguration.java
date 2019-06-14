@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingAdapter;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaDeliveryReportListener;
+import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaMoDeliveryReportListener;
 import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -77,6 +78,18 @@ public class MessagingConfiguration {
                                                                             deliveryMessageQueueMaxSize, 0L,
                                                                             TimeUnit.MILLISECONDS,
                                                                             new LinkedBlockingQueue<>()));
+    }
+
+    @Bean
+    public SendToKafkaMoDeliveryReportListener deliveryMoReportListener(MessagingAdapter messagingAdapter,
+                                                                        ApplicationProperties applicationProperties) {
+        int deliveryProcessorThreadCount = applicationProperties.getMessaging().getDeliveryProcessorThreadCount();
+        int deliveryMessageQueueMaxSize = applicationProperties.getMessaging().getDeliveryMessageQueueMaxSize();
+        return new SendToKafkaMoDeliveryReportListener(messagingAdapter,
+                                                       new ThreadPoolExecutor(deliveryProcessorThreadCount,
+                                                                              deliveryMessageQueueMaxSize, 0L,
+                                                                              TimeUnit.MILLISECONDS,
+                                                                              new LinkedBlockingQueue<>()));
     }
 
 }

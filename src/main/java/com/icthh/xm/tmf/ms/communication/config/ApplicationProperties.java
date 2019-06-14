@@ -41,6 +41,7 @@ public class ApplicationProperties {
         private String sentQueueName;
         private String deliveryFailedQueueName;
         private String deliveredQueueName;
+        private String deliveredMoQueueName;
         private Integer deliveryProcessorThreadCount;
         private Integer deliveryMessageQueueMaxSize;
     }
