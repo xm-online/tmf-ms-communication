@@ -11,6 +11,8 @@ import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
 import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
 import com.icthh.xm.tmf.ms.communication.rules.RuleResponse;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
+import com.icthh.xm.tmf.ms.communication.utils.ApiMapper;
+import com.icthh.xm.tmf.ms.communication.utils.ApiMapper.CommunicationMessageWrapper;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +41,8 @@ public class MessagingHandler {
 
     public void receiveMessage(CommunicationMessage message) {
         Messaging messaging = applicationProperties.getMessaging();
-        List<String> phoneNumbers = new ArrayList<>(from(message).getPhoneNumbers());
+        CommunicationMessageWrapper wrapper = from(message);
+        List<String> phoneNumbers = new ArrayList<>(wrapper.getPhoneNumbers());
         for (String phoneNumber : phoneNumbers) {
             try {
                 RuleResponse ruleResponse = businessRuleValidator.validate(message);
@@ -47,7 +50,7 @@ public class MessagingHandler {
                     failMessage(message, ruleResponse.getResponseCode(), ERROR_BUSINESS_RULE_VALIDATION);
                     return;
                 }
-                String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId());
+                String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId(), wrapper.getDeliveryReport());
                 String queueName = messaging.getSentQueueName();
                 sendMessage(success(messageId, message), queueName);
                 log.info("Message success sended to {}", queueName);

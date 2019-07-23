@@ -4,6 +4,7 @@ import static com.icthh.xm.tmf.ms.communication.domain.DeliveryReport.deliveryRe
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.DISTRIBUTION_ID;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
+import static com.icthh.xm.tmf.ms.communication.utils.ApiMapper.CommunicationMessageWrapper.DELIVERY_REPORT;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.UTF_16;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -14,8 +15,7 @@ import static org.jsmpp.bean.MessageState.UNDELIVERABLE;
 import static org.jsmpp.bean.OptionalParameter.Tag.MESSAGE_STATE;
 import static org.jsmpp.bean.OptionalParameter.Tag.RECEIPTED_MESSAGE_ID;
 import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -54,6 +54,7 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.MessageChannel;
+import org.testcontainers.shaded.com.google.common.collect.Lists;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MessagingTest {
@@ -163,7 +164,7 @@ public class MessagingTest {
 
     @SneakyThrows
     private void failMessage(Exception e, String errorCode, String testMessage) {
-        when(smppService.send("PH", "TestContext", "TestSender")).thenThrow(e);
+        when(smppService.send("PH", "TestContext", "TestSender", (byte)1)).thenThrow(e);
 
         messagingHandler.receiveMessage(message());
 
@@ -256,6 +257,12 @@ public class MessagingTest {
         message.setContent("TestContext");
         message.setReceiver(singletonList(receiver));
         message.setType("SMS");
+        message.setCharacteristic(Lists.newArrayList(new CommunicationRequestCharacteristic() {
+            {
+                name(DELIVERY_REPORT);
+                value("1");
+            }
+        }));
         return message;
     }
 }
