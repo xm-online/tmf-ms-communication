@@ -50,7 +50,8 @@ public class MessagingHandler {
                     failMessage(message, ruleResponse.getResponseCode(), ERROR_BUSINESS_RULE_VALIDATION);
                     return;
                 }
-                String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId(), wrapper.getDeliveryReport());
+                String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId(),
+                   wrapper.getDeliveryReport());
                 String queueName = messaging.getSentQueueName();
                 sendMessage(success(messageId, message), queueName);
                 log.info("Message success sended to {}", queueName);
