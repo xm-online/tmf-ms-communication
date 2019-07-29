@@ -100,7 +100,7 @@ public class SmppService {
         getActualSession();
     }
 
-    public String send(String destAddrs, String message, String senderId) throws PDUException, IOException,
+    public String send(String destAddrs, String message, String senderId, byte deliveryReport) throws PDUException, IOException,
                                                                                  InvalidResponseException,
                                                                                  NegativeResponseException,
                                                                                  ResponseTimeoutException {
@@ -129,7 +129,7 @@ public class SmppService {
             (byte) smpp.getPriorityFlag(),
             timeFormatter.format(new Date()),
             smpp.getValidityPeriod(),
-            new RegisteredDelivery(SMSCDeliveryReceipt.SUCCESS_FAILURE),
+            new RegisteredDelivery(deliveryReport),
             (byte) smpp.getReplaceIfPresentFlag(), dataCoding,
             (byte) smpp.getSmDefaultMsgId(),
             EMPTY_MESSAGE,
@@ -187,10 +187,10 @@ public class SmppService {
     }
 
     @SneakyThrows
-    public List<String> sendMultipleMessages(List<String> phones, String body, String senderId) {
+    public List<String> sendMultipleMessages(List<String> phones, String body, String senderId, byte deliveryReport) {
         List<String> results = new ArrayList<>();
         for (String phone : phones) {
-            results.add(send(phone, body, senderId));
+            results.add(send(phone, body, senderId, deliveryReport));
         }
         return results;
     }

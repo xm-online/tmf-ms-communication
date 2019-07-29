@@ -58,7 +58,7 @@ public class CommunicationMessageApiITest {
                .andExpect(status().isOk());
 
         verify(smppService).sendMultipleMessages(eq(asList("380900510000", "380900510001", "380900510002")),
-                                                 eq(CONTEXT_OF_SMS), eq(SENDER_ID));
+                                                 eq(CONTEXT_OF_SMS), eq(SENDER_ID), eq((byte) 0));
     }
 
     private List<ImmutableMap<String, String>> createReceivers(String... phoneNumbers) {

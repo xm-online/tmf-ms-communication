@@ -8,7 +8,6 @@ import com.icthh.xm.tmf.ms.communication.CommunicationApp;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.jsmpp.session.SMPPSession;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,14 +50,14 @@ public class SmppTest {
     @Test
     @SneakyThrows
     public void testSendingSms() {
-        String messageId = service.send("+380636666666", "test", "1616");
+        String messageId = service.send("+380636666666", "test", "1616", (byte) 1);
         assertNotNull(messageId);
     }
 
     @Test
     public void testSendingMultipleMessages() {
         List<String> phones = Arrays.asList("+380636666666", "+380636666665");
-        List<String> mIds = service.sendMultipleMessages(phones, "test", "1616");
+        List<String> mIds = service.sendMultipleMessages(phones, "test", "1616", (byte) 1);
         assertEquals(mIds.size(), 2);
         assertNotNull(mIds.get(0));
         assertNotNull(mIds.get(1));
