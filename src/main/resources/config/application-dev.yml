@@ -116,6 +116,10 @@ oauth2:
         client-id: web_app
         secret: changeit
 
+application:
+    firebase:
+        url: changeit
+        token: changeit
 # ===================================================================
 # Application specific properties
 # Add your own application properties here, see the ApplicationProperties class

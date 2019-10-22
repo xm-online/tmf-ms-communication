@@ -719,6 +719,9 @@ definitions:
       appUserId:
         type: string
         description: ID of the mobile app user
+      appToken:
+        type: string
+        description: 'App-specific token that could be used for app-specific messages'
       email:
         type: string
         description: 'Receiver address of email, if the communication type is email'
