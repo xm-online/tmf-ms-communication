@@ -36,7 +36,8 @@ public class FirebaseService {
 
     public void sendPushNotification(ApiMapper.CommunicationMessageWrapper wrapper) {
         FirebaseRequest request = new FirebaseRequest();
-        List<String> tokens = wrapper.getReceivers().stream().map(Receiver::getAppToken).filter(StringUtils::isNoneBlank).collect(toList());
+        List<String> tokens = wrapper.getReceivers().stream().map(Receiver::getAppToken)
+            .filter(StringUtils::isNoneBlank).collect(toList());
         request.setRegistrationIds(tokens);
 
         FirebaseRequestData data = new FirebaseRequestData();
@@ -47,9 +48,11 @@ public class FirebaseService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<FirebaseRequest> requestEntity = new HttpEntity<>(request, headers);
         ResponseEntity<String> responseEntity = restTemplate.postForEntity(firebaseURL, requestEntity, String.class);
-        if(!responseEntity.getStatusCode().equals(HttpStatus.OK)) {
-            log.error("Request to Firebase is failed. status: {}, response: {}", responseEntity.getStatusCode(), responseEntity.getBody());
-            throw new FirebaseCommunicatoinException(String.format("Request to Firebase failed. Status: %s", responseEntity.getStatusCode()));
+        if (!responseEntity.getStatusCode().equals(HttpStatus.OK)) {
+            log.error("Request to Firebase is failed. status: {}, response: {}", responseEntity.getStatusCode(),
+                responseEntity.getBody());
+            throw new FirebaseCommunicatoinException(
+                String.format("Request to Firebase failed. Status: %s", responseEntity.getStatusCode()));
         }
     }
 }

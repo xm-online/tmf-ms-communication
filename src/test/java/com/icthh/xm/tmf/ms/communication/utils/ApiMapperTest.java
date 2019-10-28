@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.utils;
 
+import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import org.jetbrains.annotations.NotNull;
@@ -25,12 +26,15 @@ public class ApiMapperTest {
 
     @Test
     public void emptyCharacteristicsDeliveryReportTest() {
-        Assert.assertEquals(from(new CommunicationMessage()).getDeliveryReport(), (byte) 0);
+        CommunicationMessage message = new CommunicationMessage();
+        message.setType(MessageType.SMS.name());
+        Assert.assertEquals(from(message).getDeliveryReport(), (byte) 0);
     }
 
     @NotNull
     private CommunicationMessage message(String deliveryValue) {
         return new CommunicationMessage() {{
+            setType(MessageType.SMS.name());
             setCharacteristic(Lists.newArrayList(new CommunicationRequestCharacteristic() {{
                 name(DELIVERY_REPORT);
                 value(deliveryValue);

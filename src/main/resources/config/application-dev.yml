@@ -38,7 +38,7 @@ spring:
     cloud:
         consul:
             discovery:
-               prefer-ip-address: true
+                prefer-ip-address: true
             host: localhost
             port: 8500
     mail:
@@ -72,9 +72,9 @@ server:
 jhipster:
     http:
         version: V_1_1 # To use HTTP/2 you will need to activate TLS (see application-tls.yml)
-    # CORS is disabled by default on microservices, as you should access them through a gateway.
-    # If you want to enable it, please uncomment the configuration below.
-    # cors:
+        # CORS is disabled by default on microservices, as you should access them through a gateway.
+        # If you want to enable it, please uncomment the configuration below.
+        # cors:
         # allowed-origins: "*"
         # allowed-methods: "*"
         # allowed-headers: "*"
