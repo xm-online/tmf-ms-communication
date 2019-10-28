@@ -36,7 +36,7 @@ public class FirebaseService {
 
     public void sendPushNotification(ApiMapper.CommunicationMessageWrapper wrapper) {
         FirebaseRequest request = new FirebaseRequest();
-        List<String> tokens = wrapper.getReceivers().stream().map(Receiver::getAppToken)
+        List<String> tokens = wrapper.getReceivers().stream().map(Receiver::getAppUserId)
             .filter(StringUtils::isNoneBlank).collect(toList());
         request.setRegistrationIds(tokens);
 
