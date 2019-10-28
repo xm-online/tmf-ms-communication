@@ -1,5 +1,26 @@
 package com.icthh.xm.tmf.ms.communication.messaging;
 
+import static com.icthh.xm.tmf.ms.communication.domain.DeliveryReport.deliveryReport;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.DISTRIBUTION_ID;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
+import static com.icthh.xm.tmf.ms.communication.utils.ApiMapper.CommunicationMessageWrapper.DELIVERY_REPORT;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.UTF_16;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.singletonList;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.jsmpp.bean.MessageState.DELIVERED;
+import static org.jsmpp.bean.MessageState.UNDELIVERABLE;
+import static org.jsmpp.bean.OptionalParameter.Tag.MESSAGE_STATE;
+import static org.jsmpp.bean.OptionalParameter.Tag.RECEIPTED_MESSAGE_ID;
+import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.BusinessRule;
@@ -14,6 +35,8 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestChara
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
 import io.netty.util.concurrent.ImmediateEventExecutor;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.jsmpp.PDUException;
@@ -32,32 +55,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.MessageChannel;
 import org.testcontainers.shaded.com.google.common.collect.Lists;
-
-import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-
-import static com.icthh.xm.tmf.ms.communication.domain.DeliveryReport.deliveryReport;
-import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.DISTRIBUTION_ID;
-import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
-import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
-import static com.icthh.xm.tmf.ms.communication.utils.ApiMapper.CommunicationMessageWrapper.DELIVERY_REPORT;
-import static java.nio.charset.StandardCharsets.ISO_8859_1;
-import static java.nio.charset.StandardCharsets.UTF_16;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Collections.singletonList;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.jsmpp.bean.MessageState.DELIVERED;
-import static org.jsmpp.bean.MessageState.UNDELIVERABLE;
-import static org.jsmpp.bean.OptionalParameter.Tag.MESSAGE_STATE;
-import static org.jsmpp.bean.OptionalParameter.Tag.RECEIPTED_MESSAGE_ID;
-import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.skyscreamer.jsonassert.JSONAssert.assertEquals;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MessagingTest {
@@ -83,6 +80,17 @@ public class MessagingTest {
     private SendToKafkaDeliveryReportListener sendToKafkaDeliveryReportListener;
     private SendToKafkaMoDeliveryReportListener sendToKafkaMoDeliveryReportListener;
 
+    @Before
+    public void setUp() {
+        ExecutorService executorService = ImmediateEventExecutor.INSTANCE;
+        MessagingAdapter messagingAdapter = new MessagingAdapter(kafkaTemplate, applicationProperties);
+        sendToKafkaDeliveryReportListener = new SendToKafkaDeliveryReportListener(messagingAdapter, executorService);
+        sendToKafkaMoDeliveryReportListener = new SendToKafkaMoDeliveryReportListener(messagingAdapter, executorService);
+        RuleResponse response = new RuleResponse();
+        response.setSuccess(true);
+        when(businessRuleValidator.validate(any())).thenReturn(response);
+    }
+
     public static ApplicationProperties createApplicationProperties() {
         ApplicationProperties applicationProperties = new ApplicationProperties();
         Messaging messaging = new Messaging();
@@ -97,38 +105,6 @@ public class MessagingTest {
         businessRule.setEnableBusinessTimeRule(false);
         applicationProperties.setBusinessRule(businessRule);
         return applicationProperties;
-    }
-
-    public static CommunicationMessage message() {
-        CommunicationMessage message = new CommunicationMessage();
-        Receiver receiver = new Receiver();
-        receiver.setPhoneNumber("PH");
-        receiver.setId("ID");
-        Sender sender = new Sender();
-        sender.setId("TestSender");
-        message.setId("TEST_D_ID-SMS-ID");
-        message.setSender(sender);
-        message.setContent("TestContext");
-        message.setReceiver(singletonList(receiver));
-        message.setType("SMS");
-        message.setCharacteristic(Lists.newArrayList(new CommunicationRequestCharacteristic() {
-            {
-                name(DELIVERY_REPORT);
-                value("1");
-            }
-        }));
-        return message;
-    }
-
-    @Before
-    public void setUp() {
-        ExecutorService executorService = ImmediateEventExecutor.INSTANCE;
-        MessagingAdapter messagingAdapter = new MessagingAdapter(kafkaTemplate, applicationProperties);
-        sendToKafkaDeliveryReportListener = new SendToKafkaDeliveryReportListener(messagingAdapter, executorService);
-        sendToKafkaMoDeliveryReportListener = new SendToKafkaMoDeliveryReportListener(messagingAdapter, executorService);
-        RuleResponse response = new RuleResponse();
-        response.setSuccess(true);
-        when(businessRuleValidator.validate(any())).thenReturn(response);
     }
 
     @Test
@@ -168,7 +144,7 @@ public class MessagingTest {
     private void addDistributionId(CommunicationMessage message) {
         message.setCharacteristic(new ArrayList<>());
         CommunicationRequestCharacteristic disctributionId = new CommunicationRequestCharacteristic().name(DISTRIBUTION_ID)
-            .value("TEST_D_ID");
+                                                                                                     .value("TEST_D_ID");
         message.getCharacteristic().add(disctributionId);
     }
 
@@ -176,7 +152,7 @@ public class MessagingTest {
     @SneakyThrows
     public void receiveMessageFailTest() {
         failMessage(new RuntimeException("TestMessage"),
-            "error.system.general.internalServerError", "java.lang.RuntimeException: TestMessage");
+                    "error.system.general.internalServerError", "java.lang.RuntimeException: TestMessage");
         reset(smppService, kafkaTemplate);
         failMessage(new BusinessException("TestCode", "TestMessage"), "TestCode", "TestMessage");
         reset(smppService, kafkaTemplate);
@@ -188,7 +164,7 @@ public class MessagingTest {
 
     @SneakyThrows
     private void failMessage(Exception e, String errorCode, String testMessage) {
-        when(smppService.send("PH", "TestContext", "TestSender", (byte) 1)).thenThrow(e);
+        when(smppService.send("PH", "TestContext", "TestSender", (byte)1)).thenThrow(e);
 
         messagingHandler.receiveMessage(message());
 
@@ -244,13 +220,13 @@ public class MessagingTest {
 
         DeliverSm deliverSm = new DeliverSm();
         deliverSm.setShortMessage("firstMessage".getBytes(ISO_8859_1));
-        deliverSm.setDataCoding((byte) 0);
+        deliverSm.setDataCoding((byte)0);
 
         sendToKafkaMoDeliveryReportListener.onAcceptDeliverSm(deliverSm);
 
-        ArgumentCaptor<String> argumentCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<DeliveryReport> argumentCaptor = ArgumentCaptor.forClass(DeliveryReport.class);
         verify(kafkaTemplate).send(eq(MO_QUEUE), argumentCaptor.capture());
-        assertEquals(argumentCaptor.getValue(), messageJson.trim(), false);
+        assertThat(argumentCaptor.getValue(), equalTo(messageJson.trim()));
     }
 
     @Test
@@ -264,8 +240,29 @@ public class MessagingTest {
 
         sendToKafkaMoDeliveryReportListener.onAcceptDeliverSm(deliverSm);
 
-        ArgumentCaptor<String> argumentCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<DeliveryReport> argumentCaptor = ArgumentCaptor.forClass(DeliveryReport.class);
         verify(kafkaTemplate).send(eq(MO_QUEUE), argumentCaptor.capture());
-        assertEquals(argumentCaptor.getValue(), messageJson.trim(), false);
+        assertThat(argumentCaptor.getValue(), equalTo(messageJson.trim()));
+    }
+
+    public static CommunicationMessage message() {
+        CommunicationMessage message = new CommunicationMessage();
+        Receiver receiver = new Receiver();
+        receiver.setPhoneNumber("PH");
+        receiver.setId("ID");
+        Sender sender = new Sender();
+        sender.setId("TestSender");
+        message.setId("TEST_D_ID-SMS-ID");
+        message.setSender(sender);
+        message.setContent("TestContext");
+        message.setReceiver(singletonList(receiver));
+        message.setType("SMS");
+        message.setCharacteristic(Lists.newArrayList(new CommunicationRequestCharacteristic() {
+            {
+                name(DELIVERY_REPORT);
+                value("1");
+            }
+        }));
+        return message;
     }
 }
