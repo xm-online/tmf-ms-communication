@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.google.common.collect.ImmutableMap;
+import com.icthh.xm.tmf.ms.communication.service.FirebaseService;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.api.CommunicationMessageApiController;
 import com.icthh.xm.tmf.ms.communication.web.rest.errors.ExceptionTranslator;
@@ -41,6 +42,9 @@ public class CommunicationMessageApiITest {
 
     @MockBean
     private SmppService smppService;
+
+    @MockBean
+    private FirebaseService firebaseService;
 
     @Test
     @SneakyThrows
