@@ -35,7 +35,8 @@ public class ApplicationProperties {
     private Messaging messaging = new Messaging();
     private BusinessRule businessRule = new BusinessRule();
 
-    @Data
+    @Getter
+    @Setter
     public static class Firebase {
         private String url;
         private String token;
