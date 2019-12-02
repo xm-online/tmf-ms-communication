@@ -25,6 +25,7 @@ public class ApplicationProperties {
     private final Lep lep = new Lep();
     private final Smpp smpp = new Smpp();
     private final Retry retry = new Retry();
+    private final Firebase firebase = new Firebase();
     private int kafkaConcurrencyCount;
     private String kafkaSystemTopic;
     private String kafkaSystemQueue;
@@ -33,6 +34,13 @@ public class ApplicationProperties {
 
     private Messaging messaging = new Messaging();
     private BusinessRule businessRule = new BusinessRule();
+
+    @Getter
+    @Setter
+    public static class Firebase {
+        private String url;
+        private String token;
+    }
 
     @Data
     public static class Messaging {

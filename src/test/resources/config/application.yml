@@ -106,4 +106,6 @@ application:
         priority-flag: 1
         replace-if-present-flag: 0
         sm-default-msg-id: 0
-
+    firebase:
+        url: http://localhost:9999
+        token: abcd

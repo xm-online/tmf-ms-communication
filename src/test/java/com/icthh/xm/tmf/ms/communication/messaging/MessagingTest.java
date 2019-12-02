@@ -52,6 +52,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.MessageChannel;
 import org.testcontainers.shaded.com.google.common.collect.Lists;
@@ -224,9 +225,9 @@ public class MessagingTest {
 
         sendToKafkaMoDeliveryReportListener.onAcceptDeliverSm(deliverSm);
 
-        ArgumentCaptor<DeliveryReport> argumentCaptor = ArgumentCaptor.forClass(DeliveryReport.class);
+        ArgumentCaptor<String> argumentCaptor = ArgumentCaptor.forClass(String.class);
         verify(kafkaTemplate).send(eq(MO_QUEUE), argumentCaptor.capture());
-        assertThat(argumentCaptor.getValue(), equalTo(messageJson.trim()));
+        JSONAssert.assertEquals(argumentCaptor.getValue(), messageJson.trim(), false);
     }
 
     @Test
@@ -240,9 +241,9 @@ public class MessagingTest {
 
         sendToKafkaMoDeliveryReportListener.onAcceptDeliverSm(deliverSm);
 
-        ArgumentCaptor<DeliveryReport> argumentCaptor = ArgumentCaptor.forClass(DeliveryReport.class);
+        ArgumentCaptor<String> argumentCaptor = ArgumentCaptor.forClass(String.class);
         verify(kafkaTemplate).send(eq(MO_QUEUE), argumentCaptor.capture());
-        assertThat(argumentCaptor.getValue(), equalTo(messageJson.trim()));
+        JSONAssert.assertEquals(argumentCaptor.getValue(), messageJson.trim(), false);
     }
 
     public static CommunicationMessage message() {

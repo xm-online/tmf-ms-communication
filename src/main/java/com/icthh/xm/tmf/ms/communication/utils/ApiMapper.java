@@ -1,23 +1,29 @@
 package com.icthh.xm.tmf.ms.communication.utils;
 
-import com.icthh.xm.tmf.ms.communication.web.api.model.*;
+import com.icthh.xm.tmf.ms.communication.domain.MessageType;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
+import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.math.NumberUtils;
-
 public class ApiMapper {
 
     public static CommunicationMessageWrapper from(CommunicationMessage message) {
-        return new CommunicationMessageWrapper(message.getReceiver(), message.getCharacteristic());
+        MessageType messageType = MessageType.valueOf(message.getType());
+        return new CommunicationMessageWrapper(messageType, message.getReceiver(), message.getSubject(), message.getDescription(), message.getCharacteristic());
     }
 
     public static CommunicationMessageWrapper from(CommunicationMessageCreate message) {
-        return new CommunicationMessageWrapper(message.getReceiver(), message.getCharacteristic());
+        MessageType messageType = MessageType.valueOf(message.getType());
+        return new CommunicationMessageWrapper(messageType, message.getReceiver(), message.getSubject(), message.getDescription(), message.getCharacteristic());
     }
 
     @RequiredArgsConstructor
@@ -25,7 +31,15 @@ public class ApiMapper {
 
         public static final String DELIVERY_REPORT = "DELIVERY.REPORT";
 
+        @Getter
+        private final MessageType type;
+
+        @Getter
         private final List<Receiver> receivers;
+        private final String title;
+        private final String content;
+
+        @Getter
         private final List<CommunicationRequestCharacteristic> characteristics;
 
         public List<String> getPhoneNumbers() {

@@ -30,9 +30,9 @@ hystrix:
             execution:
                 isolation:
                     strategy: SEMAPHORE
-# See https://github.com/spring-cloud/spring-cloud-netflix/issues/1330
-#                    thread:
-#                        timeoutInMilliseconds: 10000
+    # See https://github.com/spring-cloud/spring-cloud-netflix/issues/1330
+    #                    thread:
+    #                        timeoutInMilliseconds: 10000
     shareSecurityContext: true
 
 management:
@@ -126,8 +126,8 @@ jhipster:
         core-pool-size: 2
         max-pool-size: 50
         queue-capacity: 10000
-    # By default CORS is disabled. Uncomment to enable.
-    #cors:
+        # By default CORS is disabled. Uncomment to enable.
+        #cors:
         #allowed-origins: "*"
         #allowed-methods: "*"
         #allowed-headers: "*"
@@ -178,14 +178,14 @@ application:
     kafka-concurrency-count: 16
     stream-binding-enabled: true
     messaging:
-      to-send-queue-name: communication_to_send_sms
-      sent-queue-name: communication_sent_sms
-      send-failed-queue-name: communication_failed_sms
-      delivery-failed-queue-name: communication_delivery_failed
-      delivered-queue-name: communication_delivered_reports
-      delivered-mo-queue-name: communication_delivered_mo_reports
-      deliveryProcessorThreadCount: 16
-      deliveryMessageQueueMaxSize: 16000
+        to-send-queue-name: communication_to_send_sms
+        sent-queue-name: communication_sent_sms
+        send-failed-queue-name: communication_failed_sms
+        delivery-failed-queue-name: communication_delivery_failed
+        delivered-queue-name: communication_delivered_reports
+        delivered-mo-queue-name: communication_delivered_mo_reports
+        deliveryProcessorThreadCount: 16
+        deliveryMessageQueueMaxSize: 16000
     tenant-ignored-path-list: /swagger-resources/configuration/ui, /management/health, /oauth/token_key, /h2-console
     lep:
         tenant-script-storage: XM_MS_CONFIG
@@ -212,6 +212,9 @@ application:
         sm-default-msg-id: 0
         alphaEncoding:
         notAlphaEncoding:
+    firebase:
+        url:
+        token:
     retry:
         max-attempts: 3
         delay: 1000 #in milliseconds
