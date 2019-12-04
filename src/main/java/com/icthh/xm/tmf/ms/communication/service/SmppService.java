@@ -97,7 +97,9 @@ public class SmppService {
 
     @EventListener(ApplicationReadyEvent.class)
     public void init() {
-        getActualSession();
+        if (appProps.getSmpp().getEnabled()) {
+            getActualSession();
+        }
     }
 
     public String send(String destAddrs, String message, String senderId, byte deliveryReport) throws PDUException, IOException,

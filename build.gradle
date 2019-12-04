@@ -175,8 +175,8 @@ repositories {
 dependencies {
     // Use ", version: jhipster_dependencies_version, changing: true" if you want
     // to use a SNAPSHOT release instead of a stable release
-    provided "org.projectlombok:lombok:${lombok_version}"
-    apt "org.projectlombok:lombok:${lombok_version}"
+    compile "org.projectlombok:lombok:${lombok_version}"
+    annotationProcessor "org.projectlombok:lombok:${lombok_version}"
     compile group: "io.github.jhipster", name: "jhipster-framework"
     compile "io.dropwizard.metrics:metrics-core"
     compile "io.dropwizard.metrics:metrics-json"
@@ -234,6 +234,7 @@ dependencies {
     compile "com.sun.xml.bind:jaxb-core:2.2.11"
     compile "org.mapstruct:mapstruct-jdk8:${mapstruct_version}"
     compile "org.jsmpp:jsmpp:${jsmpp_version}"
+    compile "com.github.pengrad:java-telegram-bot-api:${telegrambots_version}"
 
     compile "com.icthh.xm.commons:xm-commons-logging-web:${xm_commons_version}"
     compile "com.icthh.xm.commons:xm-commons-security:${xm_commons_version}"
@@ -241,6 +242,7 @@ dependencies {
     compile "com.icthh.xm.commons:xm-commons-ms-web:${xm_commons_version}"
     compile "com.icthh.xm.commons:xm-commons-permission:${xm_commons_version}"
     compile "com.icthh.xm.commons:xm-commons-metric:${xm_commons_version}"
+    compile "com.icthh.xm.commons:xm-commons-topic:${xm_commons_version}"
 
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor") {
