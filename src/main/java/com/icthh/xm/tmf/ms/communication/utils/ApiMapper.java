@@ -1,6 +1,5 @@
 package com.icthh.xm.tmf.ms.communication.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
@@ -8,7 +7,6 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestChara
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.Collections;
@@ -17,13 +15,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class ApiMapper {
-
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
-    @SneakyThrows
-    public static CommunicationMessageCreate from(String message) {
-        return OBJECT_MAPPER.readValue(message, CommunicationMessageCreate.class);
-    }
 
     public static CommunicationMessageWrapper from(CommunicationMessage message) {
         MessageType messageType = MessageType.valueOf(message.getType());

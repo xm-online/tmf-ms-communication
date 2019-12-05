@@ -5,11 +5,11 @@ import static com.icthh.xm.tmf.ms.communication.utils.ApiMapper.from;
 import com.codahale.metrics.annotation.Timed;
 import com.icthh.xm.tmf.ms.communication.service.FirebaseService;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
-import com.icthh.xm.tmf.ms.communication.service.TelegramService;
 import com.icthh.xm.tmf.ms.communication.utils.ApiMapper;
 import com.icthh.xm.tmf.ms.communication.web.api.CommunicationMessageApiDelegate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
+import com.icthh.xm.tmf.ms.communication.web.rest.errors.FirebaseCommunicatoinException;
 import com.icthh.xm.tmf.ms.communication.web.rest.errors.InternalServerErrorException;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +23,6 @@ public class CommunicationMessageApiImpl implements CommunicationMessageApiDeleg
 
     private final FirebaseService firebaseService;
 
-    private final TelegramService telegramService;
-
     @Timed
     public ResponseEntity<CommunicationMessage> createsANewCommunicationMessageAndSendIt(
         CommunicationMessageCreate message) {
@@ -37,12 +35,8 @@ public class CommunicationMessageApiImpl implements CommunicationMessageApiDeleg
             case MobileApp:
                 firebaseService.sendPushNotification(wrapper);
                 break;
-            case Telegram:
-                telegramService.send(null/*TBD*/, message);
-                break;
             default:
-                throw new InternalServerErrorException(String.format("message type invalid " +
-                    "or still not implemented. type: %s", wrapper.getType()));
+                throw new InternalServerErrorException(String.format("message type invalid or still not implemented. type: %s", wrapper.getType()));
         }
 
         return ResponseEntity.ok().build();

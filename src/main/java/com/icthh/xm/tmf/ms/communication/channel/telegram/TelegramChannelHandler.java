@@ -1,14 +1,18 @@
 package com.icthh.xm.tmf.ms.communication.channel.telegram;
 
+import static com.icthh.xm.tmf.ms.communication.utils.LogUtil.withLog;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.topic.config.MessageListenerContainerBuilder;
 import com.icthh.xm.commons.topic.domain.ConsumerHolder;
 import com.icthh.xm.commons.topic.domain.TopicConfig;
 import com.icthh.xm.tmf.ms.communication.channel.ChannelHandler;
+import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
+import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec.Telegram;
+import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.service.TelegramService;
-import com.icthh.xm.tmf.ms.communication.utils.ApiMapper;
-import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
@@ -17,7 +21,7 @@ import org.springframework.kafka.listener.AbstractMessageListenerContainer;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,45 +29,95 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TelegramChannelHandler implements ChannelHandler<Telegram> {
+public class TelegramChannelHandler implements ChannelHandler {
 
-    private static final String TELEGRAM_SEND_QUEUE_TEMPLATE = "communication_%s_telegram_send";
-    private static final String TELEGRAM_RECIVE_QUEUE_TEMPLATE = "communication_%s_telegram_recive";
+    private static final String DEFAULT_TELEGRAM_CONSUMER_KEY = "default";
 
+    private final ApplicationProperties applicationProperties;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final KafkaProperties kafkaProperties;
     private final TelegramService telegramService;
+    private final ObjectMapper objectMapper;
 
+    @Getter
     private Map<String, Map<String, ConsumerHolder>> tenantTelegramConsumers = new ConcurrentHashMap<>();
 
     @Override
-    public void onRefresh(String tenantKey, List<Telegram> telegrams) {
-        if (CollectionUtils.isEmpty(telegrams)) {
-            log.warn("Skip processing of telegram configuration. Specification is null for tenant: [{}]", tenantKey);
+    public void onRefresh(String tenantKey, CommunicationSpec spec) {
+        if (spec == null
+            || spec.getChannels() == null
+            || CollectionUtils.isEmpty(spec.getChannels().getTelegram())) {
+            stopAllTenantConsumers(tenantKey);
+            telegramService.unregisterBot(tenantKey);
+            return;
+        }
+        List<Telegram> botConfigs = spec.getChannels().getTelegram();
+
+        //process channels queues
+        processDefaultTelegramConsumer(tenantKey);
+        // todo custom queues for telegram bots will be implemented in next releases
+        // processCustomTelegramConsumers(tenantKey, botConfigs);
+
+        //register bots
+        botConfigs.forEach(botConfig -> telegramService.registerBot(tenantKey, botConfig));
+    }
+
+    private void processDefaultTelegramConsumer(String tenantKey) {
+        Map<String, ConsumerHolder> existingConsumers = getTenantConsumers(tenantKey);
+        String topicName = buildSendMessageTopicName(tenantKey);
+        TopicConfig topicConfig = buildTopicConfig(topicName);
+
+        if (existingConsumers.containsKey(DEFAULT_TELEGRAM_CONSUMER_KEY)) {
+            log.info("[{}] Skip consumer configuration due to no changes found: [{}] ", tenantKey, topicConfig);
             return;
         }
 
-        //start channels queues
-        startTelegramConsumer(tenantKey);
-
-        //register bots
-        telegrams.forEach(botConfig -> telegramService.registerBot(tenantKey, botConfig));
+        withLog(tenantKey, "startNewDefaultTelegramConsumer", () -> {
+            AbstractMessageListenerContainer listener = buildListenerContainer(tenantKey, topicConfig);
+            listener.start();
+            existingConsumers.put(DEFAULT_TELEGRAM_CONSUMER_KEY, new ConsumerHolder(topicConfig, listener));
+            tenantTelegramConsumers.put(tenantKey, existingConsumers);
+        }, "{}", topicConfig);
     }
 
-    //   @SneakyThrows
-    private void startTelegramConsumer(String tenantKey) {
-        //todo add verification logic for existing channels
-        MessageListenerContainerBuilder builder = new MessageListenerContainerBuilder(kafkaProperties, kafkaTemplate);
-        TopicConfig config = new TopicConfig();
-        config.setTopicName(String.format(TELEGRAM_SEND_QUEUE_TEMPLATE, tenantKey.toLowerCase()));
-
-        AbstractMessageListenerContainer listener = builder.build(
-            tenantKey,
-            config,
-            (message, tenant, topicConfig) -> telegramService.send(tenantKey, ApiMapper.from(message)));
-
-        //todo verification
-        tenantTelegramConsumers.put(tenantKey, Collections.singletonMap("TBD", new ConsumerHolder(config, listener)));
+    protected AbstractMessageListenerContainer buildListenerContainer(String tenantKey, TopicConfig topicConfig) {
+        KafkaToTelegramMessageHandler messageHandler = new KafkaToTelegramMessageHandler(objectMapper, telegramService);
+        return new MessageListenerContainerBuilder(kafkaProperties, kafkaTemplate)
+            .build(tenantKey, topicConfig, messageHandler);
     }
 
+    private void stopAllTenantConsumers(String tenantKey) {
+        Map<String, ConsumerHolder> existingConsumers = getTenantConsumers(tenantKey);
+        Collection<ConsumerHolder> holders = existingConsumers.values();
+        withLog(tenantKey, "stopAllTenantTelegramConsumers", () -> {
+            holders.forEach(consumerHolder -> stopConsumer(tenantKey, consumerHolder));
+            tenantTelegramConsumers.remove(tenantKey);
+        }, "[{}]", holders);
+    }
+
+    private void stopConsumer(final String tenantKey, final ConsumerHolder consumerHolder) {
+        TopicConfig existConfig = consumerHolder.getTopicConfig();
+        withLog(tenantKey, "stopConsumer",
+            () -> consumerHolder.getContainer().stop(), "{}", existConfig);
+    }
+
+    private String buildSendMessageTopicName(String tenantKey) {
+        String sendQueuePattern = applicationProperties.getMessaging().getSendQueueNameTemplate();
+        return String.format(sendQueuePattern, tenantKey.toLowerCase(), MessageType.Telegram.name().toLowerCase());
+    }
+
+    private TopicConfig buildTopicConfig(String topicName) {
+        TopicConfig topicConfig = new TopicConfig();
+        topicConfig.setRetriesCount(applicationProperties.getMessaging().getRetriesCount());
+        topicConfig.setTopicName(topicName);
+        return topicConfig;
+    }
+
+    private Map<String, ConsumerHolder> getTenantConsumers(String tenantKey) {
+        if (tenantTelegramConsumers.containsKey(tenantKey)) {
+            return tenantTelegramConsumers.get(tenantKey);
+        } else {
+            return new ConcurrentHashMap<>();
+        }
+    }
 }

@@ -45,6 +45,9 @@ public class ApplicationProperties {
 
     @Data
     public static class Messaging {
+        private String sendQueueNameTemplate;
+        private String reciveQueueNameTemplate;
+        private Integer retriesCount;
         private String toSendQueueName;
         private String sendFailedQueueName;
         private String sentQueueName;

@@ -3,6 +3,7 @@ package com.icthh.xm.tmf.ms.communication.domain;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.io.Serializable;
 import java.util.LinkedList;
@@ -19,6 +20,7 @@ public class CommunicationSpec implements Serializable {
 
     @Getter
     @Setter
+    @ToString
     public static class Channels {
 
         private List<Telegram> telegram = new LinkedList<>();
@@ -29,6 +31,7 @@ public class CommunicationSpec implements Serializable {
 
     @Getter
     @Setter
+    @ToString(callSuper = true)
     public static class Telegram extends Channel {
 
         private String token;
@@ -37,6 +40,7 @@ public class CommunicationSpec implements Serializable {
 
     @Getter
     @Setter
+    @ToString(callSuper = true)
     public static class Viber extends Channel {
 
         private String appKey;
@@ -44,6 +48,7 @@ public class CommunicationSpec implements Serializable {
 
     @Getter
     @Setter
+    @ToString(callSuper = true)
     public static class Sms extends Channel {
 
         private Map<String, String> prop;
@@ -51,6 +56,7 @@ public class CommunicationSpec implements Serializable {
 
     @Getter
     @Setter
+    @ToString
     public static class Channel {
 
         private String key;

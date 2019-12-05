@@ -1,8 +1,9 @@
 package com.icthh.xm.tmf.ms.communication.channel;
 
-import java.util.List;
+import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec;
 
-public interface ChannelHandler<T> {
+public interface ChannelHandler {
 
-    void onRefresh(String tenantKey, List<T> channels);
+    void onRefresh(String tenantKey, CommunicationSpec spec);
+
 }

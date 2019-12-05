@@ -5,7 +5,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.api.RefreshableConfiguration;
 import com.icthh.xm.tmf.ms.communication.channel.telegram.TelegramChannelHandler;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec;
-import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec.Channels;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -49,16 +48,10 @@ public class ChannelRefreshableConfiguration implements RefreshableConfiguration
             return;
         }
         CommunicationSpec spec = readSpec(updatedKey, config);
-        if (spec == null || spec.getChannels() == null) {
-            log.warn("Skip processing of configuration: [{}]. Specification is null", updatedKey);
-            return;
-        }
-        Channels channels = spec.getChannels();
         String tenantKey = extractTenant(updatedKey);
 
-        telegramChannelHandler.onRefresh(tenantKey, channels.getTelegram());
+        telegramChannelHandler.onRefresh(tenantKey, spec);
         //init other channels: sms, email, viber, etc
-
     }
 
     private CommunicationSpec readSpec(String updatedKey, String config) {
