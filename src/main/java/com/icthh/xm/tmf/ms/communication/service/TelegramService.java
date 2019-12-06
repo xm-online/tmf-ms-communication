@@ -1,7 +1,5 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
-import static com.icthh.xm.tmf.ms.communication.utils.LogUtil.withLog;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.tmf.ms.communication.channel.telegram.TelegramUpdateListener;
@@ -43,11 +41,7 @@ public class TelegramService implements MessageService {
             return;
         }
 
-        withLog(tenantKey,
-            "startTelegramBot",
-            () -> startTelegramBot(tenantKey, botConfig),
-            "{}",
-            botConfig);
+        withLog("startTelegramBot", () -> startTelegramBot(tenantKey, botConfig), botConfig);
     }
 
     private void startTelegramBot(String tenantKey, Telegram botConfig) {
@@ -62,11 +56,8 @@ public class TelegramService implements MessageService {
 
     public void unregisterBot(String tenantKey) {
         Map<String, TelegramBot> telegramBots = getTenantBots(tenantKey);
-        telegramBots.values().forEach(telegramBot -> withLog(tenantKey,
-            "stopTelegramBot",
-            telegramBot::removeGetUpdatesListener,
-            "{}",
-            telegramBot));
+        telegramBots.values().forEach(telegramBot ->
+            withLog("stopTelegramBot", telegramBot::removeGetUpdatesListener, telegramBot));
 
         tenantTelegramBots.remove(tenantKey);
     }
@@ -127,5 +118,12 @@ public class TelegramService implements MessageService {
     private String buildReciveMessageTopicName(String tenantKey) {
         String sendQueuePattern = applicationProperties.getMessaging().getReciveQueueNameTemplate();
         return String.format(sendQueuePattern, tenantKey.toLowerCase(), MessageType.Telegram.name().toLowerCase());
+    }
+
+    private void withLog(String command, Runnable action, Object... params) {
+        final StopWatch stopWatch = StopWatch.createStarted();
+        log.info("start: {} {}", command, params);
+        action.run();
+        log.info(" stop: {}, time = {} ms.", command, stopWatch.getTime());
     }
 }

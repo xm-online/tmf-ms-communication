@@ -1,20 +1,19 @@
 package com.icthh.xm.tmf.ms.communication.channel.telegram;
 
-import static com.icthh.xm.tmf.ms.communication.utils.LogUtil.withLog;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.topic.config.MessageListenerContainerBuilder;
 import com.icthh.xm.commons.topic.domain.ConsumerHolder;
 import com.icthh.xm.commons.topic.domain.TopicConfig;
 import com.icthh.xm.tmf.ms.communication.channel.ChannelHandler;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec;
+import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec.Channels;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec.Telegram;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.service.TelegramService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer;
@@ -22,8 +21,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -37,21 +38,22 @@ public class TelegramChannelHandler implements ChannelHandler {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final KafkaProperties kafkaProperties;
     private final TelegramService telegramService;
-    private final ObjectMapper objectMapper;
 
     @Getter
     private Map<String, Map<String, ConsumerHolder>> tenantTelegramConsumers = new ConcurrentHashMap<>();
 
     @Override
     public void onRefresh(String tenantKey, CommunicationSpec spec) {
-        if (spec == null
-            || spec.getChannels() == null
-            || CollectionUtils.isEmpty(spec.getChannels().getTelegram())) {
+        List<Telegram> botConfigs = Optional.ofNullable(spec)
+            .map(CommunicationSpec::getChannels)
+            .map(Channels::getTelegram)
+            .orElseGet(Collections::emptyList);
+
+        if (CollectionUtils.isEmpty(botConfigs)) {
             stopAllTenantConsumers(tenantKey);
             telegramService.unregisterBot(tenantKey);
             return;
         }
-        List<Telegram> botConfigs = spec.getChannels().getTelegram();
 
         //process channels queues
         processDefaultTelegramConsumer(tenantKey);
@@ -81,7 +83,7 @@ public class TelegramChannelHandler implements ChannelHandler {
     }
 
     protected AbstractMessageListenerContainer buildListenerContainer(String tenantKey, TopicConfig topicConfig) {
-        KafkaToTelegramMessageHandler messageHandler = new KafkaToTelegramMessageHandler(objectMapper, telegramService);
+        KafkaToTelegramMessageHandler messageHandler = new KafkaToTelegramMessageHandler(telegramService);
         return new MessageListenerContainerBuilder(kafkaProperties, kafkaTemplate)
             .build(tenantKey, topicConfig, messageHandler);
     }
@@ -107,6 +109,7 @@ public class TelegramChannelHandler implements ChannelHandler {
     }
 
     private TopicConfig buildTopicConfig(String topicName) {
+        //todo add possibility to configure topic from telegram communication spec
         TopicConfig topicConfig = new TopicConfig();
         topicConfig.setRetriesCount(applicationProperties.getMessaging().getRetriesCount());
         topicConfig.setTopicName(topicName);
@@ -119,5 +122,12 @@ public class TelegramChannelHandler implements ChannelHandler {
         } else {
             return new ConcurrentHashMap<>();
         }
+    }
+
+    private void withLog(String tenant, String command, Runnable action, String logTemplate, Object... params) {
+        final StopWatch stopWatch = StopWatch.createStarted();
+        log.info("[{}] start: {} " + logTemplate, tenant, command, params);
+        action.run();
+        log.info("[{}]  stop: {}, time = {} ms.", tenant, command, stopWatch.getTime());
     }
 }
