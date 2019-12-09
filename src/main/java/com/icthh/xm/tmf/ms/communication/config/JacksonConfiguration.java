@@ -14,7 +14,6 @@ public class JacksonConfiguration {
 
     /**
      * Support for Java date and time API.
-     *
      * @return the corresponding Jackson module.
      */
     @Bean
@@ -51,4 +50,5 @@ public class JacksonConfiguration {
     ConstraintViolationProblemModule constraintViolationProblemModule() {
         return new ConstraintViolationProblemModule();
     }
+
 }
