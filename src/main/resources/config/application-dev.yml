@@ -118,8 +118,8 @@ oauth2:
 
 application:
     firebase:
-        url: changeit
-        token: changeit
+        url: ${FIREBASE_URL:}
+        token: ${FIREBASE_TOKEN:}
 # ===================================================================
 # Application specific properties
 # Add your own application properties here, see the ApplicationProperties class

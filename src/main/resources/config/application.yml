@@ -213,8 +213,8 @@ application:
         alphaEncoding:
         notAlphaEncoding:
     firebase:
-        url:
-        token:
+        url: ${FIREBASE_URL:}
+        token: ${FIREBASE_TOKEN:}
     retry:
         max-attempts: 3
         delay: 1000 #in milliseconds
@@ -222,3 +222,4 @@ application:
 
     businessRule:
         enableBusinessTimeRule: false
+
