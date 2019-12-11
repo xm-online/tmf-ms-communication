@@ -9,13 +9,14 @@ import com.icthh.xm.tmf.ms.communication.utils.ApiMapper;
 import com.icthh.xm.tmf.ms.communication.web.api.CommunicationMessageApiDelegate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
-import com.icthh.xm.tmf.ms.communication.web.rest.errors.FirebaseCommunicatoinException;
 import com.icthh.xm.tmf.ms.communication.web.rest.errors.InternalServerErrorException;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 @AllArgsConstructor
 public class CommunicationMessageApiImpl implements CommunicationMessageApiDelegate {
 
@@ -36,7 +37,9 @@ public class CommunicationMessageApiImpl implements CommunicationMessageApiDeleg
                 firebaseService.sendPushNotification(wrapper);
                 break;
             default:
-                throw new InternalServerErrorException(String.format("message type invalid or still not implemented. type: %s", wrapper.getType()));
+                log.error("Invalid message type specified. current value: {}. SMS type will be used.", wrapper.getType());
+                smppService.sendMultipleMessages(wrapper.getPhoneNumbers(), message.getContent(),
+                    message.getSender().getId(), wrapper.getDeliveryReport());
         }
 
         return ResponseEntity.ok().build();
