@@ -116,10 +116,6 @@ oauth2:
         client-id: web_app
         secret: changeit
 
-application:
-    firebase:
-        url: changeit
-        token: changeit
 # ===================================================================
 # Application specific properties
 # Add your own application properties here, see the ApplicationProperties class
@@ -128,5 +124,12 @@ application:
 # More documentation is available at:
 # https://www.jhipster.tech/common-application-properties/
 # ===================================================================
+application:
+    firebase:
+        url: changeit
+        token: changeit
 
-# application:
+    smpp:
+        enabled: false
+        alphaEncoding: 0
+        notAlphaEncoding: 0

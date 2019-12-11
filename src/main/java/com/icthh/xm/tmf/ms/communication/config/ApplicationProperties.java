@@ -31,6 +31,7 @@ public class ApplicationProperties {
     private String kafkaSystemQueue;
     private List<String> tenantIgnoredPathList = Collections.emptyList();
     private boolean streamBindingEnabled;
+    private String channelSpecificationPathPattern;
 
     private Messaging messaging = new Messaging();
     private BusinessRule businessRule = new BusinessRule();
@@ -44,6 +45,9 @@ public class ApplicationProperties {
 
     @Data
     public static class Messaging {
+        private String sendQueueNameTemplate;
+        private String reciveQueueNameTemplate;
+        private Integer retriesCount;
         private String toSendQueueName;
         private String sendFailedQueueName;
         private String sentQueueName;
@@ -70,6 +74,7 @@ public class ApplicationProperties {
     @Getter
     @Setter
     public static class Smpp {
+        private Boolean enabled = true;
         private String host;
         private Long connectionTimeout;
         private Integer port;

@@ -177,7 +177,11 @@ application:
     # application.kafka-concurrency-count * spring.cloud.stream.instance-count
     kafka-concurrency-count: 16
     stream-binding-enabled: true
+    channel-specification-path-pattern: /config/tenants/{tenantName}/communication/communication.yml
     messaging:
+        send-queue-name-template: communication_%s_%s_send
+        recive-queue-name-template: communication_%s_%s_recive
+        retries-count: 3
         to-send-queue-name: communication_to_send_sms
         sent-queue-name: communication_sent_sms
         send-failed-queue-name: communication_failed_sms
@@ -191,6 +195,7 @@ application:
         tenant-script-storage: XM_MS_CONFIG
         lep-resource-path-pattern: /config/tenants/{tenantName}/entity/lep/resources/**/*
     smpp:
+        enabled: true
         connection-timeout: 10000
         host: localhost
         port: 2775
