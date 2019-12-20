@@ -1,12 +1,17 @@
 package com.icthh.xm.tmf.ms.communication.messaging;
 
 import static com.icthh.xm.tmf.ms.communication.domain.DeliveryReport.deliveryReport;
+import static java.util.Optional.ofNullable;
 
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jsmpp.bean.DeliverSm;
+import org.jsmpp.bean.DeliveryReceipt;
 import org.jsmpp.bean.MessageState;
+import org.jsmpp.util.DeliveryReceiptState;
 
 @Slf4j
 public class SendToKafkaDeliveryReportListener extends AbstractDeliveryReportListener {
@@ -22,10 +27,11 @@ public class SendToKafkaDeliveryReportListener extends AbstractDeliveryReportLis
     public void processDeliveryReport(DeliverSm deliverSm) {
         final StopWatch stopWatch = StopWatch.createStarted();
 
-        String messageId = getMessageId(deliverSm);
-        MessageState state = getState(deliverSm);
+        DeliveryReceipt shortMessage = getShortMessage(deliverSm);
+        String messageId = ofNullable(getMessageId(shortMessage)).orElseGet(() -> getMessageId(deliverSm));
+        MessageState state = ofNullable(getState(shortMessage)).orElseGet(() -> getState(deliverSm));
 
-        log.info("Delivery report is received with smsc id = {}, state = {}.", messageId, state);
+        log.info("Delivery report is received with smsc id = {}, state = {}, short message: {}", messageId, state, shortMessage);
 
         if (messageId == null) {
             log.warn("RECEIPTED_MESSAGE_ID optional parameter not found.");
