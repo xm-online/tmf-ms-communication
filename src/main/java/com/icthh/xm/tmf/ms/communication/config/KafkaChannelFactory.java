@@ -104,18 +104,37 @@ public class KafkaChannelFactory {
         bindingService.bindConsumer(channel, chanelName);
 
         bindersHealthIndicator.addHealthIndicator(KAFKA, kafkaBinderHealthIndicator);
-
+        long sleepTime = calculateSubscriberSleepTime();
         channel.subscribe(message -> {
             try {
                 MdcUtils.putRid(MdcUtils.generateRid());
                 handleEvent(message);
             } catch (Exception e) {
-                log.error("error processign event", e);
+                log.error("error processing event", e);
                 throw e;
             } finally {
                 MdcUtils.removeRid();
+                if(applicationProperties.isServiceChannelManagement()){
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {
+                        log.error("kafka subscribe thread interrupted exception", e);
+                    }
+                }
             }
         });
+
+    }
+
+    private long calculateSubscriberSleepTime() {
+        if (applicationProperties.isServiceChannelManagement()) {
+            int millisecondsPeriod = 60000;
+            int kafkaThreadsCount = applicationProperties.getKafkaConcurrencyCount();
+            int channelLimit = applicationProperties.getServiceChannelLimit();
+            int operationCountPeerThread = channelLimit / kafkaThreadsCount;
+            return millisecondsPeriod / operationCountPeerThread;
+        }
+        return 0;
 
     }
 

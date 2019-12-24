@@ -29,6 +29,8 @@ public class ApplicationProperties {
     private int kafkaConcurrencyCount;
     private String kafkaSystemTopic;
     private String kafkaSystemQueue;
+    private boolean serviceChannelManagement = false;
+    private int serviceChannelLimit;
     private List<String> tenantIgnoredPathList = Collections.emptyList();
     private boolean streamBindingEnabled;
     private String channelSpecificationPathPattern;
