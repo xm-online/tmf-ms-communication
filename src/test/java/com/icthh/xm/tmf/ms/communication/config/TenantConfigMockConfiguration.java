@@ -1,6 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -34,8 +34,7 @@ public class TenantConfigMockConfiguration {
 
     @Bean
     public TenantConfigRepository tenantConfigRepository() {
-        TenantConfigRepository tenantConfigRepository = mock(TenantConfigRepository.class);
-        return tenantConfigRepository;
+        return mock(TenantConfigRepository.class);
     }
 
     @Bean

@@ -7,6 +7,7 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestChara
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.Collections;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@UtilityClass
 public class ApiMapper {
 
     public static CommunicationMessageWrapper from(CommunicationMessage message) {

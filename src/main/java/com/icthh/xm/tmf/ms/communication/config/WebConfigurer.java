@@ -6,9 +6,10 @@ import com.codahale.metrics.servlets.MetricsServlet;
 import com.icthh.xm.commons.logging.spring.config.ServiceLoggingAspectConfiguration;
 import io.github.jhipster.config.JHipsterProperties;
 import io.undertow.UndertowOptions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.web.embedded.undertow.UndertowServletWebServerFactory;
 import org.springframework.boot.web.server.MimeMappings;
 import org.springframework.boot.web.server.WebServerFactory;
@@ -40,21 +41,17 @@ import java.util.EnumSet;
 @Import({
     ServiceLoggingAspectConfiguration.class
 })
+@Slf4j
+@RequiredArgsConstructor
 public class WebConfigurer implements ServletContextInitializer, WebServerFactoryCustomizer<WebServerFactory> {
-
-    private final Logger log = LoggerFactory.getLogger(WebConfigurer.class);
 
     private final Environment env;
 
     private final JHipsterProperties jHipsterProperties;
 
+    private final ServerProperties serverProperties;
+
     private MetricRegistry metricRegistry;
-
-    public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties) {
-
-        this.env = env;
-        this.jHipsterProperties = jHipsterProperties;
-    }
 
     @Override
     public void onStartup(ServletContext servletContext) throws ServletException {
@@ -79,9 +76,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
          * See the JHipsterProperties class and your application-*.yml configuration files
          * for more information.
          */
-        if (jHipsterProperties.getHttp().getVersion().equals(JHipsterProperties.Http.Version.V_2_0) &&
-            server instanceof UndertowServletWebServerFactory) {
-
+        if (serverProperties.getHttp2().isEnabled() && server instanceof UndertowServletWebServerFactory) {
             ((UndertowServletWebServerFactory) server)
                 .addBuilderCustomizers(builder ->
                     builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true));

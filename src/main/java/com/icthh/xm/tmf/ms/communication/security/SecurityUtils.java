@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.security;
 
+import lombok.experimental.UtilityClass;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -9,10 +10,8 @@ import java.util.Optional;
 /**
  * Utility class for Spring Security.
  */
+@UtilityClass
 public final class SecurityUtils {
-
-    private SecurityUtils() {
-    }
 
     /**
      * Get the login of the current user.

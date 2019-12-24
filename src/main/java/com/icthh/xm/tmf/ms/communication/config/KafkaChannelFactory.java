@@ -1,6 +1,5 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.lang3.StringUtils.unwrap;
 import static org.springframework.cloud.stream.binder.kafka.properties.KafkaConsumerProperties.StartOffset.earliest;
 import static org.springframework.kafka.support.KafkaHeaders.ACKNOWLEDGMENT;
@@ -9,8 +8,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
-import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
-import java.util.Base64;
+
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.PostConstruct;
@@ -18,6 +17,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.boot.actuate.health.CompositeHealthIndicator;
+import org.springframework.boot.actuate.health.HealthIndicatorRegistry;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.cloud.stream.binder.ConsumerProperties;
 import org.springframework.cloud.stream.binder.HeaderMode;
@@ -86,7 +86,7 @@ public class KafkaChannelFactory {
         props.getConsumer().setAutoCommitOnError(false);
         props.getConsumer().setStartOffset(earliest);
         props.getConsumer().setAckEachRecord(true);
-        kafkaExtendedBindingProperties.getBindings().put(chanelName, props);
+        kafkaExtendedBindingProperties.setBindings(Collections.singletonMap(chanelName, props));
 
         ConsumerProperties consumerProperties = new ConsumerProperties();
         consumerProperties.setMaxAttempts(Integer.MAX_VALUE);
@@ -98,19 +98,22 @@ public class KafkaChannelFactory {
         bindingProperties.setConsumer(consumerProperties);
         bindingProperties.setDestination(chanelName);
         bindingProperties.setGroup(kafkaProperties.getConsumer().getGroupId());
-        bindingServiceProperties.getBindings().put(chanelName, bindingProperties);
+        bindingServiceProperties.setBindings(Collections.singletonMap(chanelName, bindingProperties));
 
         SubscribableChannel channel = bindingTargetFactory.createInput(chanelName);
         bindingService.bindConsumer(channel, chanelName);
 
-        bindersHealthIndicator.addHealthIndicator(KAFKA, kafkaBinderHealthIndicator);
+        HealthIndicatorRegistry registry = bindersHealthIndicator.getRegistry();
+        if (registry.get(KAFKA) == null) {
+            registry.register(KAFKA, kafkaBinderHealthIndicator);
+        }
 
         channel.subscribe(message -> {
             try {
                 MdcUtils.putRid(MdcUtils.generateRid());
                 handleEvent(message);
             } catch (Exception e) {
-                log.error("error processign event", e);
+                log.error("error processing event", e);
                 throw e;
             } finally {
                 MdcUtils.removeRid();
@@ -127,12 +130,12 @@ public class KafkaChannelFactory {
 
         try {
             String payloadString = (String) message.getPayload();
-            log.info("start processign message, base64 body = {}, headers = {}", payloadString, getHeaders(message));
+            log.info("start processing message, base64 body = {}, headers = {}", payloadString, getHeaders(message));
             payloadString = unwrap(payloadString, "\"");
-            log.info("start processign message, json body = {}", payloadString);
+            log.info("start processing message, json body = {}", payloadString);
             CommunicationMessage communicationMessage = mapToCommunicationMessage(payloadString);
             messagingHandler.receiveMessage(communicationMessage);
-            log.info("stop processign message, time = {}", stopWatch.getTime());
+            log.info("stop processing message, time = {}", stopWatch.getTime());
         } catch (Exception e) {
             log.error("Error process event", e);
         }
@@ -140,8 +143,7 @@ public class KafkaChannelFactory {
 
     private Map<String, Object> getHeaders(Message<?> message) {
         MessageHeaders headers = message.getHeaders();
-        Map<String, Object> headersForLog = new HashMap<>();
-        headersForLog.putAll(headers);
+        Map<String, Object> headersForLog = new HashMap<>(headers);
         headersForLog.remove(ACKNOWLEDGMENT);
         return headersForLog;
     }

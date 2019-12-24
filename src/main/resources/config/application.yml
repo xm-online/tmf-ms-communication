@@ -74,6 +74,8 @@ spring:
                     autoAddPartitions: true
                     minPartitionCount: 16
                     healthTimeout: 2
+    main:
+        allow-bean-definition-overriding: true
 
     messages:
         basename: i18n/messages
