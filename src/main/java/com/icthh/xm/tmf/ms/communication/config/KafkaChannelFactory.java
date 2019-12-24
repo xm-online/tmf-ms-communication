@@ -10,10 +10,12 @@ import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
+
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.PostConstruct;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
@@ -104,8 +106,9 @@ public class KafkaChannelFactory {
         bindingService.bindConsumer(channel, chanelName);
 
         bindersHealthIndicator.addHealthIndicator(KAFKA, kafkaBinderHealthIndicator);
-        long sleepTime = calculateSubscriberSleepTime();
+        long handlingTime = calculateSubscriberSleepTime();
         channel.subscribe(message -> {
+            long startHandlingTime = System.currentTimeMillis();
             try {
                 MdcUtils.putRid(MdcUtils.generateRid());
                 handleEvent(message);
@@ -114,9 +117,12 @@ public class KafkaChannelFactory {
                 throw e;
             } finally {
                 MdcUtils.removeRid();
-                if(applicationProperties.isServiceChannelManagement()){
+                if (applicationProperties.isServiceChannelManagement()) {
                     try {
-                        Thread.sleep(sleepTime);
+                        long sleepTime = handlingTime - (System.currentTimeMillis() - startHandlingTime);
+                        if (sleepTime > 0) {
+                            Thread.sleep(sleepTime);
+                        }
                     } catch (InterruptedException e) {
                         log.error("kafka subscribe thread interrupted exception", e);
                     }
@@ -128,7 +134,7 @@ public class KafkaChannelFactory {
 
     private long calculateSubscriberSleepTime() {
         if (applicationProperties.isServiceChannelManagement()) {
-            int millisecondsPeriod = 60000;
+            int millisecondsPeriod = 1000;
             int kafkaThreadsCount = applicationProperties.getKafkaConcurrencyCount();
             int channelLimit = applicationProperties.getServiceChannelLimit();
             int operationCountPeerThread = channelLimit / kafkaThreadsCount;
