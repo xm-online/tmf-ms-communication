@@ -178,7 +178,7 @@ application:
     kafka-concurrency-count: 16
     stream-binding-enabled: true
     service-channel-management: true
-    service-channel-limit: 200
+    service-channel-limit: 20
     channel-specification-path-pattern: /config/tenants/{tenantName}/communication/communication.yml
     messaging:
         send-queue-name-template: communication_%s_%s_send
