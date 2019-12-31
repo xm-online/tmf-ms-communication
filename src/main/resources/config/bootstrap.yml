@@ -18,6 +18,10 @@ spring:
                 format: yaml
                 profile-separator: "-"
             discovery:
-                tags: profile=${spring.profiles.active}, version=${info.project.version:}
+                tags:
+                    - profile=${spring.profiles.active}
+                    - version=${build.version}
+                    - git-branch=${git.branch:}
+                    - git-commit=${git.commit.id.abbrev:}
             host: localhost
             port: 8500
