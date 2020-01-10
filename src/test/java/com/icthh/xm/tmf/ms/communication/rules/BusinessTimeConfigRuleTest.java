@@ -16,6 +16,7 @@ import static java.util.Objects.requireNonNull;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
@@ -31,9 +32,11 @@ import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessTimeConfigSe
 import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessTimeRule;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -59,6 +62,13 @@ public class BusinessTimeConfigRuleTest {
     private static final String EXCEPTION_DATE_BUSINESS_TIME = EXCEPTION_DATE + "T14:15:30.00Z";
     private static final String EXCEPTION_DATE_NOT_BUSINESS_TIME = EXCEPTION_DATE + "T16:15:30.00Z";
     private static final String UPDATED_KEY = "/config/tenants/xm/tenant-config.yml";
+
+    //exceptionalClharacteristics
+    private static final CommunicationRequestCharacteristic firstExceptionalCharacteristic =
+        new CommunicationRequestCharacteristic().name("firstException").value("firstValue");
+
+    private static final CommunicationRequestCharacteristic secondExceptionalCharacteristic =
+        new CommunicationRequestCharacteristic().name("secondException").value("secondValue");
 
     @Mock
     private KafkaTemplate<String, Object> kafkaTemplate;
@@ -113,6 +123,11 @@ public class BusinessTimeConfigRuleTest {
         BusinessTime exceptionDateBusinessTime = businessTimeConfig.getExceptionDate().get(parse("2019-03-17"));
         assertEquals(exceptionDateBusinessTime.getStartTime(), of(13, 00));
         assertEquals(exceptionDateBusinessTime.getEndTime(), of(15, 30));
+
+        List<CommunicationRequestCharacteristic> exceptionCharacteristics = businessTimeConfig.getExceptionCharacteristics();
+        assertEquals(exceptionCharacteristics.size(), 2);
+        assertTrue(exceptionCharacteristics.contains(firstExceptionalCharacteristic));
+        assertTrue(exceptionCharacteristics.contains(secondExceptionalCharacteristic));
     }
 
     @Test
@@ -144,6 +159,19 @@ public class BusinessTimeConfigRuleTest {
         configLocalTime(EXCEPTION_DATE_NOT_BUSINESS_TIME);
         failureCheck();
     }
+
+    @Test
+    public void validateMessageNotBusinessTimeWithFirstExceptionTest() {
+        configLocalTime(NOT_BUSINESS_TIME);
+        successCheck(message().addCharacteristicItem(firstExceptionalCharacteristic));
+    }
+
+    @Test
+    public void validateMessageNotBusinessTimeWithSecondExceptionTest() {
+        configLocalTime(NOT_BUSINESS_TIME);
+        successCheck(message().addCharacteristicItem(secondExceptionalCharacteristic));
+    }
+
 
     private void successCheck(CommunicationMessage message) {
         messagingHandler.receiveMessage(message);
