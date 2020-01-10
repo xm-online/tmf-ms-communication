@@ -63,7 +63,7 @@ public class BusinessTimeConfigRuleTest {
     private static final String EXCEPTION_DATE_NOT_BUSINESS_TIME = EXCEPTION_DATE + "T16:15:30.00Z";
     private static final String UPDATED_KEY = "/config/tenants/xm/tenant-config.yml";
 
-    //exceptionalClharacteristics
+    //exceptionalCharacteristics
     private static final CommunicationRequestCharacteristic firstExceptionalCharacteristic =
         new CommunicationRequestCharacteristic().name("firstException").value("firstValue");
 
