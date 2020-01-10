@@ -39,7 +39,7 @@ public class BusinessTimeRule implements BusinessRule {
 
             boolean exceptionCharacteristicPresent = false;
             if (businessDayConfig.getBusinessTime() != null) {
-                exceptionCharacteristicPresent = checkMessageCharacteristics(message, businessDayConfig);
+                exceptionCharacteristicPresent = isSendingAllowedByCharacteristics(message, businessDayConfig);
             }
 
             if (!exceptionCharacteristicPresent){
@@ -66,7 +66,7 @@ public class BusinessTimeRule implements BusinessRule {
      * @param businessDayConfig Configuration
      * @return Whether the message contains characteristics which are allow to send it at not business time
      */
-    private boolean checkMessageCharacteristics(CommunicationMessage message, BusinessDayConfig businessDayConfig) {
+    private boolean isSendingAllowedByCharacteristics(CommunicationMessage message, BusinessDayConfig businessDayConfig) {
         boolean exceptionCharacteristicPresent = false;
         List<CommunicationRequestCharacteristic> exceptionCharacteristics = businessDayConfig.getBusinessTime()
             .getExceptionCharacteristics();
