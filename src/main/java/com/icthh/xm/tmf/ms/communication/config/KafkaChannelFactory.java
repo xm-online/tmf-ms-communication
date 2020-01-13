@@ -127,13 +127,13 @@ public class KafkaChannelFactory {
 
         try {
             String payloadString = (String) message.getPayload();
-            log.info("start processign message, base64 body = {}, headers = {}", payloadString, getHeaders(message));
+            log.info("start processing message, base64 body = {}, headers = {}", payloadString, getHeaders(message));
             payloadString = unwrap(payloadString, "\"");
-            log.info("start processign message, json body = {}", payloadString);
+            log.info("start processing message, json body = {}", payloadString);
             CommunicationMessage communicationMessage = mapToCommunicationMessage(payloadString);
             addReceivedByChannelCharacteristic(communicationMessage, message);
             messagingHandler.receiveMessage(communicationMessage);
-            log.info("stop processign message, time = {}", stopWatch.getTime());
+            log.info("stop processing message, time = {}", stopWatch.getTime());
         } catch (Exception e) {
             log.error("Error process event", e);
         }
