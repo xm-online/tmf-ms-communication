@@ -1,6 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static com.icthh.xm.tmf.ms.communication.rules.ttl.TTLRule.MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP;
 import static org.apache.commons.lang3.StringUtils.unwrap;
 import static org.springframework.cloud.stream.binder.kafka.properties.KafkaConsumerProperties.StartOffset.earliest;
 import static org.springframework.kafka.support.KafkaHeaders.ACKNOWLEDGMENT;
@@ -9,8 +9,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
-import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
-import java.util.Base64;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.PostConstruct;
@@ -30,6 +29,7 @@ import org.springframework.cloud.stream.binding.SubscribableChannelBindingTarget
 import org.springframework.cloud.stream.config.BindingProperties;
 import org.springframework.cloud.stream.config.BindingServiceProperties;
 import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.SubscribableChannel;
@@ -131,6 +131,7 @@ public class KafkaChannelFactory {
             payloadString = unwrap(payloadString, "\"");
             log.info("start processign message, json body = {}", payloadString);
             CommunicationMessage communicationMessage = mapToCommunicationMessage(payloadString);
+            addReceivedByChannelCharacteristic(communicationMessage, message);
             messagingHandler.receiveMessage(communicationMessage);
             log.info("stop processign message, time = {}", stopWatch.getTime());
         } catch (Exception e) {
@@ -151,4 +152,27 @@ public class KafkaChannelFactory {
         return objectMapper.readValue(eventBody, CommunicationMessage.class);
     }
 
+    /**
+     * Since Kafka headers are not accessible from the business rules,
+     * move Kafka received timestamp to the communication message characteristics
+     */
+    private void addReceivedByChannelCharacteristic(CommunicationMessage communicationMessage, Message<?> kafkaMessage){
+        // cannot be null, but anyway
+        if (kafkaMessage.getHeaders() != null){
+            Long kafkaReceivedTimestamp = (Long) kafkaMessage.getHeaders().get(KafkaHeaders.RECEIVED_TIMESTAMP);
+            // also cannot be null, but anyway
+            if (kafkaReceivedTimestamp != null){
+                communicationMessage.addCharacteristicItem(
+                    new CommunicationRequestCharacteristic()
+                        // Rename it to unlink name from source channel
+                        .name(MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP)
+                        .value(String.valueOf(kafkaReceivedTimestamp))
+                );
+            }else {
+                log.warn("{} header not found in the source message headers", KafkaHeaders.RECEIVED_TIMESTAMP);
+            }
+        }else{
+            log.warn("Kafka headers not found in the source message");
+        }
+    }
 }

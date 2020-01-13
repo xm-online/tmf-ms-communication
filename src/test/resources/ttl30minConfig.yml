@@ -1,0 +1,4 @@
+---
+ttlRule:
+  value: 30
+  chronoUnit: MINUTES
