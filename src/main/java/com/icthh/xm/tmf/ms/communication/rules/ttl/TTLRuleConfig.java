@@ -1,7 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.rules.ttl;
 
-import static com.icthh.xm.tmf.ms.communication.rules.ttl.TTLRuleConfig.Action.*;
-
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -19,8 +19,12 @@ public class TTLRuleConfig {
         private Action action;
     }
 
+    @Getter
+    @RequiredArgsConstructor
     public enum Action {
-        NONE, REJECT, WARNING;
+        NONE(false), REJECT(true), WARNING(true);
+
+        private final boolean active;
 
         public static Action getDefaultValue(){
             return NONE;
@@ -28,9 +32,7 @@ public class TTLRuleConfig {
     }
 
     public boolean isActive(){
-        return ttlRule != null
-            && ttlRule.action != null
-            && ttlRule.action != NONE;
+        return getAction().isActive();
     }
 
     public Optional<Duration> getTTL(){
@@ -43,6 +45,6 @@ public class TTLRuleConfig {
     }
 
     public Action getAction(){
-        return (ttlRule == null || ttlRule.action == null) ? NONE : ttlRule.action;
+        return (ttlRule == null || ttlRule.action == null) ? Action.getDefaultValue() : ttlRule.action;
     }
 }
