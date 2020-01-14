@@ -45,6 +45,7 @@ public class TTLRule implements BusinessRule {
                                 break;
                             case NONE:
                                 // Nothing - filtered before
+                                break;
                             default:
                                 log.error("The behaviour for the following action value is not implemented: {}", config.getAction());
                         }
