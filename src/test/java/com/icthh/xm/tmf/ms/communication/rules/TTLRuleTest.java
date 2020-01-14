@@ -80,7 +80,7 @@ public class TTLRuleTest {
     }
 
     @Test
-    public void inActiveConfigTest() throws Throwable {
+    public void inactiveConfigTest() throws Throwable {
         TTLRuleConfig ttlRuleConfig = loadInactiveConfig();
 
         assertEquals(new Long(1), ttlRuleConfig.getTtlRule().getValue());
