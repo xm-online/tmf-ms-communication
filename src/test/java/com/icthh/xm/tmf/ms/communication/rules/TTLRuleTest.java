@@ -90,6 +90,16 @@ public class TTLRuleTest {
     }
 
     @Test
+    public void warningConfigTest() throws Throwable {
+        TTLRuleConfig ttlRuleConfig = loadWarningConfig();
+
+        assertEquals(new Long(1), ttlRuleConfig.getTtlRule().getValue());
+        assertEquals(ChronoUnit.MILLIS.name(), ttlRuleConfig.getTtlRule().getChronoUnit());
+        assertEquals(TTLRuleConfig.Action.WARNING, ttlRuleConfig.getAction());
+        assertTrue(ttlRuleConfig.isActive());
+    }
+
+    @Test
     public void defaultActionConfigTest() throws Throwable {
         TTLRuleConfig ttlRuleConfig = loadDefaultActionConfig();
 
@@ -151,6 +161,20 @@ public class TTLRuleTest {
         ));
     }
 
+    /**
+     * Test that outdated message is not rejected
+     */
+    @Test
+    public void validateWarningTest() throws Throwable {
+        loadWarningConfig();
+
+        successCheck(message().addCharacteristicItem(
+            new CommunicationRequestCharacteristic()
+                .name(MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP)
+                .value(String.valueOf(Instant.now().toEpochMilli()))
+        ));
+    }
+
     @Test
     public void validateMessageOutdatedBornTimeTest() throws Throwable {
         loadOneMillisecondConfig();
@@ -182,6 +206,10 @@ public class TTLRuleTest {
 
     private TTLRuleConfig loadInactiveConfig() throws IOException {
         return refreshConfig("ttlInaciveConfig.yml");
+    }
+
+    private TTLRuleConfig loadWarningConfig() throws IOException {
+        return refreshConfig("ttlWarningConfig.yml");
     }
 
     private TTLRuleConfig loadDefaultActionConfig() throws IOException {
