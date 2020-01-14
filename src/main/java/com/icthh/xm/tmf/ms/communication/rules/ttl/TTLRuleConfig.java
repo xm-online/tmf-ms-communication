@@ -1,7 +1,8 @@
 package com.icthh.xm.tmf.ms.communication.rules.ttl;
 
-import lombok.Value;
+import static com.icthh.xm.tmf.ms.communication.rules.ttl.TTLRuleConfig.Action.*;
 
+import lombok.Value;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
@@ -15,11 +16,21 @@ public class TTLRuleConfig {
     public static class TTLConfiguration {
         private Long value;
         private String chronoUnit;
+        private Action action;
     }
+
+    public enum Action {
+        NONE, REJECT, WARNING;
+
+        public static Action getDefaultValue(){
+            return NONE;
+        }
+    }
+
     public boolean isActive(){
         return ttlRule != null
-            && ttlRule.value != null
-            && ttlRule.value > 0;
+            && ttlRule.action != null
+            && ttlRule.action != NONE;
     }
 
     public Optional<Duration> getTTL(){
@@ -29,5 +40,9 @@ public class TTLRuleConfig {
         }else{
             return Optional.empty();
         }
+    }
+
+    public Action getAction(){
+        return (ttlRule == null || ttlRule.action == null) ? NONE : ttlRule.action;
     }
 }

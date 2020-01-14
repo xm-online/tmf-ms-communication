@@ -1,3 +1,5 @@
 ---
 ttlRule:
-  value: -1
+  value: 1
+  chronoUnit: MILLIS
+  action: NONE

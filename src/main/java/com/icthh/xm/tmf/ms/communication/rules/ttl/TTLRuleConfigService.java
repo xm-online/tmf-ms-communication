@@ -35,6 +35,9 @@ public class TTLRuleConfigService extends TenantConfigService {
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         ttlRuleConfig = objectMapper.readValue(config, TTLRuleConfig.class);
+        if (ttlRuleConfig != null && ttlRuleConfig.getAction() == null){
+            log.warn("TTLRule action is not set, {} value will be used as default!", TTLRuleConfig.Action.getDefaultValue());
+        }
         log.debug("Update ttlRuleConfig: {}", ttlRuleConfig);
     }
 

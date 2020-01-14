@@ -75,6 +75,7 @@ public class TTLRuleTest {
         assertEquals(new Long(30), ttlRuleConfig.getTtlRule().getValue());
         assertEquals(ChronoUnit.MINUTES.name(), ttlRuleConfig.getTtlRule().getChronoUnit());
         assertEquals(Duration.ofMinutes(30L), ttlRuleConfig.getTTL().get());
+        assertEquals(TTLRuleConfig.Action.REJECT, ttlRuleConfig.getAction());
         assertTrue(ttlRuleConfig.isActive());
     }
 
@@ -82,8 +83,19 @@ public class TTLRuleTest {
     public void inActiveConfigTest() throws Throwable {
         TTLRuleConfig ttlRuleConfig = loadInactiveConfig();
 
-        assertEquals(new Long(-1), ttlRuleConfig.getTtlRule().getValue());
-        assertNull(ttlRuleConfig.getTtlRule().getChronoUnit());
+        assertEquals(new Long(1), ttlRuleConfig.getTtlRule().getValue());
+        assertEquals(ChronoUnit.MILLIS.name(), ttlRuleConfig.getTtlRule().getChronoUnit());
+        assertEquals(TTLRuleConfig.Action.NONE, ttlRuleConfig.getAction());
+        assertFalse(ttlRuleConfig.isActive());
+    }
+
+    @Test
+    public void inDefaultActionConfigTest() throws Throwable {
+        TTLRuleConfig ttlRuleConfig = loadDefaultActionConfig();
+
+        assertEquals(new Long(1), ttlRuleConfig.getTtlRule().getValue());
+        assertEquals(ChronoUnit.MILLIS.name(), ttlRuleConfig.getTtlRule().getChronoUnit());
+        assertEquals(TTLRuleConfig.Action.NONE, ttlRuleConfig.getAction());
         assertFalse(ttlRuleConfig.isActive());
     }
 
@@ -109,6 +121,17 @@ public class TTLRuleTest {
     @Test
     public void validateInactiveConfigTest() throws Throwable {
         loadInactiveConfig();
+
+        successCheck(message().addCharacteristicItem(
+            new CommunicationRequestCharacteristic()
+                .name(MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP)
+                .value(String.valueOf(Instant.now().toEpochMilli()))
+        ));
+    }
+
+    @Test
+    public void validateDefaultActionConfigTest() throws Throwable {
+        loadDefaultActionConfig();
 
         successCheck(message().addCharacteristicItem(
             new CommunicationRequestCharacteristic()
@@ -159,6 +182,10 @@ public class TTLRuleTest {
 
     private TTLRuleConfig loadInactiveConfig() throws IOException {
         return refreshConfig("ttlInaciveConfig.yml");
+    }
+
+    private TTLRuleConfig loadDefaultActionConfig() throws IOException {
+        return refreshConfig("ttlDefaultActionConfig.yml");
     }
 
     private TTLRuleConfig loadNoConfig() throws IOException {

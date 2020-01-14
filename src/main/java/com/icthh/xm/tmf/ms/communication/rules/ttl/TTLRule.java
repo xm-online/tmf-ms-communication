@@ -5,8 +5,6 @@ import com.icthh.xm.tmf.ms.communication.rules.RuleResponse;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 
@@ -27,34 +25,33 @@ public class TTLRule implements BusinessRule {
         ruleResponse.setResponseCode(TTL_EXCEED_MESSAGE_CODE);
         ruleResponse.setSuccess(true);
         TTLRuleConfig config = configService.getTtlRuleConfig();
-        if (config != null && message.getCharacteristic() != null) {
+        if (config != null && config.isActive() && message.getCharacteristic() != null) {
             config.getTTL().ifPresent((ttl) ->
                 message.getCharacteristic().stream()
                     .filter((characteristic) -> MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP.equals(characteristic.getName()))
-                    .findFirst()
+                    .peek((characteristic) -> log.debug("The following bornTime is found: {}", characteristic.getValue()))
+                    .findAny()
                     .filter((characteristic) -> characteristic.getValue() != null)
                     .map((characteristic) -> new Date(Long.valueOf(characteristic.getValue())).toInstant())
                     .filter((bornTime) -> Instant.now().minus(ttl).isAfter(bornTime))
-                    .ifPresent((bornTime) -> ruleResponse.setSuccess(false))
+                    .ifPresent((bornTime) -> {
+                        switch (config.getAction()) {
+                            case REJECT:
+                                log.debug("The following bornTime is rejected: {}", bornTime);
+                                ruleResponse.setSuccess(false);
+                                break;
+                            case WARNING:
+                                log.warn("The TTL is exceeded for the following bornTime: {}", bornTime);
+                                break;
+                            case NONE:
+                                // Nothing - filtered before
+                            default:
+                                log.error("The behaviour for the following action value is not implemented: {}", config.getAction());
+                        }
+                    })
             );
-            if (log.isDebugEnabled()) {
-                // do it only for debug mode
-                if (config.isActive()) {
-                    Duration ttl = config.getTTL().get();
-                    message.getCharacteristic().stream()
-                        .filter((characteristic) -> MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP.equals(characteristic.getName()))
-                        .peek((characteristic) -> log.debug("The following bornTime is found: {}", characteristic.getValue()))
-                        .findFirst()
-                        .filter((characteristic) -> characteristic.getValue() != null)
-                        .map((characteristic) -> new Date(Long.valueOf(characteristic.getValue())).toInstant())
-                        .filter((bornTime) -> Instant.now().minus(ttl).isAfter(bornTime))
-                        .ifPresent((bornTime) -> log.debug("The following bornTime is rejected: {}", bornTime));
-                } else {
-                    log.debug("TTLRule is turned off");
-                }
-            }
         } else {
-            log.debug("TTLRule is not configured");
+            log.debug("TTLRule is not configured or inactive");
         }
         return ruleResponse;
     }
