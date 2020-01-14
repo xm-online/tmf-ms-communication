@@ -90,12 +90,12 @@ public class TTLRuleTest {
     }
 
     @Test
-    public void inDefaultActionConfigTest() throws Throwable {
+    public void defaultActionConfigTest() throws Throwable {
         TTLRuleConfig ttlRuleConfig = loadDefaultActionConfig();
 
         assertEquals(new Long(1), ttlRuleConfig.getTtlRule().getValue());
         assertEquals(ChronoUnit.MILLIS.name(), ttlRuleConfig.getTtlRule().getChronoUnit());
-        assertEquals(TTLRuleConfig.Action.NONE, ttlRuleConfig.getAction());
+        assertEquals(TTLRuleConfig.Action.getDefaultValue(), ttlRuleConfig.getAction());
         assertFalse(ttlRuleConfig.isActive());
     }
 
