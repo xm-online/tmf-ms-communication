@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @Getter
 public class TTLRuleConfigService extends TenantConfigService {
 
-    TTLRuleConfig ttlRuleConfig;
+    private TTLRuleConfig ttlRuleConfig;
 
     public TTLRuleConfigService(XmConfigProperties xmConfigProperties, TenantContextHolder tenantContextHolder) {
         super(xmConfigProperties, tenantContextHolder);
