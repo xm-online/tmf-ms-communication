@@ -5,6 +5,7 @@ import com.icthh.xm.tmf.ms.communication.rules.RuleResponse;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 
@@ -25,35 +26,51 @@ public class TTLRule implements BusinessRule {
         ruleResponse.setResponseCode(TTL_EXCEED_MESSAGE_CODE);
         ruleResponse.setSuccess(true);
         TTLRuleConfig config = configService.getTtlRuleConfig();
-        if (config != null && config.isActive() && message.getCharacteristic() != null) {
-            config.getTTL().ifPresent((ttl) ->
-                message.getCharacteristic().stream()
-                    .filter((characteristic) -> MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP.equals(characteristic.getName()))
-                    .peek((characteristic) -> log.debug("The following bornTime is found: {}", characteristic.getValue()))
-                    .findAny()
-                    .filter((characteristic) -> characteristic.getValue() != null)
-                    .map((characteristic) -> new Date(Long.valueOf(characteristic.getValue())).toInstant())
-                    .filter((bornTime) -> Instant.now().minus(ttl).isAfter(bornTime))
-                    .ifPresent((bornTime) -> {
-                        switch (config.getAction()) {
-                            case REJECT:
-                                log.debug("The following bornTime is rejected: {}", bornTime);
-                                ruleResponse.setSuccess(false);
-                                break;
-                            case WARNING:
-                                log.warn("The TTL is exceeded for the following bornTime: {}", bornTime);
-                                break;
-                            case NONE:
-                                // Nothing - filtered before
-                                break;
-                            default:
-                                log.error("The behaviour for the following action value is not implemented: {}", config.getAction());
-                        }
-                    })
-            );
+        try {
+            if (config != null && config.isActive() && message.getCharacteristic() != null) {
+                config.getTTL().ifPresent((ttl) -> applyRule(message, ttl, ruleResponse));
+            } else {
+                log.debug("TTLRule is not configured or inactive");
+            }
+        } catch (Exception e) {
+            // in case of any configuration error
+            log.error(String.format("Error apply TTL rule: #s", e.getMessage()), e);
+        }
+        return ruleResponse;
+    }
+
+    private void applyRule(CommunicationMessage message, Duration ttl, RuleResponse ruleResponse) {
+        message.getCharacteristic().stream()
+            .filter((characteristic) -> MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP.equals(characteristic.getName()))
+            .peek((characteristic) -> log.debug("The following bornTime is found: {}", characteristic.getValue()))
+            .findAny()
+            .filter((characteristic) -> characteristic.getValue() != null)
+            .map((characteristic) -> new Date(Long.valueOf(characteristic.getValue())).toInstant())
+            .filter((bornTime) -> Instant.now().minus(ttl).isAfter(bornTime))
+            .ifPresent((bornTime) -> doAction(bornTime, ruleResponse));
+    }
+
+    private void doAction(Instant bornTime, RuleResponse ruleResponse) {
+        TTLRuleConfig config = configService.getTtlRuleConfig();
+        // checked before, but anyway
+        if (config != null) {
+            switch (config.getAction()) {
+                case REJECT:
+                    log.debug("The following bornTime is rejected: {}", bornTime);
+                    ruleResponse.setSuccess(false);
+                    break;
+                case WARNING:
+                    log.warn("The TTL is exceeded for the following bornTime: {}", bornTime);
+                    break;
+                case NONE:
+                    // filtered before, but anyway
+                    log.debug("TTLRule {} action is configured", TTLRuleConfig.Action.NONE);
+                    break;
+                default:
+                    log.error("The behaviour for the following action value is not implemented: {}", config.getAction());
+            }
         } else {
             log.debug("TTLRule is not configured or inactive");
         }
-        return ruleResponse;
     }
 }
