@@ -3,11 +3,13 @@ package com.icthh.xm.tmf.ms.communication.rules.ttl;
 import com.icthh.xm.tmf.ms.communication.rules.BusinessRule;
 import com.icthh.xm.tmf.ms.communication.rules.RuleResponse;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Objects;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -42,10 +44,11 @@ public class TTLRule implements BusinessRule {
     private void applyRule(CommunicationMessage message, Duration ttl, RuleResponse ruleResponse) {
         message.getCharacteristic().stream()
             .filter((characteristic) -> MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP.equals(characteristic.getName()))
-            .peek((characteristic) -> log.debug("The following bornTime is found: {}", characteristic.getValue()))
+            .map(CommunicationRequestCharacteristic::getValue)
+            .peek((bornTimestamp) -> log.debug("The following bornTime is found: {}", bornTimestamp))
             .findAny()
-            .filter((characteristic) -> characteristic.getValue() != null)
-            .map((characteristic) -> new Date(Long.valueOf(characteristic.getValue())).toInstant())
+            .filter(Objects::nonNull)
+            .map((bornTimestamp) -> new Date(Long.valueOf(bornTimestamp)).toInstant())
             .filter((bornTime) -> Instant.now().minus(ttl).isAfter(bornTime))
             .ifPresent((bornTime) -> doAction(bornTime, ruleResponse));
     }
