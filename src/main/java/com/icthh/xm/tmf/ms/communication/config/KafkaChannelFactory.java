@@ -12,6 +12,8 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import javax.annotation.PostConstruct;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -156,23 +158,19 @@ public class KafkaChannelFactory {
      * Since Kafka headers are not accessible from the business rules,
      * move Kafka received timestamp to the communication message characteristics
      */
-    private void addReceivedByChannelCharacteristic(CommunicationMessage communicationMessage, Message<?> kafkaMessage){
-        // cannot be null, but anyway
-        if (kafkaMessage.getHeaders() != null){
-            Long kafkaReceivedTimestamp = (Long) kafkaMessage.getHeaders().get(KafkaHeaders.RECEIVED_TIMESTAMP);
-            // also cannot be null, but anyway
-            if (kafkaReceivedTimestamp != null){
+    private void addReceivedByChannelCharacteristic(CommunicationMessage communicationMessage, Message<?> kafkaMessage) {
+        Optional.ofNullable(kafkaMessage)
+            .map(Message::getHeaders)
+            .map(headers -> headers.get(KafkaHeaders.RECEIVED_TIMESTAMP))
+            .filter(Objects::nonNull)
+            .map(String::valueOf)
+            .ifPresent(kafkaReceivedTimestamp ->
                 communicationMessage.addCharacteristicItem(
                     new CommunicationRequestCharacteristic()
                         // Rename it to unlink name from source channel
                         .name(MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP)
-                        .value(String.valueOf(kafkaReceivedTimestamp))
-                );
-            }else {
-                log.warn("{} header not found in the source message headers", KafkaHeaders.RECEIVED_TIMESTAMP);
-            }
-        }else{
-            log.warn("Kafka headers not found in the source message");
-        }
+                        .value(kafkaReceivedTimestamp)
+                )
+            );
     }
 }
