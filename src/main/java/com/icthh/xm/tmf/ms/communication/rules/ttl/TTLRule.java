@@ -43,14 +43,15 @@ public class TTLRule implements BusinessRule {
 
     private void applyRule(CommunicationMessage message, Duration ttl, RuleResponse ruleResponse) {
         message.getCharacteristic().stream()
-            .filter((characteristic) -> MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP.equals(characteristic.getName()))
+            .filter(characteristic -> MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP.equals(characteristic.getName()))
             .map(CommunicationRequestCharacteristic::getValue)
-            .peek((bornTimestamp) -> log.debug("The following bornTime is found: {}", bornTimestamp))
+            .peek(bornTimestamp -> log.debug("The following bornTime is found: {}", bornTimestamp))
             .findAny()
             .filter(Objects::nonNull)
-            .map((bornTimestamp) -> new Date(Long.valueOf(bornTimestamp)).toInstant())
-            .filter((bornTime) -> Instant.now().minus(ttl).isAfter(bornTime))
-            .ifPresent((bornTime) -> doAction(bornTime, ruleResponse));
+            .map(Long::valueOf)
+            .map(bornTimestamp -> new Date(bornTimestamp).toInstant())
+            .filter(bornTime -> Instant.now().minus(ttl).isAfter(bornTime))
+            .ifPresent(bornTime -> doAction(bornTime, ruleResponse));
     }
 
     private void doAction(Instant bornTime, RuleResponse ruleResponse) {
