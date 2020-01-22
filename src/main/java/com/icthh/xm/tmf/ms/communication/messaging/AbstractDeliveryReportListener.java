@@ -30,6 +30,8 @@ import static org.jsmpp.util.DeliveryReceiptState.*;
 @Slf4j
 @RequiredArgsConstructor
 public abstract class AbstractDeliveryReportListener implements DeliveryReportListener {
+    public static final int DECIMAL_SYSTEM = 10;
+    public static final int HEX_SYSTEM = 16;
     private final ExecutorService executorService;
 
     @Override
@@ -60,8 +62,8 @@ public abstract class AbstractDeliveryReportListener implements DeliveryReportLi
         String messageId = deliveryReceipt.getId();
         try {
             return ofNullable(messageId)
-                .map(id-> new BigInteger(id, 10))
-                .map(id-> id.toString(16))
+                .map(id-> new BigInteger(id, DECIMAL_SYSTEM))
+                .map(id-> id.toString(HEX_SYSTEM))
                 .orElse(null);
         } catch (Exception e) {
             log.error("Cannot convert delivered message id to big integer, id: {}", messageId);

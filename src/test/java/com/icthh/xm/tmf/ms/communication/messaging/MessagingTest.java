@@ -35,12 +35,15 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestChara
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
 import io.netty.util.concurrent.ImmediateEventExecutor;
+
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
+
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.jsmpp.PDUException;
 import org.jsmpp.bean.DeliverSm;
+import org.jsmpp.bean.MessageType;
 import org.jsmpp.bean.OptionalParameter;
 import org.jsmpp.bean.OptionalParameter.OctetString;
 import org.jsmpp.extra.NegativeResponseException;
@@ -145,7 +148,7 @@ public class MessagingTest {
     private void addDistributionId(CommunicationMessage message) {
         message.setCharacteristic(new ArrayList<>());
         CommunicationRequestCharacteristic disctributionId = new CommunicationRequestCharacteristic().name(DISTRIBUTION_ID)
-                                                                                                     .value("TEST_D_ID");
+            .value("TEST_D_ID");
         message.getCharacteristic().add(disctributionId);
     }
 
@@ -153,7 +156,7 @@ public class MessagingTest {
     @SneakyThrows
     public void receiveMessageFailTest() {
         failMessage(new RuntimeException("TestMessage"),
-                    "error.system.general.internalServerError", "java.lang.RuntimeException: TestMessage");
+            "error.system.general.internalServerError", "java.lang.RuntimeException: TestMessage");
         reset(smppService, kafkaTemplate);
         failMessage(new BusinessException("TestCode", "TestMessage"), "TestCode", "TestMessage");
         reset(smppService, kafkaTemplate);
@@ -165,7 +168,7 @@ public class MessagingTest {
 
     @SneakyThrows
     private void failMessage(Exception e, String errorCode, String testMessage) {
-        when(smppService.send("PH", "TestContext", "TestSender", (byte)1)).thenThrow(e);
+        when(smppService.send("PH", "TestContext", "TestSender", (byte) 1)).thenThrow(e);
 
         messagingHandler.receiveMessage(message());
 
@@ -184,35 +187,33 @@ public class MessagingTest {
         assertThat(payload, equalTo(messageResponse));
     }
 
-//    @Test
-//    public void messageUndeliveredTest() {
-//        DeliverSm deliverSm = new DeliverSm();
-//        OctetString messageId = new OctetString(RECEIPTED_MESSAGE_ID, "messagenumber");
-//        OptionalParameter.Byte messageState = new OptionalParameter.Byte(MESSAGE_STATE, UNDELIVERABLE.value());
-//        deliverSm.setOptionalParameters(messageId, messageState);
-//
-//        sendToKafkaDeliveryReportListener.onAcceptDeliverSm(deliverSm);
-//
-//        ArgumentCaptor<DeliveryReport> argumentCaptor = ArgumentCaptor.forClass(DeliveryReport.class);
-//        verify(kafkaTemplate).send(eq(FAILED_DELIVERY), argumentCaptor.capture());
-//        assertThat(argumentCaptor.getValue(), equalTo(deliveryReport("messagenumber", "UNDELIVERABLE")));
-//    }
+    @Test
+    public void messageUndeliveredTest() {
+        DeliverSm deliverSm = new DeliverSm();
+        deliverSm.setEsmClass(MessageType.SMSC_DEL_RECEIPT.value());
+        deliverSm.setShortMessage(
+            "id:2 sub:001 dlvrd:001 submit date:0908312310 done date:0908312311 stat:UNDELIV err:xxx Text:Hello SMPP world!"
+                .getBytes());
+        sendToKafkaDeliveryReportListener.onAcceptDeliverSm(deliverSm);
 
-//    @Test
-//    public void messageDeliveredTest() {
-//        MessageChannel messageChannel = mock(MessageChannel.class);
-//        DeliverSm deliverSm = new DeliverSm();
-//        OctetString messageId = new OctetString(RECEIPTED_MESSAGE_ID, "messagenumber");
-//        OptionalParameter.Byte messageState = new OptionalParameter.Byte(MESSAGE_STATE, DELIVERED.value());
-//        deliverSm.setOptionalParameters(messageId, messageState);
-//
-//        sendToKafkaDeliveryReportListener.onAcceptDeliverSm(deliverSm);
-//
-//
-//        ArgumentCaptor<DeliveryReport> argumentCaptor = ArgumentCaptor.forClass(DeliveryReport.class);
-//        verify(kafkaTemplate).send(eq(SUCCESS_DELIVERY), argumentCaptor.capture());
-//        assertThat(argumentCaptor.getValue(), equalTo(deliveryReport("messagenumber", "DELIVERED")));
-//    }
+        ArgumentCaptor<DeliveryReport> argumentCaptor = ArgumentCaptor.forClass(DeliveryReport.class);
+        verify(kafkaTemplate).send(eq(FAILED_DELIVERY), argumentCaptor.capture());
+        assertThat(argumentCaptor.getValue(), equalTo(deliveryReport("2", "UNDELIVERABLE")));
+    }
+
+    @Test
+    public void messageDeliveredTest() {
+        DeliverSm deliverSm = new DeliverSm();
+        deliverSm.setEsmClass(MessageType.SMSC_DEL_RECEIPT.value());
+        deliverSm.setShortMessage(
+            "id:111111 sub:001 dlvrd:001 submit date:0908312310 done date:0908312311 stat:DELIVRD err:xxx Text:Hello SMPP world!"
+                .getBytes());
+        sendToKafkaDeliveryReportListener.onAcceptDeliverSm(deliverSm);
+
+        ArgumentCaptor<DeliveryReport> argumentCaptor = ArgumentCaptor.forClass(DeliveryReport.class);
+        verify(kafkaTemplate).send(eq(SUCCESS_DELIVERY), argumentCaptor.capture());
+        assertThat(argumentCaptor.getValue(), equalTo(deliveryReport("1b207", "DELIVERED")));
+    }
 
     @Test
     @SneakyThrows
@@ -221,7 +222,7 @@ public class MessagingTest {
 
         DeliverSm deliverSm = new DeliverSm();
         deliverSm.setShortMessage("firstMessage".getBytes(ISO_8859_1));
-        deliverSm.setDataCoding((byte)0);
+        deliverSm.setDataCoding((byte) 0);
 
         sendToKafkaMoDeliveryReportListener.onAcceptDeliverSm(deliverSm);
 

@@ -1,9 +1,11 @@
 package com.icthh.xm.tmf.ms.communication.rules.businesstime;
 
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Map;
 import lombok.Value;
 
@@ -17,6 +19,7 @@ public class BusinessDayConfig {
 
         private Map<String, BusinessTime> businessDay;
         private Map<LocalDate, BusinessTime> exceptionDate;
+        private List<CommunicationRequestCharacteristic> exceptionCharacteristics;
     }
 
     @Value

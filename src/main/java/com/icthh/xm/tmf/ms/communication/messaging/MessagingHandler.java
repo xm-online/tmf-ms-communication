@@ -54,7 +54,7 @@ public class MessagingHandler {
                    wrapper.getDeliveryReport());
                 String queueName = messaging.getSentQueueName();
                 sendMessage(success(messageId, message), queueName);
-                log.info("Message success sended to {}", queueName);
+                log.info("Message success sent to {}", queueName);
             } catch (NegativeResponseException e) {
                 log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
                 failMessage(message, "error.system.sending.smpp." + e.getCommandStatus(), e.getMessage());
@@ -81,7 +81,7 @@ public class MessagingHandler {
         Messaging messaging = applicationProperties.getMessaging();
         String failedQueueName = messaging.getSendFailedQueueName();
         sendMessage(failed(communicationMessage, code, message), failedQueueName);
-        log.warn("Message about error sended to {}", failedQueueName);
+        log.warn("Message about error sent to {}", failedQueueName);
     }
 
 }
