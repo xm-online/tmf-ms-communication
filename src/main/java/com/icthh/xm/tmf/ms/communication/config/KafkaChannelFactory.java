@@ -12,12 +12,10 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.PostConstruct;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
@@ -109,10 +107,18 @@ public class KafkaChannelFactory {
         bindingService.bindConsumer(channel, chanelName);
 
         bindersHealthIndicator.addHealthIndicator(KAFKA, kafkaBinderHealthIndicator);
-        long handlingTime = calculateSubscriberSleepTime();
+        long messagePeerSecondHandlingTime = calculateTimePeerMessage();
+        final long[] lastHandlingTime = {System.currentTimeMillis()};
         channel.subscribe(message -> {
-            long startHandlingTime = System.currentTimeMillis();
             try {
+                if (applicationProperties.isServiceChannelManagement()) {
+                    synchronized (this) {
+                        while (System.currentTimeMillis() - lastHandlingTime[0] < messagePeerSecondHandlingTime) {
+                            Thread.yield();
+                        }
+                        lastHandlingTime[0] = System.currentTimeMillis();
+                    }
+                }
                 MdcUtils.putRid(MdcUtils.generateRid());
                 handleEvent(message);
             } catch (Exception e) {
@@ -120,31 +126,18 @@ public class KafkaChannelFactory {
                 throw e;
             } finally {
                 MdcUtils.removeRid();
-                if (applicationProperties.isServiceChannelManagement()) {
-                    try {
-                        long sleepTime = handlingTime - (System.currentTimeMillis() - startHandlingTime);
-                        if (sleepTime > 0) {
-                            Thread.sleep(sleepTime);
-                        }
-                    } catch (InterruptedException e) {
-                        log.error("kafka subscribe thread interrupted exception", e);
-                    }
-                }
             }
         });
 
     }
 
-    private long calculateSubscriberSleepTime() {
+    private long calculateTimePeerMessage() {
         if (applicationProperties.isServiceChannelManagement()) {
             int millisecondsPeriod = 1000;
-            int kafkaThreadsCount = applicationProperties.getKafkaConcurrencyCount();
-            int channelLimit = applicationProperties.getServiceChannelLimit();
-            int operationCountPeerThread = channelLimit / kafkaThreadsCount;
-            return millisecondsPeriod / operationCountPeerThread;
+            int channelLimit = applicationProperties.getServiceChannelLimit();//100
+            return millisecondsPeriod / channelLimit;//10
         }
         return 0;
-
     }
 
     private void handleEvent(Message<?> message) {
