@@ -1,5 +1,0 @@
----
-ttlRule:
-  value: 1
-  chronoUnit: MILLIS
-  action: WARNING
