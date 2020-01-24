@@ -85,7 +85,7 @@ public class KafkaChannelFactory {
         kafkaMessageChannelBinder.setExtendedBindingProperties(kafkaExtendedBindingProperties);
     }
 
-    @Scheduled(fixedRate = 1000)
+    @Scheduled(fixedRate = 1200)
     public void startHandler() {
         ConsumerRecords<Long, String> consumerRecords = consumer.poll(1000);
         if (consumerRecords.count() > 0) {
