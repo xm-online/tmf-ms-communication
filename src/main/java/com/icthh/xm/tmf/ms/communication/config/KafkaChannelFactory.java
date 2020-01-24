@@ -10,14 +10,18 @@ import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+
+import java.util.*;
 import javax.annotation.PostConstruct;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.boot.actuate.health.CompositeHealthIndicator;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.cloud.stream.binder.ConsumerProperties;
@@ -35,6 +39,7 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.SubscribableChannel;
+import org.springframework.scheduling.annotation.Scheduled;
 
 /**
  * Configures Spring Cloud Stream support.
@@ -57,6 +62,7 @@ public class KafkaChannelFactory {
     private final MessagingHandler messagingHandler;
     private CompositeHealthIndicator bindersHealthIndicator;
     private KafkaBinderHealthIndicator kafkaBinderHealthIndicator;
+    private Consumer<Long, String> consumer;
 
     public KafkaChannelFactory(BindingServiceProperties bindingServiceProperties,
                                SubscribableChannelBindingTargetFactory bindingTargetFactory,
@@ -64,7 +70,8 @@ public class KafkaChannelFactory {
                                ApplicationProperties applicationProperties, KafkaProperties kafkaProperties,
                                KafkaMessageChannelBinder kafkaMessageChannelBinder, MessagingHandler messagingHandler,
                                CompositeHealthIndicator bindersHealthIndicator,
-                               KafkaBinderHealthIndicator kafkaBinderHealthIndicator) {
+                               KafkaBinderHealthIndicator kafkaBinderHealthIndicator,
+                               Consumer<Long, String> consumer) {
         this.bindingServiceProperties = bindingServiceProperties;
         this.bindingTargetFactory = bindingTargetFactory;
         this.bindingService = bindingService;
@@ -74,66 +81,39 @@ public class KafkaChannelFactory {
         this.messagingHandler = messagingHandler;
         this.bindersHealthIndicator = bindersHealthIndicator;
         this.kafkaBinderHealthIndicator = kafkaBinderHealthIndicator;
-
+        this.consumer = consumer;
         kafkaMessageChannelBinder.setExtendedBindingProperties(kafkaExtendedBindingProperties);
     }
 
-    @PostConstruct
-    public void createHandler() {
+    @Scheduled(fixedRate = 1000)
+    public void startHandler() {
+        ConsumerRecords<Long, String> consumerRecords = consumer.poll(1000);
+        if (consumerRecords.count() > 0) {
+            consumerRecords.forEach(consumerRecord -> {
+                log.debug("handler process {}", consumerRecords.count());
+                try {
+                    MdcUtils.putRid(MdcUtils.generateRid());
+                    handleEvent(consumerRecord.value(), consumerRecord.timestamp());
+                } catch (Exception e) {
+                    log.error("error processign event", e);
+                    throw e;
+                } finally {
+                    MdcUtils.removeRid();
+                }
+            });
 
-        String chanelName = applicationProperties.getMessaging().getToSendQueueName();
-
-        KafkaBindingProperties props = new KafkaBindingProperties();
-        props.getConsumer().setAutoCommitOffset(false);
-        props.getConsumer().setAutoCommitOnError(false);
-        props.getConsumer().setStartOffset(earliest);
-        props.getConsumer().setAckEachRecord(true);
-        kafkaExtendedBindingProperties.getBindings().put(chanelName, props);
-
-        ConsumerProperties consumerProperties = new ConsumerProperties();
-        consumerProperties.setMaxAttempts(Integer.MAX_VALUE);
-        consumerProperties.setHeaderMode(HeaderMode.none);
-        consumerProperties.setPartitioned(true);
-        consumerProperties.setConcurrency(applicationProperties.getKafkaConcurrencyCount());
-
-        BindingProperties bindingProperties = new BindingProperties();
-        bindingProperties.setConsumer(consumerProperties);
-        bindingProperties.setDestination(chanelName);
-        bindingProperties.setGroup(kafkaProperties.getConsumer().getGroupId());
-        bindingServiceProperties.getBindings().put(chanelName, bindingProperties);
-
-        SubscribableChannel channel = bindingTargetFactory.createInput(chanelName);
-        bindingService.bindConsumer(channel, chanelName);
-
-        bindersHealthIndicator.addHealthIndicator(KAFKA, kafkaBinderHealthIndicator);
-
-        channel.subscribe(message -> {
-            try {
-                MdcUtils.putRid(MdcUtils.generateRid());
-                handleEvent(message);
-            } catch (Exception e) {
-                log.error("error processign event", e);
-                throw e;
-            } finally {
-                MdcUtils.removeRid();
-            }
-        });
-
+        }
     }
 
-    private void handleEvent(Message<?> message) {
+    private void handleEvent(String payloadString, long kafkaReceivedTimestamp) {
         final StopWatch stopWatch = StopWatch.createStarted();
 
-        // ACKNOWLEDGMENT before processing (important, for avoid duplicate sms)
-        message.getHeaders().get(ACKNOWLEDGMENT, Acknowledgment.class).acknowledge();
-
         try {
-            String payloadString = (String) message.getPayload();
-            log.info("start processing message, base64 body = {}, headers = {}", payloadString, getHeaders(message));
+            log.info("start processing message, base64 body = {}", payloadString);
             payloadString = unwrap(payloadString, "\"");
             log.info("start processing message, json body = {}", payloadString);
             CommunicationMessage communicationMessage = mapToCommunicationMessage(payloadString);
-            addReceivedByChannelCharacteristic(communicationMessage, message);
+            addReceivedByChannelCharacteristic(communicationMessage, kafkaReceivedTimestamp);
             messagingHandler.receiveMessage(communicationMessage);
             log.info("stop processing message, time = {}", stopWatch.getTime());
         } catch (Exception e) {
@@ -158,19 +138,13 @@ public class KafkaChannelFactory {
      * Since Kafka headers are not accessible from the business rules,
      * move Kafka received timestamp to the communication message characteristics
      */
-    private void addReceivedByChannelCharacteristic(CommunicationMessage communicationMessage, Message<?> kafkaMessage) {
-        Optional.ofNullable(kafkaMessage)
-            .map(Message::getHeaders)
-            .map(headers -> headers.get(KafkaHeaders.RECEIVED_TIMESTAMP))
-            .filter(Objects::nonNull)
-            .map(String::valueOf)
-            .ifPresent(kafkaReceivedTimestamp ->
-                communicationMessage.addCharacteristicItem(
-                    new CommunicationRequestCharacteristic()
-                        // Rename it to unlink name from source channel
-                        .name(MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP)
-                        .value(kafkaReceivedTimestamp)
-                )
-            );
+    private void addReceivedByChannelCharacteristic(CommunicationMessage communicationMessage, long kafkaReceivedTimestamp) {
+
+        communicationMessage.addCharacteristicItem(
+            new CommunicationRequestCharacteristic()
+                // Rename it to unlink name from source channel
+                .name(MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP)
+                .value(Long.toString(kafkaReceivedTimestamp)));
+
     }
 }

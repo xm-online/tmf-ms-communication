@@ -12,6 +12,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.Consumer;
 import org.springframework.boot.actuate.health.CompositeHealthIndicator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
@@ -56,10 +57,11 @@ public class MessagingConfiguration {
                                                    KafkaMessageChannelBinder kafkaMessageChannelBinder,
                                                    KafkaProperties kafkaProperties, MessagingHandler messageHandler,
                                                    CompositeHealthIndicator bindersHealthIndicator,
-                                                   KafkaBinderHealthIndicator kafkaBinderHealthIndicator) {
+                                                   KafkaBinderHealthIndicator kafkaBinderHealthIndicator,
+                                                   Consumer<Long, String> consumer) {
         return new KafkaChannelFactory(bindingServiceProperties, bindingTargetFactory, bindingService, objectMapper,
                                        applicationProperties, kafkaProperties, kafkaMessageChannelBinder,
-                                       messageHandler, bindersHealthIndicator, kafkaBinderHealthIndicator);
+                                       messageHandler, bindersHealthIndicator, kafkaBinderHealthIndicator,consumer);
     }
 
     @Bean
