@@ -95,7 +95,7 @@ public class KafkaChannelFactory {
             while (true) {
                 log.info("last processing parameters: sleepTime: {} ms, realSleepTime {} ms, messageCount: {} messages", sleepTime, System.currentTimeMillis() - sleepStartTime, messagesCount);
                 long startTime = System.currentTimeMillis();
-                ConsumerRecords<Long, String> consumerRecords = consumer.poll(SCHEDULED_TIME / 2);
+                ConsumerRecords<Long, String> consumerRecords = consumer.poll(0);
                 messagesCount = consumerRecords.count();
                 if (consumerRecords.count() > 0) {
                     consumerRecords.forEach(consumerRecord -> {
