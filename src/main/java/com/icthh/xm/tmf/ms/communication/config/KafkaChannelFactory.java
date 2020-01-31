@@ -86,6 +86,7 @@ public class KafkaChannelFactory {
         kafkaMessageChannelBinder.setExtendedBindingProperties(kafkaExtendedBindingProperties);
     }
 
+    @PostConstruct
     public void startHandler() {
         new Thread(() -> {
             while (true) {
