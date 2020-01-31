@@ -88,12 +88,12 @@ public class KafkaChannelFactory {
 
     @PostConstruct
     public void startHandler() {
-        new Thread(() -> {
+        Runnable handler = () -> {
             long sleepTime = 0;
             long sleepStartTime = 0;
             int messagesCount = 0;
             while (true) {
-                log.info("last processing parameters: sleepTime: {} ms, realSleepTime {} ms, messageCount: {} messages", sleepTime, System.currentTimeMillis() - sleepStartTime, messagesCount);
+                log.info("last processing parameters: thread name: {}, sleepTime: {} ms, realSleepTime {} ms, messageCount: {} messages", Thread.currentThread().getName(), sleepTime, System.currentTimeMillis() - sleepStartTime, messagesCount);
                 long startTime = System.currentTimeMillis();
                 ConsumerRecords<Long, String> consumerRecords = consumer.poll(0);
                 messagesCount = consumerRecords.count();
@@ -122,7 +122,13 @@ public class KafkaChannelFactory {
                 }
             }
 
-        }).start();
+        };
+
+        for (int i = 0; i < applicationProperties.getKafka().getThreadsCount(); i++) {
+            Thread thread = new Thread(handler);
+            thread.setName("Kafka-handler-" + i);
+            thread.start();
+        }
 
     }
 

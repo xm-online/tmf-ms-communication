@@ -48,6 +48,7 @@ public class ApplicationProperties {
     public static class Kafka {
         private String bootstrapServers;
         private int maxPoolRecords;
+        private int threadsCount;
     }
 
     @Getter
