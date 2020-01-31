@@ -88,44 +88,8 @@ public class KafkaChannelFactory {
 
     @PostConstruct
     public void startHandler() {
-        Runnable handler = () -> {
-            long sleepTime = 0;
-            long sleepStartTime = 0;
-            int messagesCount = 0;
-            while (true) {
-                log.info("last processing parameters: thread name: {}, sleepTime: {} ms, realSleepTime {} ms, messageCount: {} messages", Thread.currentThread().getName(), sleepTime, System.currentTimeMillis() - sleepStartTime, messagesCount);
-                long startTime = System.currentTimeMillis();
-                ConsumerRecords<Long, String> consumerRecords = consumer.poll(0);
-                messagesCount = consumerRecords.count();
-                if (consumerRecords.count() > 0) {
-                    consumerRecords.forEach(consumerRecord -> {
-                        log.debug("handler process {}", consumerRecords.count());
-                        try {
-                            MdcUtils.putRid(MdcUtils.generateRid());
-                            handleEvent(consumerRecord.value(), consumerRecord.timestamp());
-                        } catch (Exception e) {
-                            log.error("error processign event", e);
-                            throw e;
-                        } finally {
-                            MdcUtils.removeRid();
-                        }
-                    });
-                }
-                sleepTime = SCHEDULED_TIME - (System.currentTimeMillis() - startTime);
-                if (sleepTime > 0) {
-                    try {
-                        sleepStartTime = System.currentTimeMillis();
-                        Thread.sleep(sleepTime);
-                    } catch (InterruptedException e) {
-                        log.error("error interrupted event, message {}", e.getMessage());
-                    }
-                }
-            }
-
-        };
-
         for (int i = 0; i < applicationProperties.getKafka().getThreadsCount(); i++) {
-            Thread thread = new Thread(handler);
+            Thread thread = new Thread(new KafkaHandler());
             thread.setName("Kafka-handler-" + i);
             thread.start();
         }
@@ -173,5 +137,48 @@ public class KafkaChannelFactory {
                 .name(MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP)
                 .value(Long.toString(kafkaReceivedTimestamp)));
 
+    }
+
+
+    private class KafkaHandler implements Runnable {
+        @Override
+        public void run() {
+            long sleepTime = 0;
+            long sleepStartTime = 0;
+            int messagesCount = 0;
+            while (true) {
+                log.info("last processing parameters: thread name: {}, sleepTime: {} ms, realSleepTime {} ms, messageCount: {} messages", Thread.currentThread().getName(), sleepTime, System.currentTimeMillis() - sleepStartTime, messagesCount);
+                long startTime = System.currentTimeMillis();
+                ConsumerRecords<Long, String> consumerRecords;
+                synchronized (consumer) {
+                    consumerRecords = consumer.poll(0);
+                }
+                messagesCount = consumerRecords.count();
+                if (consumerRecords.count() > 0) {
+                    consumerRecords.forEach(consumerRecord -> {
+                        log.debug("handler process {}", consumerRecords.count());
+                        try {
+                            MdcUtils.putRid(MdcUtils.generateRid());
+                            handleEvent(consumerRecord.value(), consumerRecord.timestamp());
+                        } catch (Exception e) {
+                            log.error("error processign event", e);
+                            throw e;
+                        } finally {
+                            MdcUtils.removeRid();
+                        }
+                    });
+                }
+                sleepTime = SCHEDULED_TIME - (System.currentTimeMillis() - startTime);
+                if (sleepTime > 0) {
+                    try {
+                        sleepStartTime = System.currentTimeMillis();
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {
+                        log.error("error interrupted event, message {}", e.getMessage());
+                    }
+                }
+            }
+
+        }
     }
 }

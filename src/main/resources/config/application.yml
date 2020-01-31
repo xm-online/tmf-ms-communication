@@ -180,7 +180,8 @@ application:
     channel-specification-path-pattern: /config/tenants/{tenantName}/communication/communication.yml
     kafka:
         bootstrap-servers: localhost:9092
-        max-pool-records: 1
+        max-pool-records: 100
+        threads-count: 3
     messaging:
         send-queue-name-template: communication_%s_%s_send
         recive-queue-name-template: communication_%s_%s_recive
