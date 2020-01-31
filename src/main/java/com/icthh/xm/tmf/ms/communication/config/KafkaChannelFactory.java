@@ -89,9 +89,14 @@ public class KafkaChannelFactory {
     @PostConstruct
     public void startHandler() {
         new Thread(() -> {
+            long sleepTime = 0;
+            long sleepStartTime = 0;
+            int messagesCount = 0;
             while (true) {
+                log.info("last processing parameters: sleepTime: {} ms, realSleepTime {} ms, messageCount: {} messages", sleepTime, System.currentTimeMillis() - sleepStartTime, messagesCount);
                 long startTime = System.currentTimeMillis();
                 ConsumerRecords<Long, String> consumerRecords = consumer.poll(SCHEDULED_TIME / 2);
+                messagesCount = consumerRecords.count();
                 if (consumerRecords.count() > 0) {
                     consumerRecords.forEach(consumerRecord -> {
                         log.debug("handler process {}", consumerRecords.count());
@@ -106,9 +111,10 @@ public class KafkaChannelFactory {
                         }
                     });
                 }
-                long sleepTime = SCHEDULED_TIME - (System.currentTimeMillis() - startTime);
+                sleepTime = SCHEDULED_TIME - (System.currentTimeMillis() - startTime);
                 if (sleepTime > 0) {
                     try {
+                        sleepStartTime = System.currentTimeMillis();
                         Thread.sleep(sleepTime);
                     } catch (InterruptedException e) {
                         log.error("error interrupted event, message {}", e.getMessage());
