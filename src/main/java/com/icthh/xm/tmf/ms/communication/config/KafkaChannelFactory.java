@@ -51,6 +51,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 public class KafkaChannelFactory {
 
     private static final String KAFKA = "kafka";
+    private static long SCHEDULED_TIME = 1000;
 
     private final BindingServiceProperties bindingServiceProperties;
     private final SubscribableChannelBindingTargetFactory bindingTargetFactory;
@@ -85,24 +86,37 @@ public class KafkaChannelFactory {
         kafkaMessageChannelBinder.setExtendedBindingProperties(kafkaExtendedBindingProperties);
     }
 
-    @Scheduled(fixedRate = 1200)
     public void startHandler() {
-        ConsumerRecords<Long, String> consumerRecords = consumer.poll(1000);
-        if (consumerRecords.count() > 0) {
-            consumerRecords.forEach(consumerRecord -> {
-                log.debug("handler process {}", consumerRecords.count());
-                try {
-                    MdcUtils.putRid(MdcUtils.generateRid());
-                    handleEvent(consumerRecord.value(), consumerRecord.timestamp());
-                } catch (Exception e) {
-                    log.error("error processign event", e);
-                    throw e;
-                } finally {
-                    MdcUtils.removeRid();
+        new Thread(() -> {
+            while (true) {
+                long startTime = System.currentTimeMillis();
+                ConsumerRecords<Long, String> consumerRecords = consumer.poll(SCHEDULED_TIME);
+                if (consumerRecords.count() > 0) {
+                    consumerRecords.forEach(consumerRecord -> {
+                        log.debug("handler process {}", consumerRecords.count());
+                        try {
+                            MdcUtils.putRid(MdcUtils.generateRid());
+                            handleEvent(consumerRecord.value(), consumerRecord.timestamp());
+                        } catch (Exception e) {
+                            log.error("error processign event", e);
+                            throw e;
+                        } finally {
+                            MdcUtils.removeRid();
+                        }
+                    });
                 }
-            });
+                long sleepTime = SCHEDULED_TIME - (System.currentTimeMillis() - startTime);
+                if (sleepTime > 0) {
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {
+                        log.error("error interrupted event, message {}", e.getMessage());
+                    }
+                }
+            }
 
-        }
+        });
+
     }
 
     private void handleEvent(String payloadString, long kafkaReceivedTimestamp) {
