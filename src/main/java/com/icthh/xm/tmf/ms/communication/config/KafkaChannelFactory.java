@@ -91,7 +91,7 @@ public class KafkaChannelFactory {
         new Thread(() -> {
             while (true) {
                 long startTime = System.currentTimeMillis();
-                ConsumerRecords<Long, String> consumerRecords = consumer.poll(SCHEDULED_TIME);
+                ConsumerRecords<Long, String> consumerRecords = consumer.poll(SCHEDULED_TIME / 2);
                 if (consumerRecords.count() > 0) {
                     consumerRecords.forEach(consumerRecord -> {
                         log.debug("handler process {}", consumerRecords.count());
