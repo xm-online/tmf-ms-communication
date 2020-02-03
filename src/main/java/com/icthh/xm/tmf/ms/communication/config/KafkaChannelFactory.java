@@ -88,6 +88,7 @@ public class KafkaChannelFactory {
 
     @PostConstruct
     public void startHandler() {
+        log.info("Start handlers. Count = {}", applicationProperties.getKafka().getThreadsCount());
         for (int i = 0; i < applicationProperties.getKafka().getThreadsCount(); i++) {
             Thread thread = new Thread(new KafkaHandler());
             thread.setName("Kafka-handler-" + i);
@@ -146,12 +147,15 @@ public class KafkaChannelFactory {
             long sleepTime = 0;
             long sleepStartTime = 0;
             int messagesCount = 0;
+            log.info("Start handler. thread name: {}", Thread.currentThread().getName());
             while (true) {
                 log.info("last processing parameters: thread name: {}, sleepTime: {} ms, realSleepTime {} ms, messageCount: {} messages", Thread.currentThread().getName(), sleepTime, System.currentTimeMillis() - sleepStartTime, messagesCount);
                 long startTime = System.currentTimeMillis();
                 ConsumerRecords<Long, String> consumerRecords;
                 synchronized (consumer) {
+                    log.info("Start pooling records. thread name: {}", Thread.currentThread().getName());
                     consumerRecords = consumer.poll(0);
+                    log.info("End pooling records. thread name: {}", Thread.currentThread().getName());
                 }
                 messagesCount = consumerRecords.count();
                 if (consumerRecords.count() > 0) {
@@ -169,16 +173,15 @@ public class KafkaChannelFactory {
                     });
                 }
                 sleepTime = SCHEDULED_TIME - (System.currentTimeMillis() - startTime);
+                sleepStartTime = System.currentTimeMillis();
                 if (sleepTime > 0) {
                     try {
-                        sleepStartTime = System.currentTimeMillis();
                         Thread.sleep(sleepTime);
                     } catch (InterruptedException e) {
                         log.error("error interrupted event, message {}", e.getMessage());
                     }
                 }
             }
-
         }
     }
 }
