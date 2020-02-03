@@ -148,9 +148,14 @@ public class KafkaChannelFactory {
                     consumerRecords = consumer.poll(Duration.of(100, ChronoUnit.MILLIS));
                     //  log.info("End pooling records. thread name: {}", Thread.currentThread().getName());
                     messagesCount = consumerRecords.count();
-                    int consumerSleepTime = applicationProperties.getKafka().getPeriod() / messagesCount;
+                    int consumerSleepTime = 0;
+                    if (messagesCount == 0) {
+                        consumerSleepTime = applicationProperties.getKafka().getPeriod() / messagesCount;
+                    }
+
                     long startHandlingMessageTime = System.currentTimeMillis();
                     if (consumerRecords.count() > 0) {
+                        int finalConsumerSleepTime = consumerSleepTime;
                         consumerRecords.forEach(consumerRecord -> {
                             log.debug("handler process {}", consumerRecords.count());
                             try {
@@ -162,7 +167,7 @@ public class KafkaChannelFactory {
                             } finally {
                                 MdcUtils.removeRid();
                             }
-                            long sleep = consumerSleepTime - (System.currentTimeMillis() - startHandlingMessageTime);
+                            long sleep = finalConsumerSleepTime - (System.currentTimeMillis() - startHandlingMessageTime);
                             if (sleep > 0) {
                                 try {
                                     Thread.sleep(sleep);
