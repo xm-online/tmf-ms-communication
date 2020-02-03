@@ -49,6 +49,7 @@ public class ApplicationProperties {
         private String bootstrapServers;
         private int maxPoolRecords;
         private int threadsCount;
+        private int period;
     }
 
     @Getter

@@ -162,7 +162,7 @@ public class KafkaChannelFactory {
                             }
                         });
                     }
-                    sleepTime = SCHEDULED_TIME - (System.currentTimeMillis() - startTime);
+                    sleepTime = applicationProperties.getKafka().getPeriod() - (System.currentTimeMillis() - startTime);
                     sleepStartTime = System.currentTimeMillis();
                     if (sleepTime > 0) {
                         try {
