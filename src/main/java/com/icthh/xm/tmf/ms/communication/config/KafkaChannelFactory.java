@@ -147,7 +147,7 @@ public class KafkaChannelFactory {
             long sleepStartTime = 0;
             int messagesCount = 0;
             while (true) {
-             //   log.info("last processing parameters: thread name: {}, sleepTime: {} ms, realSleepTime {} ms, messageCount: {} messages", Thread.currentThread().getName(), sleepTime, System.currentTimeMillis() - sleepStartTime, messagesCount);
+                log.info("last processing parameters: thread name: {}, sleepTime: {} ms, realSleepTime {} ms, messageCount: {} messages", Thread.currentThread().getName(), sleepTime, System.currentTimeMillis() - sleepStartTime, messagesCount);
                 long startTime = System.currentTimeMillis();
                 ConsumerRecords<Long, String> consumerRecords;
                 synchronized (consumer) {
