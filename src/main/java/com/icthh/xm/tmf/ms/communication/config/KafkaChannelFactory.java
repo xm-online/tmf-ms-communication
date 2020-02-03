@@ -1,45 +1,35 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
-import static com.icthh.xm.tmf.ms.communication.rules.ttl.TTLRule.MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP;
-import static org.apache.commons.lang3.StringUtils.unwrap;
-import static org.springframework.cloud.stream.binder.kafka.properties.KafkaConsumerProperties.StartOffset.earliest;
-import static org.springframework.kafka.support.KafkaHeaders.ACKNOWLEDGMENT;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
-
-import java.util.*;
-import javax.annotation.PostConstruct;
-
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.boot.actuate.health.CompositeHealthIndicator;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
-import org.springframework.cloud.stream.binder.ConsumerProperties;
-import org.springframework.cloud.stream.binder.HeaderMode;
 import org.springframework.cloud.stream.binder.kafka.KafkaBinderHealthIndicator;
 import org.springframework.cloud.stream.binder.kafka.KafkaMessageChannelBinder;
-import org.springframework.cloud.stream.binder.kafka.properties.KafkaBindingProperties;
 import org.springframework.cloud.stream.binder.kafka.properties.KafkaExtendedBindingProperties;
 import org.springframework.cloud.stream.binding.BindingService;
 import org.springframework.cloud.stream.binding.SubscribableChannelBindingTargetFactory;
-import org.springframework.cloud.stream.config.BindingProperties;
 import org.springframework.cloud.stream.config.BindingServiceProperties;
-import org.springframework.kafka.support.Acknowledgment;
-import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
-import org.springframework.messaging.SubscribableChannel;
-import org.springframework.scheduling.annotation.Scheduled;
+
+import javax.annotation.PostConstruct;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.Map;
+
+import static com.icthh.xm.tmf.ms.communication.rules.ttl.TTLRule.MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP;
+import static org.apache.commons.lang3.StringUtils.unwrap;
+import static org.springframework.kafka.support.KafkaHeaders.ACKNOWLEDGMENT;
 
 /**
  * Configures Spring Cloud Stream support.
@@ -157,7 +147,7 @@ public class KafkaChannelFactory {
                     ConsumerRecords<Long, String> consumerRecords;
                     synchronized (consumer) {
                         log.info("Start pooling records. thread name: {}", Thread.currentThread().getName());
-                        consumerRecords = consumer.poll(200);
+                        consumerRecords = consumer.poll(Duration.of(0, ChronoUnit.SECONDS));
                         log.info("End pooling records. thread name: {}", Thread.currentThread().getName());
                     }
                     messagesCount = consumerRecords.count();
