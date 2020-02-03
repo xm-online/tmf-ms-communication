@@ -157,7 +157,7 @@ public class KafkaChannelFactory {
                     ConsumerRecords<Long, String> consumerRecords;
                     synchronized (consumer) {
                         log.info("Start pooling records. thread name: {}", Thread.currentThread().getName());
-                        consumerRecords = consumer.poll(0);
+                        consumerRecords = consumer.poll(200);
                         log.info("End pooling records. thread name: {}", Thread.currentThread().getName());
                     }
                     messagesCount = consumerRecords.count();
