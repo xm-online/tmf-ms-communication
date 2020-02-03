@@ -137,16 +137,16 @@ public class KafkaChannelFactory {
             long sleepTime = 0;
             long sleepStartTime = 0;
             int messagesCount = 0;
-            log.info("Start handler. thread name: {}", Thread.currentThread().getName());
+          //  log.info("Start handler. thread name: {}", Thread.currentThread().getName());
             Consumer<Long, String> consumer = consumerBuilder.buildConsumer();
             while (true) {
                 try {
-                    log.info("last processing parameters: thread name: {}, sleepTime: {} ms, realSleepTime {} ms, messageCount: {} messages", Thread.currentThread().getName(), sleepTime, System.currentTimeMillis() - sleepStartTime, messagesCount);
+                   // log.info("last processing parameters: thread name: {}, sleepTime: {} ms, realSleepTime {} ms, messageCount: {} messages", Thread.currentThread().getName(), sleepTime, System.currentTimeMillis() - sleepStartTime, messagesCount);
                     long startTime = System.currentTimeMillis();
                     ConsumerRecords<Long, String> consumerRecords;
-                    log.info("Start pooling records. thread name: {}", Thread.currentThread().getName());
+                  //  log.info("Start pooling records. thread name: {}", Thread.currentThread().getName());
                     consumerRecords = consumer.poll(Duration.of(100, ChronoUnit.MILLIS));
-                    log.info("End pooling records. thread name: {}", Thread.currentThread().getName());
+                  //  log.info("End pooling records. thread name: {}", Thread.currentThread().getName());
                     messagesCount = consumerRecords.count();
                     if (consumerRecords.count() > 0) {
                         consumerRecords.forEach(consumerRecord -> {
