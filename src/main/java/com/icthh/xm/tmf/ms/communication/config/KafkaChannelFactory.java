@@ -149,7 +149,7 @@ public class KafkaChannelFactory {
                     //  log.info("End pooling records. thread name: {}", Thread.currentThread().getName());
                     messagesCount = consumerRecords.count();
                     int consumerSleepTime = 0;
-                    if (messagesCount == 0) {
+                    if (messagesCount != 0) {
                         consumerSleepTime = applicationProperties.getKafka().getPeriod() / messagesCount;
                     }
 
