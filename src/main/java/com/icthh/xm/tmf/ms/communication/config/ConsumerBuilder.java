@@ -7,11 +7,12 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.Properties;
 
-@Configuration
+@Service
 public class ConsumerBuilder {
     private final ApplicationProperties applicationProperties;
     private final KafkaProperties kafkaProperties;
@@ -21,7 +22,6 @@ public class ConsumerBuilder {
         this.kafkaProperties = kafkaProperties;
     }
 
-    @Bean
     public Consumer<Long, String> buildConsumer() {
         Properties props = new Properties();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, applicationProperties.getKafka().getBootstrapServers());

@@ -53,7 +53,7 @@ public class KafkaChannelFactory {
     private final MessagingHandler messagingHandler;
     private CompositeHealthIndicator bindersHealthIndicator;
     private KafkaBinderHealthIndicator kafkaBinderHealthIndicator;
-    private Consumer<Long, String> consumer;
+    private ConsumerBuilder consumerBuilder;
 
     public KafkaChannelFactory(BindingServiceProperties bindingServiceProperties,
                                SubscribableChannelBindingTargetFactory bindingTargetFactory,
@@ -62,7 +62,7 @@ public class KafkaChannelFactory {
                                KafkaMessageChannelBinder kafkaMessageChannelBinder, MessagingHandler messagingHandler,
                                CompositeHealthIndicator bindersHealthIndicator,
                                KafkaBinderHealthIndicator kafkaBinderHealthIndicator,
-                               Consumer<Long, String> consumer) {
+                               ConsumerBuilder consumerBuilder) {
         this.bindingServiceProperties = bindingServiceProperties;
         this.bindingTargetFactory = bindingTargetFactory;
         this.bindingService = bindingService;
@@ -72,7 +72,7 @@ public class KafkaChannelFactory {
         this.messagingHandler = messagingHandler;
         this.bindersHealthIndicator = bindersHealthIndicator;
         this.kafkaBinderHealthIndicator = kafkaBinderHealthIndicator;
-        this.consumer = consumer;
+        this.consumerBuilder = consumerBuilder;
         kafkaMessageChannelBinder.setExtendedBindingProperties(kafkaExtendedBindingProperties);
     }
 
@@ -138,18 +138,15 @@ public class KafkaChannelFactory {
             long sleepStartTime = 0;
             int messagesCount = 0;
             log.info("Start handler. thread name: {}", Thread.currentThread().getName());
+            Consumer<Long, String> consumer = consumerBuilder.buildConsumer();
             while (true) {
                 try {
-
-
                     log.info("last processing parameters: thread name: {}, sleepTime: {} ms, realSleepTime {} ms, messageCount: {} messages", Thread.currentThread().getName(), sleepTime, System.currentTimeMillis() - sleepStartTime, messagesCount);
                     long startTime = System.currentTimeMillis();
                     ConsumerRecords<Long, String> consumerRecords;
-                    synchronized (consumer) {
-                        log.info("Start pooling records. thread name: {}", Thread.currentThread().getName());
-                        consumerRecords = consumer.poll(Duration.of(0, ChronoUnit.SECONDS));
-                        log.info("End pooling records. thread name: {}", Thread.currentThread().getName());
-                    }
+                    log.info("Start pooling records. thread name: {}", Thread.currentThread().getName());
+                    consumerRecords = consumer.poll(Duration.of(100, ChronoUnit.MILLIS));
+                    log.info("End pooling records. thread name: {}", Thread.currentThread().getName());
                     messagesCount = consumerRecords.count();
                     if (consumerRecords.count() > 0) {
                         consumerRecords.forEach(consumerRecord -> {
