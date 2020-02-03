@@ -149,37 +149,43 @@ public class KafkaChannelFactory {
             int messagesCount = 0;
             log.info("Start handler. thread name: {}", Thread.currentThread().getName());
             while (true) {
-                log.info("last processing parameters: thread name: {}, sleepTime: {} ms, realSleepTime {} ms, messageCount: {} messages", Thread.currentThread().getName(), sleepTime, System.currentTimeMillis() - sleepStartTime, messagesCount);
-                long startTime = System.currentTimeMillis();
-                ConsumerRecords<Long, String> consumerRecords;
-                synchronized (consumer) {
-                    log.info("Start pooling records. thread name: {}", Thread.currentThread().getName());
-                    consumerRecords = consumer.poll(0);
-                    log.info("End pooling records. thread name: {}", Thread.currentThread().getName());
-                }
-                messagesCount = consumerRecords.count();
-                if (consumerRecords.count() > 0) {
-                    consumerRecords.forEach(consumerRecord -> {
-                        log.debug("handler process {}", consumerRecords.count());
-                        try {
-                            MdcUtils.putRid(MdcUtils.generateRid());
-                            handleEvent(consumerRecord.value(), consumerRecord.timestamp());
-                        } catch (Exception e) {
-                            log.error("error processign event", e);
-                            throw e;
-                        } finally {
-                            MdcUtils.removeRid();
-                        }
-                    });
-                }
-                sleepTime = SCHEDULED_TIME - (System.currentTimeMillis() - startTime);
-                sleepStartTime = System.currentTimeMillis();
-                if (sleepTime > 0) {
-                    try {
-                        Thread.sleep(sleepTime);
-                    } catch (InterruptedException e) {
-                        log.error("error interrupted event, message {}", e.getMessage());
+                try {
+
+
+                    log.info("last processing parameters: thread name: {}, sleepTime: {} ms, realSleepTime {} ms, messageCount: {} messages", Thread.currentThread().getName(), sleepTime, System.currentTimeMillis() - sleepStartTime, messagesCount);
+                    long startTime = System.currentTimeMillis();
+                    ConsumerRecords<Long, String> consumerRecords;
+                    synchronized (consumer) {
+                        log.info("Start pooling records. thread name: {}", Thread.currentThread().getName());
+                        consumerRecords = consumer.poll(0);
+                        log.info("End pooling records. thread name: {}", Thread.currentThread().getName());
                     }
+                    messagesCount = consumerRecords.count();
+                    if (consumerRecords.count() > 0) {
+                        consumerRecords.forEach(consumerRecord -> {
+                            log.debug("handler process {}", consumerRecords.count());
+                            try {
+                                MdcUtils.putRid(MdcUtils.generateRid());
+                                handleEvent(consumerRecord.value(), consumerRecord.timestamp());
+                            } catch (Exception e) {
+                                log.error("error processign event", e);
+                                throw e;
+                            } finally {
+                                MdcUtils.removeRid();
+                            }
+                        });
+                    }
+                    sleepTime = SCHEDULED_TIME - (System.currentTimeMillis() - startTime);
+                    sleepStartTime = System.currentTimeMillis();
+                    if (sleepTime > 0) {
+                        try {
+                            Thread.sleep(sleepTime);
+                        } catch (InterruptedException e) {
+                            log.error("error interrupted event, message {}", e.getMessage());
+                        }
+                    }
+                } catch (Throwable t) {
+                    log.error("Error with message {}", t.getMessage());
                 }
             }
         }
