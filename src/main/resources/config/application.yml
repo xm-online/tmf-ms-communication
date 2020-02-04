@@ -61,6 +61,7 @@ management:
             prometheus:
                 enabled: true
                 step: 60
+
 spring:
     application:
         name: communication
