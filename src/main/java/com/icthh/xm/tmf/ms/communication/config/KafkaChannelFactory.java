@@ -9,6 +9,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.springframework.boot.actuate.health.CompositeHealthIndicator;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
@@ -18,18 +19,13 @@ import org.springframework.cloud.stream.binder.kafka.properties.KafkaExtendedBin
 import org.springframework.cloud.stream.binding.BindingService;
 import org.springframework.cloud.stream.binding.SubscribableChannelBindingTargetFactory;
 import org.springframework.cloud.stream.config.BindingServiceProperties;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageHeaders;
 
 import javax.annotation.PostConstruct;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.icthh.xm.tmf.ms.communication.rules.ttl.TTLRule.MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP;
 import static org.apache.commons.lang3.StringUtils.unwrap;
-import static org.springframework.kafka.support.KafkaHeaders.ACKNOWLEDGMENT;
 
 /**
  * Configures Spring Cloud Stream support.
@@ -39,9 +35,6 @@ import static org.springframework.kafka.support.KafkaHeaders.ACKNOWLEDGMENT;
  */
 @Slf4j
 public class KafkaChannelFactory {
-
-    private static final String KAFKA = "kafka";
-    private static long SCHEDULED_TIME = 1000;
 
     private final BindingServiceProperties bindingServiceProperties;
     private final SubscribableChannelBindingTargetFactory bindingTargetFactory;
@@ -78,37 +71,79 @@ public class KafkaChannelFactory {
 
     @PostConstruct
     public void startHandler() {
-        log.info("Start handlers. Count = {}", applicationProperties.getKafka().getThreadsCount());
-        for (int i = 0; i < applicationProperties.getKafka().getThreadsCount(); i++) {
-            Thread thread = new Thread(new KafkaHandler());
-            thread.setName("Kafka-handler-" + i);
-            thread.start();
-        }
+        new Thread(() -> {
+            Consumer<Long, String> consumer = consumerBuilder.buildConsumer();
 
+            while (true) {
+                try {
+                    long startTime = System.currentTimeMillis();
+                    ConsumerRecords<Long, String> consumerRecords;
+                    consumerRecords = consumer.poll(Duration.of(applicationProperties.getKafka().getPollDuration(), ChronoUnit.MILLIS));
+                    long consumerSleepTime = calculateSleepTimeBetweenMessages(consumerRecords.count());
+                    long startHandlingMessageTime = System.currentTimeMillis();
+                    final long[] messageParts = {1};
+                    if (consumerRecords.count() > 0) {
+                        log.debug("handler process {}", consumerRecords.count());
+                        consumerRecords.forEach(consumerRecord -> {
+                            String value = consumerRecord.value();
+                            log.info("start processing message, base64 body = {}", value);
+                            value = unwrap(value, "\"");
+                            log.info("start processing message, json body = {}", value);
+                            CommunicationMessage communicationMessage = mapToCommunicationMessage(value);
+                            handleMessage(communicationMessage, consumerRecord.timestamp());
+                            messageParts[0] = communicationMessage.getMessageParts();
+                            sleep(consumerSleepTime * communicationMessage.getMessageParts(), startHandlingMessageTime);
+                        });
+                    }
+                    sleep(applicationProperties.getKafka().getPeriod() * messageParts[0], startTime);
+                } catch (Throwable t) {
+                    log.error("Error with message {}", t.getMessage());
+                }
+            }
+        }).start();
     }
 
-    private void handleEvent(String payloadString, long kafkaReceivedTimestamp) {
+    private long calculateSleepTimeBetweenMessages(int messagesCount) {
+        if (messagesCount != 0) {
+            return applicationProperties.getKafka().getPeriod() / messagesCount;
+        }
+        return 0;
+    }
+
+    private void handleMessage(CommunicationMessage communicationMessage, long kafkaReceivedTimestamp) {
+        try {
+            MdcUtils.putRid(MdcUtils.generateRid());
+            handleEvent(communicationMessage, kafkaReceivedTimestamp);
+        } catch (Exception e) {
+            log.error("error processign event", e);
+            throw e;
+        } finally {
+            MdcUtils.removeRid();
+        }
+    }
+
+    private void sleep(long handlingTime, long startTime) {
+        long sleep = handlingTime - (System.currentTimeMillis() - startTime);
+        if (sleep > 0) {
+            try {
+                Thread.sleep(sleep);
+            } catch (InterruptedException e) {
+                log.error("error interrupted event handling, message {}", e.getMessage());
+            }
+        }
+    }
+
+
+    private void handleEvent(CommunicationMessage communicationMessage, long kafkaReceivedTimestamp) {
         final StopWatch stopWatch = StopWatch.createStarted();
 
         try {
-            log.info("start processing message, base64 body = {}", payloadString);
-            payloadString = unwrap(payloadString, "\"");
-            log.info("start processing message, json body = {}", payloadString);
-            CommunicationMessage communicationMessage = mapToCommunicationMessage(payloadString);
             addReceivedByChannelCharacteristic(communicationMessage, kafkaReceivedTimestamp);
             messagingHandler.receiveMessage(communicationMessage);
             log.info("stop processing message, time = {}", stopWatch.getTime());
         } catch (Exception e) {
             log.error("Error process event", e);
         }
-    }
-
-    private Map<String, Object> getHeaders(Message<?> message) {
-        MessageHeaders headers = message.getHeaders();
-        Map<String, Object> headersForLog = new HashMap<>();
-        headersForLog.putAll(headers);
-        headersForLog.remove(ACKNOWLEDGMENT);
-        return headersForLog;
     }
 
     @SneakyThrows
@@ -130,66 +165,4 @@ public class KafkaChannelFactory {
 
     }
 
-
-    private class KafkaHandler implements Runnable {
-        @Override
-        public void run() {
-            long sleepTime = 0;
-            long sleepStartTime = 0;
-            int messagesCount = 0;
-            //  log.info("Start handler. thread name: {}", Thread.currentThread().getName());
-            Consumer<Long, String> consumer = consumerBuilder.buildConsumer();
-            while (true) {
-                try {
-                    // log.info("last processing parameters: thread name: {}, sleepTime: {} ms, realSleepTime {} ms, messageCount: {} messages", Thread.currentThread().getName(), sleepTime, System.currentTimeMillis() - sleepStartTime, messagesCount);
-                    long startTime = System.currentTimeMillis();
-                    ConsumerRecords<Long, String> consumerRecords;
-                    //  log.info("Start pooling records. thread name: {}", Thread.currentThread().getName());
-                    consumerRecords = consumer.poll(Duration.of(100, ChronoUnit.MILLIS));
-                    //  log.info("End pooling records. thread name: {}", Thread.currentThread().getName());
-                    messagesCount = consumerRecords.count();
-                    int consumerSleepTime = 0;
-                    if (messagesCount != 0) {
-                        consumerSleepTime = applicationProperties.getKafka().getPeriod() / messagesCount;
-                    }
-
-                    long startHandlingMessageTime = System.currentTimeMillis();
-                    if (consumerRecords.count() > 0) {
-                        int finalConsumerSleepTime = consumerSleepTime;
-                        consumerRecords.forEach(consumerRecord -> {
-                            log.debug("handler process {}", consumerRecords.count());
-                            try {
-                                MdcUtils.putRid(MdcUtils.generateRid());
-                                handleEvent(consumerRecord.value(), consumerRecord.timestamp());
-                            } catch (Exception e) {
-                                log.error("error processign event", e);
-                                throw e;
-                            } finally {
-                                MdcUtils.removeRid();
-                            }
-                            long sleep = finalConsumerSleepTime - (System.currentTimeMillis() - startHandlingMessageTime);
-                            if (sleep > 0) {
-                                try {
-                                    Thread.sleep(sleep);
-                                } catch (InterruptedException e) {
-                                    log.error("error interrupted event handling, message {}", e.getMessage());
-                                }
-                            }
-                        });
-                    }
-                    sleepTime = applicationProperties.getKafka().getPeriod() - (System.currentTimeMillis() - startTime);
-                    sleepStartTime = System.currentTimeMillis();
-                    if (sleepTime > 0) {
-                        try {
-                            Thread.sleep(sleepTime);
-                        } catch (InterruptedException e) {
-                            log.error("error interrupted event, message {}", e.getMessage());
-                        }
-                    }
-                } catch (Throwable t) {
-                    log.error("Error with message {}", t.getMessage());
-                }
-            }
-        }
-    }
 }
