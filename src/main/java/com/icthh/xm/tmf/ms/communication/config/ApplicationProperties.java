@@ -47,9 +47,7 @@ public class ApplicationProperties {
     @Setter
     public static class Kafka {
         private String bootstrapServers;
-        private int maxPoolRecords;
         private int period;
-        private int pollDuration;
     }
 
     @Getter

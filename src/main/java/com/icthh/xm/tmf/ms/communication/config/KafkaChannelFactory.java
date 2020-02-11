@@ -73,13 +73,10 @@ public class KafkaChannelFactory {
     public void startHandler() {
         new Thread(() -> {
             Consumer<Long, String> consumer = consumerBuilder.buildConsumer();
-
             while (true) {
                 try {
-                    long startTime = System.currentTimeMillis();
                     ConsumerRecords<Long, String> consumerRecords;
-                    consumerRecords = consumer.poll(Duration.of(applicationProperties.getKafka().getPollDuration(), ChronoUnit.MILLIS));
-                    long consumerSleepTime = calculateSleepTimeBetweenMessages(consumerRecords.count());
+                    consumerRecords = consumer.poll(Duration.of(0, ChronoUnit.MILLIS));
                     long startHandlingMessageTime = System.currentTimeMillis();
                     if (consumerRecords.count() > 0) {
                         log.debug("handler process {}", consumerRecords.count());
@@ -90,23 +87,14 @@ public class KafkaChannelFactory {
                             log.info("start processing message, json body = {}", value);
                             CommunicationMessage communicationMessage = mapToCommunicationMessage(value);
                             handleMessage(communicationMessage, consumerRecord.timestamp());
-                            sleep(consumerSleepTime * communicationMessage.getMessageParts(), startHandlingMessageTime);
+                            sleep(applicationProperties.getKafka().getPeriod() * communicationMessage.getMessageParts(), startHandlingMessageTime);
                         });
                     }
-                    log.debug("handler process {}", consumerRecords.count());
-                    sleep(applicationProperties.getKafka().getPeriod() , startTime);
                 } catch (Throwable t) {
                     log.error("Error with message {}", t.getMessage());
                 }
             }
         }).start();
-    }
-
-    private long calculateSleepTimeBetweenMessages(int messagesCount) {
-        if (messagesCount != 0) {
-            return applicationProperties.getKafka().getPeriod() / messagesCount;
-        }
-        return 0;
     }
 
     private void handleMessage(CommunicationMessage communicationMessage, long kafkaReceivedTimestamp) {
