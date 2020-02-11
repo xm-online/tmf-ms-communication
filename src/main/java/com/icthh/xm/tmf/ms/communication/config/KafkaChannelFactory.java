@@ -87,7 +87,8 @@ public class KafkaChannelFactory {
                             log.info("start processing message, json body = {}", value);
                             CommunicationMessage communicationMessage = mapToCommunicationMessage(value);
                             handleMessage(communicationMessage, consumerRecord.timestamp());
-                            sleep(applicationProperties.getKafka().getPeriod() * communicationMessage.getMessageParts(), startHandlingMessageTime);
+                            log.info("start processing message, message parts {}", communicationMessage.getMessageParts());
+                            sleep(applicationProperties.getKafka().getPeriod() * communicationMessage.getMessageParts());
                         });
                     }
                 } catch (Throwable t) {
@@ -109,8 +110,8 @@ public class KafkaChannelFactory {
         }
     }
 
-    private void sleep(long handlingTime, long startTime) {
-        long sleep = handlingTime - (System.currentTimeMillis() - startTime);
+    private void sleep(long handlingTime) {
+        long sleep = handlingTime;
         log.debug("Sleep time: {}", sleep);
         if (sleep > 0) {
             try {
