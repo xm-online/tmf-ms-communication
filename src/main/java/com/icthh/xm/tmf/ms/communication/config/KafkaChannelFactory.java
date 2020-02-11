@@ -81,7 +81,6 @@ public class KafkaChannelFactory {
                     consumerRecords = consumer.poll(Duration.of(applicationProperties.getKafka().getPollDuration(), ChronoUnit.MILLIS));
                     long consumerSleepTime = calculateSleepTimeBetweenMessages(consumerRecords.count());
                     long startHandlingMessageTime = System.currentTimeMillis();
-                    final long[] messageParts = {1};
                     if (consumerRecords.count() > 0) {
                         log.debug("handler process {}", consumerRecords.count());
                         consumerRecords.forEach(consumerRecord -> {
@@ -91,12 +90,11 @@ public class KafkaChannelFactory {
                             log.info("start processing message, json body = {}", value);
                             CommunicationMessage communicationMessage = mapToCommunicationMessage(value);
                             handleMessage(communicationMessage, consumerRecord.timestamp());
-                            messageParts[0] = communicationMessage.getMessageParts();
                             sleep(consumerSleepTime * communicationMessage.getMessageParts(), startHandlingMessageTime);
                         });
                     }
                     log.debug("handler process {}", consumerRecords.count());
-                    sleep(applicationProperties.getKafka().getPeriod() * messageParts[0], startTime);
+                    sleep(applicationProperties.getKafka().getPeriod() , startTime);
                 } catch (Throwable t) {
                     log.error("Error with message {}", t.getMessage());
                 }
