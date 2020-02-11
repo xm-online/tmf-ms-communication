@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.config.client.repository.TenantListRepository;
 import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessTimeConfigService;
+import com.icthh.xm.tmf.ms.communication.rules.ttl.TTLRuleConfigService;
 import java.util.Collections;
 import java.util.Set;
 import org.springframework.context.annotation.Bean;
@@ -40,5 +41,10 @@ public class TenantConfigMockConfiguration {
     @Bean
     public BusinessTimeConfigService businessTimeConfigService() {
         return mock(BusinessTimeConfigService.class);
+    }
+
+    @Bean("TTLRuleConfigService")
+    public TTLRuleConfigService ttlRuleConfigService() {
+        return mock(TTLRuleConfigService.class);
     }
 }
