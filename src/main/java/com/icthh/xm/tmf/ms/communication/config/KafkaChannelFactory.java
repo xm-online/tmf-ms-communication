@@ -95,6 +95,7 @@ public class KafkaChannelFactory {
                             sleep(consumerSleepTime * communicationMessage.getMessageParts(), startHandlingMessageTime);
                         });
                     }
+                    log.debug("handler process {}", consumerRecords.count());
                     sleep(applicationProperties.getKafka().getPeriod() * messageParts[0], startTime);
                 } catch (Throwable t) {
                     log.error("Error with message {}", t.getMessage());
@@ -124,6 +125,7 @@ public class KafkaChannelFactory {
 
     private void sleep(long handlingTime, long startTime) {
         long sleep = handlingTime - (System.currentTimeMillis() - startTime);
+        log.debug("Sleep time: {}", sleep);
         if (sleep > 0) {
             try {
                 Thread.sleep(sleep);

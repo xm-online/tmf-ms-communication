@@ -182,6 +182,7 @@ application:
         bootstrap-servers: localhost:9092
         max-pool-records: 1
         period: 1000
+        pollDuration: 10
     messaging:
         send-queue-name-template: communication_%s_%s_send
         recive-queue-name-template: communication_%s_%s_recive
