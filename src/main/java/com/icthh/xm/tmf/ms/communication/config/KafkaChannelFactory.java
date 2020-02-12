@@ -77,6 +77,7 @@ public class KafkaChannelFactory {
                 try {
                     ConsumerRecords<Long, String> consumerRecords;
                     consumerRecords = consumer.poll(Duration.of(0, ChronoUnit.MILLIS));
+                    long startHandlingMessageTime = System.currentTimeMillis();
                     if (consumerRecords.count() > 0) {
                         log.debug("handler process {}", consumerRecords.count());
                         consumerRecords.forEach(consumerRecord -> {
@@ -87,7 +88,7 @@ public class KafkaChannelFactory {
                             CommunicationMessage communicationMessage = mapToCommunicationMessage(value);
                             handleMessage(communicationMessage, consumerRecord.timestamp());
                             log.info("start processing message, message parts {}", communicationMessage.getMessageParts());
-                            sleep(applicationProperties.getKafka().getPeriod());
+                            sleep(applicationProperties.getKafka().getPeriod(), startHandlingMessageTime);
                         });
                     }
                 } catch (Throwable t) {
@@ -109,8 +110,8 @@ public class KafkaChannelFactory {
         }
     }
 
-    private void sleep(long handlingTime) {
-        long sleep = handlingTime;
+    private void sleep(long handlingTime, long startTime) {
+        long sleep = handlingTime - (System.currentTimeMillis() - startTime);
         log.debug("Sleep time: {}", sleep);
         if (sleep > 0) {
             try {
