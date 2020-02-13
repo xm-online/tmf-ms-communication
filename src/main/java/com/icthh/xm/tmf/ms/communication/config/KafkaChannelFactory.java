@@ -87,7 +87,6 @@ public class KafkaChannelFactory {
                             log.info("start processing message, json body = {}", value);
                             CommunicationMessage communicationMessage = mapToCommunicationMessage(value);
                             handleMessage(communicationMessage, consumerRecord.timestamp());
-                            log.info("start processing message, message parts {}", communicationMessage.getMessageParts());
                             sleep(applicationProperties.getKafka().getPeriod(), startHandlingMessageTime);
                         });
                     }
