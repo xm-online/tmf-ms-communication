@@ -12,6 +12,7 @@ addons:
 
 script:
   - set -e
+  - "docker build -t smpp-emulator -f src/main/docker/smpp-emulator/Dockerfile ."
   - "./gradlew --no-daemon --refresh-dependencies clean check test"
   - "./gradlew -x test -Pprod --no-daemon bootWar"
   - docker login -u $DOCKER_USER -p $DOCKER_PASS
