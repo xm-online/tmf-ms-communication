@@ -81,7 +81,8 @@ public class MessagingConfiguration {
             new ThreadPoolExecutor(deliveryProcessorThreadCount,
                 deliveryMessageQueueMaxSize, 0L,
                 TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>()));
+                new LinkedBlockingQueue<>()),
+            applicationProperties.isConvertToHexDeliveredId());
     }
 
     @Bean

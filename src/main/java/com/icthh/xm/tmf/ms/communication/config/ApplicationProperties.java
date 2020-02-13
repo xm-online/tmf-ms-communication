@@ -33,6 +33,7 @@ public class ApplicationProperties {
     private final Retry retry = new Retry();
     private final Firebase firebase = new Firebase();
     private int kafkaConcurrencyCount;
+    private boolean convertToHexDeliveredId;
     private String kafkaSystemTopic;
     private String kafkaSystemQueue;
     private Kafka kafka;

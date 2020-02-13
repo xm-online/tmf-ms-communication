@@ -169,6 +169,7 @@ xm-config:
 
 # application:
 application:
+    convert-to-hex-delivered-id: true
     kafka-system-topic: system_topic
     kafka-system-queue: system_queue
     # The concurrency of the inbound consumer.
