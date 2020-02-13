@@ -17,10 +17,15 @@ import org.jsmpp.util.DeliveryReceiptState;
 public class SendToKafkaDeliveryReportListener extends AbstractDeliveryReportListener {
 
     private final MessagingAdapter messagingAdapter;
+    private final boolean convertToHexDeliveredId;
 
-    public SendToKafkaDeliveryReportListener(MessagingAdapter messagingAdapter, ExecutorService executorService) {
+    public SendToKafkaDeliveryReportListener(MessagingAdapter messagingAdapter,
+                                             ExecutorService executorService,
+                                             boolean convertToHexDeliveredId
+    ) {
         super(executorService);
         this.messagingAdapter = messagingAdapter;
+        this.convertToHexDeliveredId = convertToHexDeliveredId;
     }
 
     @Override
@@ -28,7 +33,7 @@ public class SendToKafkaDeliveryReportListener extends AbstractDeliveryReportLis
         final StopWatch stopWatch = StopWatch.createStarted();
 
         DeliveryReceipt shortMessage = getShortMessage(deliverSm);
-        String messageId = ofNullable(getMessageId(shortMessage)).orElseGet(() -> getMessageId(deliverSm));
+        String messageId = ofNullable(getMessageId(shortMessage, convertToHexDeliveredId)).orElseGet(() -> getMessageId(deliverSm));
         MessageState state = ofNullable(getState(shortMessage)).orElseGet(() -> getState(deliverSm));
 
         log.info("Delivery report is received with smsc id = {}, state = {}, short message: {}", messageId, state, shortMessage);
