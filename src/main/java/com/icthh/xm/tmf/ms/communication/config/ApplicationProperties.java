@@ -4,13 +4,19 @@ import com.icthh.xm.commons.lep.TenantScriptStorage;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.jsmpp.bean.BindType;
 import org.jsmpp.bean.NumberingPlanIndicator;
 import org.jsmpp.bean.TypeOfNumber;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * Properties specific to Communication.
@@ -30,12 +36,22 @@ public class ApplicationProperties {
     private boolean convertToHexDeliveredId;
     private String kafkaSystemTopic;
     private String kafkaSystemQueue;
+    private Kafka kafka;
     private List<String> tenantIgnoredPathList = Collections.emptyList();
     private boolean streamBindingEnabled;
     private String channelSpecificationPathPattern;
 
     private Messaging messaging = new Messaging();
     private BusinessRule businessRule = new BusinessRule();
+
+    @Getter
+    @Setter
+    public static class Kafka {
+        private String bootstrapServers;
+        private int maxPoolRecords;
+        private int threadsCount;
+        private int period;
+    }
 
     @Getter
     @Setter
@@ -109,4 +125,5 @@ public class ApplicationProperties {
         private long delay;
         private int multiplier;
     }
+
 }

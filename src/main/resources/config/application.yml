@@ -68,7 +68,7 @@ spring:
             default-binder: kafka
             kafka:
                 binder:
-                    brokers: localhost:9092
+                    brokers: kafka:9092
                     defaultBrokerPort: 9092
                     autoCreateTopics: true
                     autoAddPartitions: true
@@ -84,7 +84,7 @@ spring:
         mode: HTML
 
     kafka:
-        bootstrap-servers: localhost:9092
+        bootstrap-servers: kafka:9092
         consumer:
             group-id: communication
             key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -179,6 +179,11 @@ application:
     kafka-concurrency-count: 16
     stream-binding-enabled: true
     channel-specification-path-pattern: /config/tenants/{tenantName}/communication/communication.yml
+    kafka:
+        bootstrap-servers: kafka:9092
+        max-pool-records: 100
+        threads-count: 3
+        period: 10
     messaging:
         send-queue-name-template: communication_%s_%s_send
         recive-queue-name-template: communication_%s_%s_recive

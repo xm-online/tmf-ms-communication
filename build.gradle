@@ -217,7 +217,11 @@ dependencies {
     compile "org.springframework.cloud:spring-cloud-security"
     compile "org.springframework.cloud:spring-cloud-starter-openfeign"
     compile "org.springframework.cloud:spring-cloud-stream"
-    compile "org.springframework.cloud:spring-cloud-stream-binder-kafka"
+    compile 'org.apache.kafka:kafka-clients:2.1.0'
+    compile("org.springframework.cloud:spring-cloud-stream-binder-kafka") {
+        exclude group: 'org.apache.kafka', module: 'kafka-clients'
+    }
+
     compile "org.springframework.boot:spring-boot-starter-cloud-connectors"
     compile "org.springframework.security:spring-security-config"
     compile "org.springframework.security:spring-security-data"
