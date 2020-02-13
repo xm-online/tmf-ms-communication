@@ -44,7 +44,7 @@ public class SmppTest {
     }
 
     @ClassRule
-    public static GenericContainer genericContainer = new GenericContainer(DOCKER_IMAGE_NAME)
+    public static GenericContainer<?> genericContainer = new GenericContainer<>(DOCKER_IMAGE_NAME)
         .withCreateContainerCmdModifier(getContainerModifier());
 
     @Test

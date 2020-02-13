@@ -13,10 +13,11 @@
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
 
-
 spring:
     application:
         name: communication
+    main:
+        allow-bean-definition-overriding: true
     messages:
         basename: i18n/messages
     mvc:
@@ -25,7 +26,14 @@ spring:
     thymeleaf:
         mode: HTML
     kafka:
-        bootstrap-servers: localhost:9093
+        bootstrap-servers: localhost:9092
+    cloud:
+        bus:
+            enabled: false
+        discovery:
+            enabled: false
+        consul:
+            enabled: false
 
 logging:
     level:
@@ -38,7 +46,11 @@ logging:
 #
 # Full reference is available at: https://www.jhipster.tech/common-application-properties/
 # ===================================================================
-
+management:
+    metrics:
+        export:
+            prometheus:
+                enabled: true
 jhipster:
     async:
         core-pool-size: 1
@@ -64,9 +76,8 @@ jhipster:
             client-id: internal
             client-secret: internal
     metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
-        jmx.enabled: true
         logs: # Reports Dropwizard metrics in the logs
-            enabled: true
+            enabled: false
             report-frequency: 60 # in seconds
 xm-config:
     enabled: false

@@ -42,7 +42,7 @@ public class FirebaseService {
 
 
         FirebaseRequestData data = new FirebaseRequestData();
-        wrapper.getCharacteristics().stream().forEach(item -> data.addAdditionalData(item.getName(), item.getValue()));
+        wrapper.getCharacteristics().forEach(item -> data.addAdditionalData(item.getName(), item.getValue()));
         request.setRequestData(data);
 
         HttpHeaders headers = new HttpHeaders();

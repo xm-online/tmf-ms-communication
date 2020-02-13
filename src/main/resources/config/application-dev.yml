@@ -62,6 +62,8 @@ spring:
 
 server:
     port: 8701
+    http2:
+        enabled: false # To use HTTP/2 you will need SSL support (see above the "server.ssl" configuration)
 
 # ===================================================================
 # JHipster specific properties
@@ -70,8 +72,6 @@ server:
 # ===================================================================
 
 jhipster:
-    http:
-        version: V_1_1 # To use HTTP/2 you will need to activate TLS (see application-tls.yml)
         # CORS is disabled by default on microservices, as you should access them through a gateway.
         # If you want to enable it, please uncomment the configuration below.
         # cors:
@@ -91,10 +91,6 @@ jhipster:
         from: communication@localhost
         base-url: http://127.0.0.1:8701
     metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
-        jmx:
-            enabled: true
-        prometheus:
-            enabled: false #expose metrics via prometheus
         logs: # Reports Dropwizard metrics in the logs
             enabled: false
             report-frequency: 60 # in seconds

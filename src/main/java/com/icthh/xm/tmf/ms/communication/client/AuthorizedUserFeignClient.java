@@ -16,12 +16,12 @@ public @interface AuthorizedUserFeignClient {
     String name() default "";
 
     /**
-     * A custom <code>@Configuration</code> for the feign client.
+     * A custom {@code @Configuration} for the feign client.
      *
-     * Can contain override <code>@Bean</code> definition for the pieces that make up the client, for instance {@link
+     * Can contain override {@code @Bean} definition for the pieces that make up the client, for instance {@link
      * feign.codec.Decoder}, {@link feign.codec.Encoder}, {@link feign.Contract}.
      *
-     * @see FeignClientsConfiguration for the defaults
+     * @see FeignClientsConfiguration for the defaults.
      */
     @AliasFor(annotation = FeignClient.class, attribute = "configuration")
     Class<?>[] configuration() default OAuth2UserClientFeignConfiguration.class;
@@ -43,7 +43,7 @@ public @interface AuthorizedUserFeignClient {
     Class<?> fallback() default void.class;
 
     /**
-     * Path prefix to be used by all method-level mappings. Can be used with or without <code>@RibbonClient</code>.
+     * Path prefix to be used by all method-level mappings. Can be used with or without {@code @RibbonClient}.
      */
     String path() default "";
 }
