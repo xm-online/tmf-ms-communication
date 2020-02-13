@@ -449,8 +449,6 @@ definitions:
       - sender
       - receiver
     properties:
-      messageParts:
-        type: integer
       callbackFlag:
         type: boolean
       content:
