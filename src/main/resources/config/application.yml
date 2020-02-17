@@ -182,6 +182,8 @@ application:
     kafka:
         bootstrap-servers: localhost:9092
         period: 1000
+        rate-limit: 400
+        read-timeout: 500
     messaging:
         send-queue-name-template: communication_%s_%s_send
         recive-queue-name-template: communication_%s_%s_recive

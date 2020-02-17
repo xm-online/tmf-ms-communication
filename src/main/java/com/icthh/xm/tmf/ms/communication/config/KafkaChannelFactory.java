@@ -23,6 +23,10 @@ import org.springframework.cloud.stream.config.BindingServiceProperties;
 import javax.annotation.PostConstruct;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static com.icthh.xm.tmf.ms.communication.rules.ttl.TTLRule.MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP;
 import static org.apache.commons.lang3.StringUtils.unwrap;
@@ -48,6 +52,8 @@ public class KafkaChannelFactory {
     private KafkaBinderHealthIndicator kafkaBinderHealthIndicator;
     private ConsumerBuilder consumerBuilder;
 
+    private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(40);
+
     public KafkaChannelFactory(BindingServiceProperties bindingServiceProperties,
                                SubscribableChannelBindingTargetFactory bindingTargetFactory,
                                BindingService bindingService, ObjectMapper objectMapper,
@@ -71,30 +77,57 @@ public class KafkaChannelFactory {
 
     @PostConstruct
     public void startHandler() {
-        new Thread(() -> {
-            Consumer<Long, String> consumer = consumerBuilder.buildConsumer();
-            while (true) {
-                try {
-                    ConsumerRecords<Long, String> consumerRecords;
-                    consumerRecords = consumer.poll(Duration.of(0, ChronoUnit.MILLIS));
-                    long startHandlingMessageTime = System.currentTimeMillis();
-                    if (consumerRecords.count() > 0) {
-                        log.debug("handler process {}", consumerRecords.count());
-                        consumerRecords.forEach(consumerRecord -> {
-                            String value = consumerRecord.value();
-                            log.info("start processing message, base64 body = {}", value);
-                            value = unwrap(value, "\"");
-                            log.info("start processing message, json body = {}", value);
-                            CommunicationMessage communicationMessage = mapToCommunicationMessage(value);
-                            handleMessage(communicationMessage, consumerRecord.timestamp());
-                            sleep(applicationProperties.getKafka().getPeriod(), startHandlingMessageTime);
-                        });
+        int rateLimit = applicationProperties.getKafka().getRateLimit();
+        int pauseBetweenSends = 1000_000 / rateLimit;
+        Thread process = new Thread() {
+            public void run() {
+                Consumer<Long, String> consumer = consumerBuilder.buildConsumer();
+                consumer.commitSync();
+                long calculatedTime = System.currentTimeMillis();
+                long startDelay = 0;
+                ConsumerRecords<Long, String> consumerRecords = new ConsumerRecords<>(Collections.EMPTY_MAP);
+                while (true) {
+                    try {
+                        if (consumerRecords.count() > 0) {
+                            int recordCount = 1;
+                            log.debug("handler process {}", consumerRecords.count());
+                            for (ConsumerRecord<Long, String> consumerRecord : consumerRecords) {
+                                scheduledExecutorService.schedule(() -> {
+                                    String value = consumerRecord.value();
+                                    log.info("start processing message, base64 body = {}", value);
+                                    value = unwrap(value, "\"");
+                                    log.info("start processing message, json body = {}", value);
+                                    CommunicationMessage communicationMessage = mapToCommunicationMessage(value);
+                                    handleMessage(communicationMessage, consumerRecord.timestamp());
+                                }, (startDelay * 1000) + (recordCount * pauseBetweenSends), TimeUnit.MICROSECONDS);
+                                recordCount++;
+                            }
+                            calculatedTime += (recordCount * pauseBetweenSends) / 1000;
+                        }
+                        consumerRecords = consumer.poll(Duration.of(applicationProperties.getKafka().getReadTimeout(), ChronoUnit.MILLIS));
+                        long currentTime = System.currentTimeMillis();
+                        long gap = calculatedTime - currentTime;
+                        if (gap < 0) {
+                            calculatedTime = System.currentTimeMillis();
+                            startDelay = 0;
+                        } else if (gap > 500) {
+                            sleep(gap - 500);
+                            currentTime = System.currentTimeMillis();
+                            startDelay = calculatedTime - currentTime;
+                            startDelay = startDelay < 0 ? 0 : startDelay;
+                        } else {
+                            startDelay = gap;
+                        }
+                    } catch (Throwable t) {
+                        startDelay = 0;
+                        calculatedTime = System.currentTimeMillis();
+                        log.error("Error with message {}", t.getMessage());
                     }
-                } catch (Throwable t) {
-                    log.error("Error with message {}", t.getMessage());
                 }
             }
-        }).start();
+        };
+        process.setDaemon(true);
+        process.start();
     }
 
     private void handleMessage(CommunicationMessage communicationMessage, long kafkaReceivedTimestamp) {
@@ -108,19 +141,6 @@ public class KafkaChannelFactory {
             MdcUtils.removeRid();
         }
     }
-
-    private void sleep(long handlingTime, long startTime) {
-        long sleep = handlingTime - (System.currentTimeMillis() - startTime);
-        log.debug("Sleep time: {}", sleep);
-        if (sleep > 0) {
-            try {
-                Thread.sleep(sleep);
-            } catch (InterruptedException e) {
-                log.error("error interrupted event handling, message {}", e.getMessage());
-            }
-        }
-    }
-
 
     private void handleEvent(CommunicationMessage communicationMessage, long kafkaReceivedTimestamp) {
         final StopWatch stopWatch = StopWatch.createStarted();

@@ -49,6 +49,8 @@ public class ApplicationProperties {
     public static class Kafka {
         private String bootstrapServers;
         private int period;
+        private int rateLimit;
+        private int readTimeout;
     }
 
     @Getter
