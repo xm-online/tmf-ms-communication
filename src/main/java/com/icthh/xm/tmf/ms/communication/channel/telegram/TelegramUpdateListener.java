@@ -51,6 +51,9 @@ public class TelegramUpdateListener implements UpdatesListener {
 
         Sender sender = new Sender();
         sender.setId(update.message().chat().id().toString());
+        sender.setUserName(update.message().from().username().isEmpty() ?
+            update.message().from().firstName() + " " + update.message().from().lastName() :
+            update.message().from().username());
         message.setSender(sender);
 
         return message;

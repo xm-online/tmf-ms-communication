@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.tmf.ms.communication.channel.telegram.TelegramUpdateListener;
@@ -8,8 +9,12 @@ import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec.Telegram;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import com.pengrad.telegrambot.TelegramBot;
+import com.pengrad.telegrambot.model.request.Keyboard;
+import com.pengrad.telegrambot.model.request.ParseMode;
+import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
 import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -18,8 +23,13 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import javax.validation.Valid;
 
 @Slf4j
 @Service
@@ -90,16 +100,52 @@ public class TelegramService implements MessageService {
         return new CommunicationMessage();
     }
 
-    private void botExecute(TelegramBot bot, Receiver receiver, CommunicationMessageCreate message) {
+    protected void botExecute(TelegramBot bot, Receiver receiver, CommunicationMessageCreate message) {
         final StopWatch stopWatch = StopWatch.createStarted();
         String chatId = receiver.getAppUserId();
         log.info("start sending message, bot = {}, chatId = {}", message.getType(), chatId);
         try {
-            bot.execute(new SendMessage(chatId, message.getContent()));
-            log.info("stop sending message, time = {} ms.", stopWatch.getTime());
+            @Valid List<CommunicationRequestCharacteristic> characteristics = message.getCharacteristic();
+            if (characteristics.isEmpty()) {
+                bot.execute(new SendMessage(chatId, message.getContent()));
+                log.info("stop sending message, time = {} ms.", stopWatch.getTime());
+            } else {
+                for (CommunicationRequestCharacteristic characteristic : characteristics) {
+                    switch (characteristic.getName()) {
+                        case "keyboardMarkup":
+                            ObjectMapper objectMapper = new ObjectMapper();
+                            List<List<LinkedHashMap<String, String>>> keyboardListModel = null;
+                            try {
+                                keyboardListModel = objectMapper.readValue(characteristic.getValue(), new TypeReference<List<List<LinkedHashMap<String, String>>>>() {});
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            String[][] keyboardMarkup = createArray(keyboardListModel);
+                            Keyboard replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardMarkup);
+                            bot.execute(new SendMessage(chatId, message.getContent())
+                                .replyMarkup(replyKeyboardMarkup));
+                            break;
+                        case "parseMode":
+                            bot.execute(new SendMessage(chatId, message.getContent())
+                                .parseMode(ParseMode.valueOf(characteristic.getValue())));
+                            break;
+                        default:
+                            bot.execute(new SendMessage(chatId, message.getContent()));
+                            log.info("stop sending message, time = {} ms.", stopWatch.getTime());
+                            break;
+                    }
+                }
+            }
         } catch (Exception ex) {
             log.error("error processing message: {}, time = {} ms.", ex.getMessage(), stopWatch.getTime());
         }
+    }
+
+    private String[][] createArray(List<List<LinkedHashMap<String, String>>> keyboardListModel) {
+        return keyboardListModel.stream()
+                                    .map(arr -> arr.stream().map(it -> it.get("name")).collect(Collectors.toList()))
+                                    .map(arrString -> arrString.toArray(String[]::new))
+                                    .toArray(String[][]::new);
     }
 
     private Map<String, TelegramBot> getTenantBots(String tenantKey) {

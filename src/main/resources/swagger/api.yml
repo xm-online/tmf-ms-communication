@@ -763,6 +763,9 @@ definitions:
       name:
         type: string
         description: Name of the sender
+      userName:
+        type: string
+        description: UserName of the sender
       phoneNumber:
         type: string
         description: 'Phone number of the sender, if the communication type is SMS.'
