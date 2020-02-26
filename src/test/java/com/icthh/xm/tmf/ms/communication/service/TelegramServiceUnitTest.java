@@ -64,10 +64,19 @@ public class TelegramServiceUnitTest {
         message.setCharacteristic(List.of(characteristic));
 
         SendMessage sendMessage = prepareMessage(receiver.getAppUserId(), message.getContent(), message.getCharacteristic().get(0));
+
+        //todo it better to write test for method telegramService.send
         telegramService.botExecute(telegramBot, receiver, message);
 
-        verify(telegramBot).execute(argThat((ArgumentMatcher<SendMessage>) argument -> (argument)
-            .getParameters().get("chat_id").equals(sendMessage.getParameters().get("chat_id"))));
+
+        verify(telegramBot).execute(argThat((ArgumentMatcher<SendMessage>) argument -> {
+
+                //todo and than verify something like this
+                String chatId = (String) argument.getParameters().get("chat_id");
+                Keyboard keyboard = (Keyboard) argument.getParameters().get("reply_markup");
+                return "chatIdValue".equals(chatId) && "{expectedjson}".equals(keyboard.toString());
+            }
+        ));
 
     }
 
@@ -78,7 +87,7 @@ public class TelegramServiceUnitTest {
             keyboardListModel = objectMapper.readValue(characteristic.getValue(), new TypeReference<List<List<LinkedHashMap<String, String>>>>() {
             });
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace();//todo
         }
         String[][] keyboardMarkup = keyboardListModel.stream()
             .map(arr -> arr.stream().map(it -> it.get("name")).collect(Collectors.toList()))

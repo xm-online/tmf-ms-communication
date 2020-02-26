@@ -105,21 +105,29 @@ public class TelegramService implements MessageService {
         String chatId = receiver.getAppUserId();
         log.info("start sending message, bot = {}, chatId = {}", message.getType(), chatId);
         try {
+            //todo move SendMessage construction in separate method
+            //todo for example SendMessage forExecute= buildSendMessage()
             @Valid List<CommunicationRequestCharacteristic> characteristics = message.getCharacteristic();
             if (characteristics.isEmpty()) {
                 bot.execute(new SendMessage(chatId, message.getContent()));
                 log.info("stop sending message, time = {} ms.", stopWatch.getTime());
             } else {
+                //todo also use java 8 style of "for" characteristics.stream().forEach()
                 for (CommunicationRequestCharacteristic characteristic : characteristics) {
                     switch (characteristic.getName()) {
                         case "keyboardMarkup":
+                            //todo each section of switch case should very simple (1-2 line of code)
+                            //todo so suggest to move login in all "case" to separate methods
+
+                            // objectMapper already defined in this class, please use it
                             ObjectMapper objectMapper = new ObjectMapper();
                             List<List<LinkedHashMap<String, String>>> keyboardListModel = null;
                             try {
                                 keyboardListModel = objectMapper.readValue(characteristic.getValue(), new TypeReference<List<List<LinkedHashMap<String, String>>>>() {});
                             } catch (IOException e) {
-                                e.printStackTrace();
+                                e.printStackTrace(); //todo use log.error or private method with lombok annotation @SneakyThrows
                             }
+
                             String[][] keyboardMarkup = createArray(keyboardListModel);
                             Keyboard replyKeyboardMarkup = new ReplyKeyboardMarkup(keyboardMarkup);
                             bot.execute(new SendMessage(chatId, message.getContent())
@@ -142,6 +150,7 @@ public class TelegramService implements MessageService {
     }
 
     private String[][] createArray(List<List<LinkedHashMap<String, String>>> keyboardListModel) {
+        //todo potential NPE, keyboardListModel may be null
         return keyboardListModel.stream()
                                     .map(arr -> arr.stream().map(it -> it.get("name")).collect(Collectors.toList()))
                                     .map(arrString -> arrString.toArray(String[]::new))
