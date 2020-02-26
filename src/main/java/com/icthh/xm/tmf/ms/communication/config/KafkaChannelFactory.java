@@ -14,6 +14,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.PostConstruct;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +61,14 @@ public class KafkaChannelFactory {
     private final MessagingHandler messagingHandler;
     private CompositeHealthIndicator bindersHealthIndicator;
     private KafkaBinderHealthIndicator kafkaBinderHealthIndicator;
+
+    private int rateLimit = 400; // applicationProperties.getKafka().getRateLimit();
+    private int pauseBetweenSends = 1_000_000 / rateLimit;
+    private int processingPoolSize = 40;
+
+    private volatile AtomicLong nextScheduledTime = new AtomicLong((System.nanoTime() / 1000) + pauseBetweenSends);
+
+    private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(processingPoolSize);
 
     public KafkaChannelFactory(BindingServiceProperties bindingServiceProperties,
                                SubscribableChannelBindingTargetFactory bindingTargetFactory,
@@ -108,15 +120,21 @@ public class KafkaChannelFactory {
         bindersHealthIndicator.addHealthIndicator(KAFKA, kafkaBinderHealthIndicator);
 
         channel.subscribe(message -> {
-            try {
-                MdcUtils.putRid(MdcUtils.generateRid());
-                handleEvent(message);
-            } catch (Exception e) {
-                log.error("error processign event", e);
-                throw e;
-            } finally {
-                MdcUtils.removeRid();
-            }
+            long delay;
+            do {
+                delay = nextScheduledTime.getAndAdd(pauseBetweenSends) - System.nanoTime() / 1000;
+            } while (delay < pauseBetweenSends);
+            scheduledExecutorService.schedule(() -> {
+                try {
+                    MdcUtils.putRid(MdcUtils.generateRid());
+                    handleEvent(message);
+                } catch (Exception e) {
+                    log.error("error processing event", e);
+                    throw e;
+                } finally {
+                    MdcUtils.removeRid();
+                }
+            }, delay, TimeUnit.MICROSECONDS);
         });
 
     }
