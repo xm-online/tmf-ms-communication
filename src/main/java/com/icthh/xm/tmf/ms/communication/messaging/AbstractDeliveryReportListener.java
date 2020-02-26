@@ -58,13 +58,13 @@ public abstract class AbstractDeliveryReportListener implements DeliveryReportLi
         return null;
     }
 
-    protected String getMessageId(DeliveryReceipt deliveryReceipt){
+    protected String getMessageId(DeliveryReceipt deliveryReceipt, boolean convertToHexDeliveredId){
         String messageId = deliveryReceipt.getId();
         try {
-            return ofNullable(messageId)
+            return convertToHexDeliveredId ? ofNullable(messageId)
                 .map(id-> new BigInteger(id, DECIMAL_SYSTEM))
                 .map(id-> id.toString(HEX_SYSTEM))
-                .orElse(null);
+                .orElse(null) : messageId;
         } catch (Exception e) {
             log.error("Cannot convert delivered message id to big integer, id: {}", messageId);
             return null;
@@ -85,9 +85,8 @@ public abstract class AbstractDeliveryReportListener implements DeliveryReportLi
     }
 
     protected MessageState getState(DeliverSm deliverSm) {
-        return getTagValue(deliverSm, MESSAGE_STATE, op -> {
-            return MessageState.valueOf(((OptionalParameter.Byte) op).getValue());
-        });
+        return getTagValue(deliverSm, MESSAGE_STATE,
+            op -> MessageState.valueOf(((OptionalParameter.Byte) op).getValue()));
     }
 
     protected <T> T getTagValue(DeliverSm deliverSm, OptionalParameter.Tag tag, Function<OptionalParameter, T> converter) {

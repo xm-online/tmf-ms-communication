@@ -14,6 +14,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.core.env.Environment;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import javax.annotation.PostConstruct;
 import java.net.InetAddress;
@@ -25,6 +26,7 @@ import java.util.Collection;
 @EnableAutoConfiguration
 @EnableConfigurationProperties({ApplicationProperties.class})
 @EnableDiscoveryClient
+@EnableScheduling
 public class CommunicationApp {
 
     private static final Logger log = LoggerFactory.getLogger(CommunicationApp.class);

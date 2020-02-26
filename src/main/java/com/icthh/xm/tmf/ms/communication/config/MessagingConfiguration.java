@@ -7,11 +7,14 @@ import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaDeliveryReportList
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaMoDeliveryReportListener;
 import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
+
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.consumer.Consumer;
 import org.springframework.boot.actuate.health.CompositeHealthIndicator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
@@ -37,7 +40,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 @EnableBinding
 @EnableIntegration
 @RequiredArgsConstructor
-@Import( {KafkaBinderConfiguration.class})
+@Import({KafkaBinderConfiguration.class})
 @ConditionalOnProperty("application.stream-binding-enabled")
 public class MessagingConfiguration {
 
@@ -56,10 +59,11 @@ public class MessagingConfiguration {
                                                    KafkaMessageChannelBinder kafkaMessageChannelBinder,
                                                    KafkaProperties kafkaProperties, MessagingHandler messageHandler,
                                                    CompositeHealthIndicator bindersHealthIndicator,
-                                                   KafkaBinderHealthIndicator kafkaBinderHealthIndicator) {
+                                                   KafkaBinderHealthIndicator kafkaBinderHealthIndicator,
+                                                   ConsumerBuilder consumerBuilder) {
         return new KafkaChannelFactory(bindingServiceProperties, bindingTargetFactory, bindingService, objectMapper,
-                                       applicationProperties, kafkaProperties, kafkaMessageChannelBinder,
-                                       messageHandler, bindersHealthIndicator, kafkaBinderHealthIndicator);
+            applicationProperties, kafkaProperties, kafkaMessageChannelBinder,
+            messageHandler, bindersHealthIndicator, kafkaBinderHealthIndicator, consumerBuilder);
     }
 
     @Bean
@@ -74,10 +78,11 @@ public class MessagingConfiguration {
         int deliveryProcessorThreadCount = applicationProperties.getMessaging().getDeliveryProcessorThreadCount();
         int deliveryMessageQueueMaxSize = applicationProperties.getMessaging().getDeliveryMessageQueueMaxSize();
         return new SendToKafkaDeliveryReportListener(messagingAdapter,
-                                                     new ThreadPoolExecutor(deliveryProcessorThreadCount,
-                                                                            deliveryMessageQueueMaxSize, 0L,
-                                                                            TimeUnit.MILLISECONDS,
-                                                                            new LinkedBlockingQueue<>()));
+            new ThreadPoolExecutor(deliveryProcessorThreadCount,
+                deliveryMessageQueueMaxSize, 0L,
+                TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>()),
+            applicationProperties.isConvertToHexDeliveredId());
     }
 
     @Bean
@@ -86,10 +91,10 @@ public class MessagingConfiguration {
         int deliveryProcessorThreadCount = applicationProperties.getMessaging().getDeliveryProcessorThreadCount();
         int deliveryMessageQueueMaxSize = applicationProperties.getMessaging().getDeliveryMessageQueueMaxSize();
         return new SendToKafkaMoDeliveryReportListener(messagingAdapter,
-                                                       new ThreadPoolExecutor(deliveryProcessorThreadCount,
-                                                                              deliveryMessageQueueMaxSize, 0L,
-                                                                              TimeUnit.MILLISECONDS,
-                                                                              new LinkedBlockingQueue<>()));
+            new ThreadPoolExecutor(deliveryProcessorThreadCount,
+                deliveryMessageQueueMaxSize, 0L,
+                TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>()));
     }
 
 }
