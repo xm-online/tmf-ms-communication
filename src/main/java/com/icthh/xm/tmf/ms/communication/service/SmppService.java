@@ -10,7 +10,9 @@ import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Smpp;
 import com.icthh.xm.tmf.ms.communication.messaging.MessageReceiverListenerAdapter;
+
 import java.io.IOException;
+
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +44,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
@@ -63,7 +66,8 @@ public class SmppService {
     private volatile SMPPSession session;
 
     @SneakyThrows
-    private SMPPSession createSession(ApplicationProperties appProps)  {
+    @PostConstruct
+    private SMPPSession createSession() {
         SMPPSession session = new SMPPSession();
         Smpp smpp = appProps.getSmpp();
         BindParameter bindParam = new BindParameter(
@@ -103,15 +107,15 @@ public class SmppService {
     }
 
     public String send(String destAddrs, String message, String senderId, byte deliveryReport) throws PDUException, IOException,
-                                                                                 InvalidResponseException,
-                                                                                 NegativeResponseException,
-                                                                                 ResponseTimeoutException {
+        InvalidResponseException,
+        NegativeResponseException,
+        ResponseTimeoutException {
 
         Smpp smpp = appProps.getSmpp();
 
         DataCoding dataCoding = getDataConding(message);
         log.info("Start send message from: {} to: {} with encoding [{}] and content.size: {}", senderId, destAddrs,
-                 dataCoding, message.length());
+            dataCoding, message.length());
 
         OctetString payload = toPayload(message);
         OptionalParameter[] parameters = new OptionalParameter[]{payload};
@@ -157,15 +161,11 @@ public class SmppService {
         if (session != null && session.getSessionState().isBound()) {
             return session;
         }
-
         synchronized (this) {
             session = this.session;
-            if (session == null) {
-                session = createSession(appProps);
-                this.session = session;
-            } else if (!session.getSessionState().isBound()) {
+            if (!session.getSessionState().isBound()) {
                 session.unbindAndClose();
-                session = createSession(appProps);
+                session = createSession();
                 this.session = session;
             }
         }
@@ -177,11 +177,11 @@ public class SmppService {
     }
 
     private OctetString toPayload(String message) throws UnsupportedEncodingException {
-       if (isAlpha(message)) {
-           return new OctetString(MESSAGE_PAYLOAD.code(), message);
-       } else {
-           return new OctetString(MESSAGE_PAYLOAD.code(), message, UTF_16.name());
-       }
+        if (isAlpha(message)) {
+            return new OctetString(MESSAGE_PAYLOAD.code(), message);
+        } else {
+            return new OctetString(MESSAGE_PAYLOAD.code(), message, UTF_16.name());
+        }
     }
 
     private String getSourceAddr(String senderId, Smpp smpp) {

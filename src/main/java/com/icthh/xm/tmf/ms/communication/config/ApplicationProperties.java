@@ -3,6 +3,7 @@ package com.icthh.xm.tmf.ms.communication.config;
 import com.icthh.xm.commons.lep.TenantScriptStorage;
 import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -48,9 +49,8 @@ public class ApplicationProperties {
     @Setter
     public static class Kafka {
         private String bootstrapServers;
-        private int period;
         private int rateLimit;
-        private int readTimeout;
+        private int poolSize;
     }
 
     @Getter
@@ -90,6 +90,7 @@ public class ApplicationProperties {
 
     @Getter
     @Setter
+    @NoArgsConstructor
     public static class Smpp {
         private Boolean enabled = true;
         private String host;

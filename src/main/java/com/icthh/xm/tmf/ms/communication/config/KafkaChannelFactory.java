@@ -10,6 +10,7 @@ import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -19,6 +20,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.PostConstruct;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
@@ -62,13 +64,14 @@ public class KafkaChannelFactory {
     private CompositeHealthIndicator bindersHealthIndicator;
     private KafkaBinderHealthIndicator kafkaBinderHealthIndicator;
 
-    private int rateLimit = 400; // applicationProperties.getKafka().getRateLimit();
-    private int pauseBetweenSends = 1_000_000 / rateLimit;
-    private int processingPoolSize = 40;
+    private static final int NANO_IN_SEC = 1_000_000;
+    private final int pauseBetweenSends;
+    private final int processingPoolSize;
+    private final long kafkaReadSleepTimeout;
 
-    private volatile AtomicLong nextScheduledTime = new AtomicLong((System.nanoTime() / 1000) + pauseBetweenSends);
+    private volatile AtomicLong nextScheduledTime;
 
-    private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(processingPoolSize);
+    private ScheduledExecutorService scheduledExecutorService;
 
     public KafkaChannelFactory(BindingServiceProperties bindingServiceProperties,
                                SubscribableChannelBindingTargetFactory bindingTargetFactory,
@@ -88,6 +91,11 @@ public class KafkaChannelFactory {
         this.kafkaBinderHealthIndicator = kafkaBinderHealthIndicator;
 
         kafkaMessageChannelBinder.setExtendedBindingProperties(kafkaExtendedBindingProperties);
+        pauseBetweenSends = NANO_IN_SEC / applicationProperties.getKafka().getRateLimit();
+        processingPoolSize = applicationProperties.getKafka().getPoolSize();
+        nextScheduledTime = new AtomicLong((System.nanoTime() / 1000) + pauseBetweenSends);
+        scheduledExecutorService = Executors.newScheduledThreadPool(processingPoolSize);
+        kafkaReadSleepTimeout = processingPoolSize * pauseBetweenSends * 2;
     }
 
     @PostConstruct
@@ -120,10 +128,15 @@ public class KafkaChannelFactory {
         bindersHealthIndicator.addHealthIndicator(KAFKA, kafkaBinderHealthIndicator);
 
         channel.subscribe(message -> {
-            long delay;
-            do {
-                delay = nextScheduledTime.getAndAdd(pauseBetweenSends) - System.nanoTime() / 1000;
-            } while (delay < pauseBetweenSends);
+
+            long delay = nextScheduledTime.getAndAdd(pauseBetweenSends) - System.nanoTime() / 1000;
+            if (delay > kafkaReadSleepTimeout) {
+                try {
+                    Thread.sleep(kafkaReadSleepTimeout);
+                } catch (InterruptedException e) {
+                    log.error("error processing kafka sleep timeout", e);
+                }
+            }
             scheduledExecutorService.schedule(() -> {
                 try {
                     MdcUtils.putRid(MdcUtils.generateRid());

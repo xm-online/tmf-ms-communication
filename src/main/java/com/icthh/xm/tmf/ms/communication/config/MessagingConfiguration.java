@@ -59,11 +59,10 @@ public class MessagingConfiguration {
                                                    KafkaMessageChannelBinder kafkaMessageChannelBinder,
                                                    KafkaProperties kafkaProperties, MessagingHandler messageHandler,
                                                    CompositeHealthIndicator bindersHealthIndicator,
-                                                   KafkaBinderHealthIndicator kafkaBinderHealthIndicator,
-                                                   ConsumerBuilder consumerBuilder) {
+                                                   KafkaBinderHealthIndicator kafkaBinderHealthIndicator) {
         return new KafkaChannelFactory(bindingServiceProperties, bindingTargetFactory, bindingService, objectMapper,
             applicationProperties, kafkaProperties, kafkaMessageChannelBinder,
-            messageHandler, bindersHealthIndicator, kafkaBinderHealthIndicator, consumerBuilder);
+            messageHandler, bindersHealthIndicator, kafkaBinderHealthIndicator);
     }
 
     @Bean

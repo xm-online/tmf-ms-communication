@@ -181,9 +181,8 @@ application:
     channel-specification-path-pattern: /config/tenants/{tenantName}/communication/communication.yml
     kafka:
         bootstrap-servers: localhost:9092
-        period: 1000
-        rate-limit: 400
-        read-timeout: 500
+        rateLimit: 400
+        poolSize: 40
     messaging:
         send-queue-name-template: communication_%s_%s_send
         recive-queue-name-template: communication_%s_%s_recive
