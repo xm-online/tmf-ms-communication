@@ -60,8 +60,8 @@ public class MessagingConfiguration {
                                                    CompositeHealthIndicator bindersHealthIndicator,
                                                    KafkaBinderHealthIndicator kafkaBinderHealthIndicator) {
         return new KafkaChannelFactory(bindingServiceProperties, bindingTargetFactory, bindingService, objectMapper,
-            applicationProperties, kafkaProperties, kafkaMessageChannelBinder,
-            messageHandler, bindersHealthIndicator, kafkaBinderHealthIndicator);
+                                       applicationProperties, kafkaProperties, kafkaMessageChannelBinder,
+                                       messageHandler, bindersHealthIndicator, kafkaBinderHealthIndicator);
     }
 
     @Bean
@@ -76,11 +76,11 @@ public class MessagingConfiguration {
         int deliveryProcessorThreadCount = applicationProperties.getMessaging().getDeliveryProcessorThreadCount();
         int deliveryMessageQueueMaxSize = applicationProperties.getMessaging().getDeliveryMessageQueueMaxSize();
         return new SendToKafkaDeliveryReportListener(messagingAdapter,
-            new ThreadPoolExecutor(deliveryProcessorThreadCount,
-                deliveryMessageQueueMaxSize, 0L,
-                TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>()),
-            applicationProperties.isConvertToHexDeliveredId());
+                                                     new ThreadPoolExecutor(deliveryProcessorThreadCount,
+                                                         deliveryMessageQueueMaxSize, 0L,
+                                                         TimeUnit.MILLISECONDS,
+                                                         new LinkedBlockingQueue<>()),
+                                                     applicationProperties.isConvertToHexDeliveredId());
     }
 
     @Bean
@@ -89,10 +89,10 @@ public class MessagingConfiguration {
         int deliveryProcessorThreadCount = applicationProperties.getMessaging().getDeliveryProcessorThreadCount();
         int deliveryMessageQueueMaxSize = applicationProperties.getMessaging().getDeliveryMessageQueueMaxSize();
         return new SendToKafkaMoDeliveryReportListener(messagingAdapter,
-            new ThreadPoolExecutor(deliveryProcessorThreadCount,
-                deliveryMessageQueueMaxSize, 0L,
-                TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>()));
+                                                       new ThreadPoolExecutor(deliveryProcessorThreadCount,
+                                                           deliveryMessageQueueMaxSize, 0L,
+                                                           TimeUnit.MILLISECONDS,
+                                                           new LinkedBlockingQueue<>()));
     }
 
 }

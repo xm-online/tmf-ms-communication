@@ -107,15 +107,15 @@ public class SmppService {
     }
 
     public String send(String destAddrs, String message, String senderId, byte deliveryReport) throws PDUException, IOException,
-        InvalidResponseException,
-        NegativeResponseException,
-        ResponseTimeoutException {
+                                                                                 InvalidResponseException,
+                                                                                 NegativeResponseException,
+                                                                                 ResponseTimeoutException {
 
         Smpp smpp = appProps.getSmpp();
 
         DataCoding dataCoding = getDataConding(message);
         log.info("Start send message from: {} to: {} with encoding [{}] and content.size: {}", senderId, destAddrs,
-            dataCoding, message.length());
+                 dataCoding, message.length());
 
         OctetString payload = toPayload(message);
         OptionalParameter[] parameters = new OptionalParameter[]{payload};
@@ -161,6 +161,7 @@ public class SmppService {
         if (session != null && session.getSessionState().isBound()) {
             return session;
         }
+
         synchronized (this) {
             session = this.session;
             if (!session.getSessionState().isBound()) {
