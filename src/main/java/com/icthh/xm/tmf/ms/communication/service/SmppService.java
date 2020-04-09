@@ -178,11 +178,11 @@ public class SmppService {
     }
 
     private OctetString toPayload(String message) throws UnsupportedEncodingException {
-         if (isAlpha(message)) {
-             return new OctetString(MESSAGE_PAYLOAD.code(), message);
-         } else {
-             return new OctetString(MESSAGE_PAYLOAD.code(), message, UTF_16.name());
-         }
+        if (isAlpha(message)) {
+            return new OctetString(MESSAGE_PAYLOAD.code(), message);
+        } else {
+            return new OctetString(MESSAGE_PAYLOAD.code(), message, UTF_16.name());
+        }
     }
 
     private String getSourceAddr(String senderId, Smpp smpp) {
