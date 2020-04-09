@@ -11,7 +11,7 @@ public class RoutingSerializer implements Serializer<Object> {
     private JsonSerializer<Object> objectSerializer = new JsonSerializer<>();
 
     @Override
-    public void configure(Map configs, boolean isKey) {
+    public void configure(Map<String, ?> configs, boolean isKey) {
         stringSerializer.configure(configs, isKey);
         objectSerializer.configure(configs, isKey);
     }

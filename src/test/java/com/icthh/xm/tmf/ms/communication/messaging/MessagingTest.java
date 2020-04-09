@@ -147,9 +147,9 @@ public class MessagingTest {
 
     private void addDistributionId(CommunicationMessage message) {
         message.setCharacteristic(new ArrayList<>());
-        CommunicationRequestCharacteristic disctributionId = new CommunicationRequestCharacteristic().name(DISTRIBUTION_ID)
-            .value("TEST_D_ID");
-        message.getCharacteristic().add(disctributionId);
+        CommunicationRequestCharacteristic distributionId = new CommunicationRequestCharacteristic().name(DISTRIBUTION_ID)
+                                                                                                     .value("TEST_D_ID");
+        message.getCharacteristic().add(distributionId);
     }
 
     @Test
@@ -233,8 +233,8 @@ public class MessagingTest {
 
     @Test
     @SneakyThrows
-    public void messageMoDeliveredWithCirilicTest() {
-        String messageJson = IOUtils.toString(getClass().getClassLoader().getResourceAsStream("message-with-cirilic.json"), UTF_8);
+    public void messageMoDeliveredWithCyrillicTest() {
+        String messageJson = IOUtils.toString(getClass().getClassLoader().getResourceAsStream("message-with-cyrillic.json"), UTF_8);
 
         DeliverSm deliverSm = new DeliverSm();
         deliverSm.setShortMessage("secondMessage с русскими символами".getBytes(UTF_16));

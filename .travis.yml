@@ -1,6 +1,6 @@
 language: java
 jdk:
-- openjdk8
+- openjdk11
 install: true
 addons:
   sonarcloud:
@@ -9,24 +9,32 @@ addons:
       secure: nkLw7Y0EnRjg2bt4aBN+8YVPjfO85xm8VAShmvwHK+DmBqImfw1bYhCANvwCIS/+aEbyvaXxfPIsUeLs5wVyyOs8O8fBzsP/OM2K/E/5kYdHk4p7jSLdFTwPp4rNW2SsALI2bDxdRvLsZMqbWr/7nA+EMA4T16rkPKNPdeyrhuY8eCDn0DHCTZ20ezXD5t7iv/itVTRXK4W4E5bvWgCK7VBy0ycJO04+6tETtqnrKF9Dc+xyLPSvcUi6cSBswAvncH09io3Yume51ZhhpKwJVhx793OP8fNFxW61DR+fAL4hJnhN4/Lr6eXOynukDbX6uHylNL9b2dHNFXY+6e6QoiPly9TFuf4x9zTCVpxJJVi8owmSxZKlOnFyVifWfwKgaRmFKDka6J8DprPGu4+ew33Fb6GN/Mkt8JXOIfJg1ObiKKqcA31Ym5hxFh4KSUr+XmVQh5Xw5DUtngSkrKo7pZtEUvyox5vaA3LueJSzpgd427aO24Y1/rVPW87i6tqsfxCfz5K2qIaoieW1QKX/GHHKr0v85M2bMaHmgPaHtUII2083CqGhmgMd5Mqsmk2ILEoIU0pTkShWp4cWLPkuoFs/veDrYEY7xLg48P9/dDuG2pbW8lC2Xf4MdtU7pQwSs+nJhJN20tFtDSjqzWptWgaRM8S6zuex8biphPt+hck=
     branches:
     - master
+
 script:
-- set -e
-- "docker build -t smpp-emulator -f src/main/docker/smpp-emulator/Dockerfile ."
-- "./gradlew --no-daemon --refresh-dependencies clean test"
-- "./gradlew -x test -Pprod --no-daemon bootWar"
-- docker login -u $DOCKER_USER -p $DOCKER_PASS
-- export DOCKER_REPO=$(echo  -n $TRAVIS_REPO_SLUG | sed -e 's/^xm-online\//xmonline\//g')
-- export IMAGE_BRANCH=$(echo -n $TRAVIS_BRANCH | sed -e 's/\//-/g')
-- docker build -t $DOCKER_REPO:$IMAGE_BRANCH -t $DOCKER_REPO:$IMAGE_BRANCH-$TRAVIS_BUILD_NUMBER
-  --label commit_id="$TRAVIS_COMMIT" --label commit_message="$TRAVIS_COMMIT_MESSAGE"
-  -f src/main/docker/Dockerfile .
-- docker push $DOCKER_REPO:$IMAGE_BRANCH
-- docker push $DOCKER_REPO:$IMAGE_BRANCH-$TRAVIS_BUILD_NUMBER
-- if [ "$IMAGE_BRANCH" == "master" ]; then docker tag $DOCKER_REPO:$IMAGE_BRANCH $DOCKER_REPO:latest;
-  docker push $DOCKER_REPO:latest; export SONAR_PK=$(echo  -n $TRAVIS_REPO_SLUG |
-  sed -e 's/\//:/g'); ./gradlew -x test --no-daemon sonarqube -Dsonar.projectKey="$SONAR_PK"
-  -Dsonar.projectName="$SONAR_PK" -Dsonar.java.binaries="." -Dsonar.projectVersion="$IMAGE_BRANCH";
-  fi
+  - set -e
+  - "docker build -t smpp-emulator -f src/main/docker/smpp-emulator/Dockerfile ."
+  - "./gradlew --no-daemon --refresh-dependencies clean check test"
+  - "./gradlew -x test -Pprod --no-daemon bootWar"
+  - docker login -u $DOCKER_USER -p $DOCKER_PASS
+  - export DOCKER_REPO=$(echo  -n $TRAVIS_REPO_SLUG | sed -e 's/^xm-online\//xmonline\//g')
+  - export IMAGE_BRANCH=$(echo -n $TRAVIS_BRANCH | sed -e 's/\//-/g')
+  - export PROJECT_VERSION=$(./gradlew -q  getProjectVersion)
+  - if [ "$IMAGE_BRANCH" == "master" ]; 
+    then 
+        export SONAR_PK=$(echo  -n $TRAVIS_REPO_SLUG | sed -e 's/\//:/g');
+        ./gradlew -x test --no-daemon sonarqube -Dsonar.projectKey="$SONAR_PK"
+        -Dsonar.projectName="$SONAR_PK" -Dsonar.java.binaries="." -Dsonar.projectVersion="$IMAGE_BRANCH";
+        TAGS="$PROJECT_VERSION $PROJECT_VERSION-$TRAVIS_BUILD_NUMBER $(echo $PROJECT_VERSION | awk -F '.' '{printf $1"."$2" "$1}') latest";
+    else
+        TAGS="$IMAGE_BRANCH $IMAGE_BRANCH-$TRAVIS_BUILD_NUMBER";
+    fi
+  - docker build -t app-docker-img --label commit_id="$TRAVIS_COMMIT" --label commit_message="$TRAVIS_COMMIT_MESSAGE" -f src/main/docker/Dockerfile .
+  - for TAG in $TAGS;
+    do
+        docker tag app-docker-img $DOCKER_REPO:$TAG;
+        docker push $DOCKER_REPO:$TAG;
+    done
+
 cache:
   directories:
   - "~/.gradle"
