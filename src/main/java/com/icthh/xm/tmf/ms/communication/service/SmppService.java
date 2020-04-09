@@ -67,7 +67,7 @@ public class SmppService {
 
     @SneakyThrows
     @PostConstruct
-    private SMPPSession createSession() {
+    private void createSession() {
         SMPPSession session = new SMPPSession();
         Smpp smpp = appProps.getSmpp();
         BindParameter bindParam = new BindParameter(
@@ -96,7 +96,7 @@ public class SmppService {
                 getActualSession();
             }
         });
-        return session;
+        this.session = session;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -107,15 +107,15 @@ public class SmppService {
     }
 
     public String send(String destAddrs, String message, String senderId, byte deliveryReport) throws PDUException, IOException,
-                                                                                 InvalidResponseException,
-                                                                                 NegativeResponseException,
-                                                                                 ResponseTimeoutException {
+        InvalidResponseException,
+        NegativeResponseException,
+        ResponseTimeoutException {
 
         Smpp smpp = appProps.getSmpp();
 
         DataCoding dataCoding = getDataConding(message);
         log.info("Start send message from: {} to: {} with encoding [{}] and content.size: {}", senderId, destAddrs,
-                 dataCoding, message.length());
+            dataCoding, message.length());
 
         OctetString payload = toPayload(message);
         OptionalParameter[] parameters = new OptionalParameter[]{payload};
@@ -166,8 +166,8 @@ public class SmppService {
             session = this.session;
             if (!session.getSessionState().isBound()) {
                 session.unbindAndClose();
-                session = createSession();
-                this.session = session;
+                createSession();
+                session = this.session;
             }
         }
         return session;
