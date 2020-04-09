@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 @SpringBootApplication(scanBasePackages = { "com.icthh.xm" })
+@EnableAutoConfiguration
 @EnableConfigurationProperties({ApplicationProperties.class})
 @EnableDiscoveryClient
 public class CommunicationApp {
