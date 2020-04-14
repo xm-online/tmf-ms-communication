@@ -68,8 +68,7 @@ public class TTLRuleTest {
     @Autowired
     private TTLRuleConfigService ttlRuleConfigService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+
 
     private MessagingHandler messagingHandler;
 
@@ -197,7 +196,7 @@ public class TTLRuleTest {
             defaultCharset()));
         TTLRule ttlRule = new TTLRule(ttlRuleConfigService);
         BusinessRuleValidator businessRuleValidator = new BusinessRuleValidator(singletonList(ttlRule));
-        messagingHandler = new MessagingHandler(objectMapper,
+        messagingHandler = new MessagingHandler(new ObjectMapper(),
             kafkaTemplate,
             smppService,
             createApplicationProperties(),

@@ -89,9 +89,6 @@ public class BusinessTimeConfigRuleTest {
     @Autowired
     private BusinessTimeConfigService businessTimeConfigService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     private MessagingHandler messagingHandler;
 
     @SneakyThrows
@@ -103,7 +100,7 @@ public class BusinessTimeConfigRuleTest {
 
         BusinessTimeRule businessTimeRule = new BusinessTimeRule(businessTimeConfigService, clock);
         BusinessRuleValidator businessRuleValidator = new BusinessRuleValidator(singletonList(businessTimeRule));
-        messagingHandler = new MessagingHandler(objectMapper,
+        messagingHandler = new MessagingHandler(new ObjectMapper(),
                                                 kafkaTemplate,
                                                 smppService,
                                                 createApplicationProperties(),
