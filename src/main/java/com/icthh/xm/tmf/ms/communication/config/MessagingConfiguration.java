@@ -95,4 +95,9 @@ public class MessagingConfiguration {
                                                                               new LinkedBlockingQueue<>()));
     }
 
+    @Bean
+    public ObjectMapper objectMapper(){
+        return new ObjectMapper();
+    }
+
 }
