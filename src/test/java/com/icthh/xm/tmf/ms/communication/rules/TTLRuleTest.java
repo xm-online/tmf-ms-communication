@@ -14,6 +14,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.config.client.config.XmConfigProperties;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
@@ -35,6 +36,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+
 import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
@@ -65,6 +67,9 @@ public class TTLRuleTest {
 
     @Autowired
     private TTLRuleConfigService ttlRuleConfigService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private MessagingHandler messagingHandler;
 
@@ -192,7 +197,8 @@ public class TTLRuleTest {
             defaultCharset()));
         TTLRule ttlRule = new TTLRule(ttlRuleConfigService);
         BusinessRuleValidator businessRuleValidator = new BusinessRuleValidator(singletonList(ttlRule));
-        messagingHandler = new MessagingHandler(kafkaTemplate,
+        messagingHandler = new MessagingHandler(objectMapper,
+            kafkaTemplate,
             smppService,
             createApplicationProperties(),
             businessRuleValidator);

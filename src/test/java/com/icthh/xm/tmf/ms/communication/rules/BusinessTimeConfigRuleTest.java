@@ -22,6 +22,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.config.client.config.XmConfigProperties;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
@@ -88,6 +89,9 @@ public class BusinessTimeConfigRuleTest {
     @Autowired
     private BusinessTimeConfigService businessTimeConfigService;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     private MessagingHandler messagingHandler;
 
     @SneakyThrows
@@ -99,7 +103,8 @@ public class BusinessTimeConfigRuleTest {
 
         BusinessTimeRule businessTimeRule = new BusinessTimeRule(businessTimeConfigService, clock);
         BusinessRuleValidator businessRuleValidator = new BusinessRuleValidator(singletonList(businessTimeRule));
-        messagingHandler = new MessagingHandler(kafkaTemplate,
+        messagingHandler = new MessagingHandler(objectMapper,
+                                                kafkaTemplate,
                                                 smppService,
                                                 createApplicationProperties(),
                                                 businessRuleValidator);

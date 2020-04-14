@@ -6,6 +6,7 @@ import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaDeliveryReportListener;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaMoDeliveryReportListener;
 import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
+import com.icthh.xm.tmf.ms.communication.service.KafkaHandelMessageService;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -42,24 +43,25 @@ import org.springframework.kafka.core.KafkaTemplate;
 public class MessagingConfiguration {
 
     @Bean
-    public MessagingHandler messagingHandler(KafkaTemplate<String, Object> channelResolver, SmppService smppService,
+    public MessagingHandler messagingHandler(ObjectMapper objectMapper, KafkaTemplate<String, Object> channelResolver, SmppService smppService,
                                              ApplicationProperties applicationProperties,
                                              BusinessRuleValidator businessRuleValidator) {
-        return new MessagingHandler(channelResolver, smppService, applicationProperties, businessRuleValidator);
+        return new MessagingHandler(objectMapper,channelResolver, smppService, applicationProperties, businessRuleValidator);
     }
 
     @Bean
     public KafkaChannelFactory kafkaChannelFactory(BindingServiceProperties bindingServiceProperties,
                                                    SubscribableChannelBindingTargetFactory bindingTargetFactory,
-                                                   BindingService bindingService, ObjectMapper objectMapper,
+                                                   BindingService bindingService,
                                                    ApplicationProperties applicationProperties,
                                                    KafkaMessageChannelBinder kafkaMessageChannelBinder,
-                                                   KafkaProperties kafkaProperties, MessagingHandler messageHandler,
+                                                   KafkaProperties kafkaProperties,
                                                    CompositeHealthIndicator bindersHealthIndicator,
-                                                   KafkaBinderHealthIndicator kafkaBinderHealthIndicator) {
-        return new KafkaChannelFactory(bindingServiceProperties, bindingTargetFactory, bindingService, objectMapper,
+                                                   KafkaBinderHealthIndicator kafkaBinderHealthIndicator,
+                                                   KafkaHandelMessageService kafkaHandelMessageService) {
+        return new KafkaChannelFactory(bindingServiceProperties, bindingTargetFactory, bindingService,
                                        applicationProperties, kafkaProperties, kafkaMessageChannelBinder,
-                                       messageHandler, bindersHealthIndicator, kafkaBinderHealthIndicator);
+                                        bindersHealthIndicator, kafkaBinderHealthIndicator,kafkaHandelMessageService);
     }
 
     @Bean
