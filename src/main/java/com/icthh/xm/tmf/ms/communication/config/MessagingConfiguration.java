@@ -96,8 +96,9 @@ public class MessagingConfiguration {
     }
 
     @Bean
-    public ObjectMapper objectMapper(){
-        return new ObjectMapper();
+    public KafkaHandelMessageService kafkaHandelMessageService(ApplicationProperties applicationProperties,
+                                                               MessagingHandler messagingHandler){
+        return new KafkaHandelMessageService(applicationProperties,messagingHandler);
     }
 
 }

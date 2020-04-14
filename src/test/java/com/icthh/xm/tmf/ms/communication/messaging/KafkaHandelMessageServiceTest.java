@@ -53,10 +53,11 @@ public class KafkaHandelMessageServiceTest {
         for (int i = 0; i < 10; i++) {
             kafkaHandelMessageService.handle(new MockMessage());
         }
+        //sleep for excluding race conditional between start messages processing and test checker;
+        Thread.sleep(1200);
         do {
+            Assert.assertEquals(sleepHandler.incrementAndGet(), handlerCount.get());
             Thread.sleep(1000);
-            sleepHandler.getAndIncrement();
-            Assert.assertEquals(sleepHandler.get(), handlerCount.get());
         } while (handlerCount.get() != 10);
     }
 

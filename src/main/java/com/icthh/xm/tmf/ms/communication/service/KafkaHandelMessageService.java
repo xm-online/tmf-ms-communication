@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 
-@Service
 @Slf4j
 public class KafkaHandelMessageService {
 
