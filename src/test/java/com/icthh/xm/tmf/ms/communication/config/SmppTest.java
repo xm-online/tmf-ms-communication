@@ -54,13 +54,4 @@ public class SmppTest {
         assertNotNull(messageId);
     }
 
-    @Test
-    public void testSendingMultipleMessages() {
-        List<String> phones = Arrays.asList("+380636666666", "+380636666665");
-        List<String> mIds = service.sendMultipleMessages(phones, "test", "1616", (byte) 1);
-        assertEquals(mIds.size(), 2);
-        assertNotNull(mIds.get(0));
-        assertNotNull(mIds.get(1));
-    }
-
 }

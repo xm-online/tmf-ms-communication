@@ -1,15 +1,16 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.icthh.xm.tmf.ms.communication.lep.LepMessageHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingAdapter;
-import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaDeliveryReportListener;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaMoDeliveryReportListener;
-import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
-import com.icthh.xm.tmf.ms.communication.service.SmppService;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.MessageHandlerService;
+
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.CompositeHealthIndicator;
@@ -37,16 +38,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 @EnableBinding
 @EnableIntegration
 @RequiredArgsConstructor
-@Import( {KafkaBinderConfiguration.class})
+@Import({KafkaBinderConfiguration.class})
 @ConditionalOnProperty("application.stream-binding-enabled")
 public class MessagingConfiguration {
-
-    @Bean
-    public MessagingHandler messagingHandler(KafkaTemplate<String, Object> channelResolver, SmppService smppService,
-                                             ApplicationProperties applicationProperties,
-                                             BusinessRuleValidator businessRuleValidator) {
-        return new MessagingHandler(channelResolver, smppService, applicationProperties, businessRuleValidator);
-    }
 
     @Bean
     public KafkaChannelFactory kafkaChannelFactory(BindingServiceProperties bindingServiceProperties,
@@ -54,12 +48,15 @@ public class MessagingConfiguration {
                                                    BindingService bindingService, ObjectMapper objectMapper,
                                                    ApplicationProperties applicationProperties,
                                                    KafkaMessageChannelBinder kafkaMessageChannelBinder,
-                                                   KafkaProperties kafkaProperties, MessagingHandler messageHandler,
+                                                   KafkaProperties kafkaProperties,
+                                                   MessageHandlerService messageHandler,
                                                    CompositeHealthIndicator bindersHealthIndicator,
-                                                   KafkaBinderHealthIndicator kafkaBinderHealthIndicator) {
+                                                   KafkaBinderHealthIndicator kafkaBinderHealthIndicator,
+                                                   LepMessageHandler lepMessageHandler
+    ) {
         return new KafkaChannelFactory(bindingServiceProperties, bindingTargetFactory, bindingService, objectMapper,
-                                       applicationProperties, kafkaProperties, kafkaMessageChannelBinder,
-                                       messageHandler, bindersHealthIndicator, kafkaBinderHealthIndicator);
+            applicationProperties, kafkaProperties, kafkaMessageChannelBinder,
+            messageHandler, bindersHealthIndicator, kafkaBinderHealthIndicator, lepMessageHandler);
     }
 
     @Bean
@@ -74,10 +71,10 @@ public class MessagingConfiguration {
         int deliveryProcessorThreadCount = applicationProperties.getMessaging().getDeliveryProcessorThreadCount();
         int deliveryMessageQueueMaxSize = applicationProperties.getMessaging().getDeliveryMessageQueueMaxSize();
         return new SendToKafkaDeliveryReportListener(messagingAdapter,
-                                                     new ThreadPoolExecutor(deliveryProcessorThreadCount,
-                                                                            deliveryMessageQueueMaxSize, 0L,
-                                                                            TimeUnit.MILLISECONDS,
-                                                                            new LinkedBlockingQueue<>()));
+            new ThreadPoolExecutor(deliveryProcessorThreadCount,
+                deliveryMessageQueueMaxSize, 0L,
+                TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>()));
     }
 
     @Bean
@@ -86,10 +83,10 @@ public class MessagingConfiguration {
         int deliveryProcessorThreadCount = applicationProperties.getMessaging().getDeliveryProcessorThreadCount();
         int deliveryMessageQueueMaxSize = applicationProperties.getMessaging().getDeliveryMessageQueueMaxSize();
         return new SendToKafkaMoDeliveryReportListener(messagingAdapter,
-                                                       new ThreadPoolExecutor(deliveryProcessorThreadCount,
-                                                                              deliveryMessageQueueMaxSize, 0L,
-                                                                              TimeUnit.MILLISECONDS,
-                                                                              new LinkedBlockingQueue<>()));
+            new ThreadPoolExecutor(deliveryProcessorThreadCount,
+                deliveryMessageQueueMaxSize, 0L,
+                TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>()));
     }
 
 }
