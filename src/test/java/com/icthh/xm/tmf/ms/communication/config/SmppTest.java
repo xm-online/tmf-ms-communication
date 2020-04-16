@@ -8,6 +8,7 @@ import com.icthh.xm.tmf.ms.communication.CommunicationApp;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.jsmpp.bean.SMSCDeliveryReceipt;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static junit.framework.TestCase.assertNotNull;
+import static org.jsmpp.bean.SMSCDeliveryReceipt.SUCCESS_FAILURE;
 import static org.junit.Assert.assertEquals;
 
 @Slf4j
@@ -50,7 +52,8 @@ public class SmppTest {
     @Test
     @SneakyThrows
     public void testSendingSms() {
-        String messageId = service.send("+380636666666", "test", "1616", (byte) 0);
+        String messageId = service.send("+380636666666", "test", "1616",
+            SUCCESS_FAILURE.value());
         assertNotNull(messageId);
     }
 
