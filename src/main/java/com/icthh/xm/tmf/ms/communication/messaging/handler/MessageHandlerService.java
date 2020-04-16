@@ -20,7 +20,7 @@ public class MessageHandlerService {
     private Map<String, BasicMessageHandler> messageHandlerMap;
 
     @PostConstruct
-    private void init() {
+    void init() {
         messageHandlerMap = Map.of(
             MessageType.SMS.name(), smppMessagingHandler,
             MessageType.MobileApp.name(), mobileAppMessageHandler

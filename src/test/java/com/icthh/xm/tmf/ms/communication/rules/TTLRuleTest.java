@@ -2,7 +2,8 @@ package com.icthh.xm.tmf.ms.communication.rules;
 
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
-import static com.icthh.xm.tmf.ms.communication.messaging.MessagingTest.*;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ERROR_BUSINESS_RULE_VALIDATION;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandlerTest.*;
 import static com.icthh.xm.tmf.ms.communication.rules.ttl.TTLRule.MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP;
 import static com.icthh.xm.tmf.ms.communication.rules.ttl.TTLRule.TTL_EXCEED_MESSAGE_CODE;
 import static java.nio.charset.Charset.defaultCharset;
@@ -17,7 +18,7 @@ import static org.mockito.Mockito.verify;
 import com.icthh.xm.commons.config.client.config.XmConfigProperties;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
-import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler;
 import com.icthh.xm.tmf.ms.communication.rules.ttl.TTLRule;
 import com.icthh.xm.tmf.ms.communication.rules.ttl.TTLRuleConfig;
 import com.icthh.xm.tmf.ms.communication.rules.ttl.TTLRuleConfigService;
@@ -66,7 +67,7 @@ public class TTLRuleTest {
     @Autowired
     private TTLRuleConfigService ttlRuleConfigService;
 
-    private MessagingHandler messagingHandler;
+    private SmppMessagingHandler smppMessagingHandler;
 
     @Test
     public void activeConfigTest() throws Throwable {
@@ -192,7 +193,7 @@ public class TTLRuleTest {
             defaultCharset()));
         TTLRule ttlRule = new TTLRule(ttlRuleConfigService);
         BusinessRuleValidator businessRuleValidator = new BusinessRuleValidator(singletonList(ttlRule));
-        messagingHandler = new MessagingHandler(kafkaTemplate,
+        smppMessagingHandler = new SmppMessagingHandler(kafkaTemplate,
             smppService,
             createApplicationProperties(),
             businessRuleValidator);
@@ -225,7 +226,7 @@ public class TTLRuleTest {
     }
 
     private void successCheck(CommunicationMessage message) {
-        messagingHandler.receiveMessage(message);
+        smppMessagingHandler.handle(message);
         MessageResponse messageResponse = new MessageResponse(SUCCESS, message);
         ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
         verify(kafkaTemplate).send(eq(SUCCESS_SENT), argumentCaptor.capture());
@@ -238,10 +239,10 @@ public class TTLRuleTest {
     }
 
     private void failureCheck(CommunicationMessage message) {
-        messagingHandler.receiveMessage(message);
+        smppMessagingHandler.handle(message);
         MessageResponse messageResponse = new MessageResponse(FAILED, message);
         messageResponse.setErrorCode(TTL_EXCEED_MESSAGE_CODE);
-        messageResponse.setErrorMessage(MessagingHandler.ERROR_BUSINESS_RULE_VALIDATION);
+        messageResponse.setErrorMessage(ERROR_BUSINESS_RULE_VALIDATION);
         ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
         verify(kafkaTemplate).send(eq(FAIL_SEND), argumentCaptor.capture());
         verify(kafkaTemplate, never()).send(eq(SUCCESS_SENT), argumentCaptor.capture());

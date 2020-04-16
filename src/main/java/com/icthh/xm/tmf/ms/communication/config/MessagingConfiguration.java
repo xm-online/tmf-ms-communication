@@ -1,7 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.icthh.xm.tmf.ms.communication.lep.LepMessageHandler;
+import com.icthh.xm.tmf.ms.communication.lep.LepKafkaMessageHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingAdapter;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaDeliveryReportListener;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaMoDeliveryReportListener;
@@ -52,7 +52,7 @@ public class MessagingConfiguration {
                                                    MessageHandlerService messageHandler,
                                                    CompositeHealthIndicator bindersHealthIndicator,
                                                    KafkaBinderHealthIndicator kafkaBinderHealthIndicator,
-                                                   LepMessageHandler lepMessageHandler
+                                                   LepKafkaMessageHandler lepMessageHandler
     ) {
         return new KafkaChannelFactory(bindingServiceProperties, bindingTargetFactory, bindingService, objectMapper,
             applicationProperties, kafkaProperties, kafkaMessageChannelBinder,

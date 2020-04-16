@@ -1,14 +1,19 @@
 package com.icthh.xm.tmf.ms.communication.web.rest;
 
 import com.google.common.collect.ImmutableMap;
-import com.icthh.xm.tmf.ms.communication.domain.MessageType;
-import com.icthh.xm.tmf.ms.communication.service.FirebaseService;
-import com.icthh.xm.tmf.ms.communication.service.SmppService;
-import com.icthh.xm.tmf.ms.communication.utils.ApiMapper;
+import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageCreateResolver;
+import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageResolver;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.CustomCommunicationMessageHandler;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.MessageHandlerService;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.MobileAppMessageHandler;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler;
 import com.icthh.xm.tmf.ms.communication.web.api.CommunicationMessageApiController;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.rest.errors.ExceptionTranslator;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.validator.internal.util.CollectionHelper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -22,14 +27,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.google.common.collect.ImmutableMap.of;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageType.MobileApp;
-import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -39,7 +43,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @WebMvcTest(controllers = CommunicationMessageApiController.class, secure = false)
 @ContextConfiguration(
-    classes = {CommunicationMessageApiImpl.class, CommunicationMessageApiController.class, ExceptionTranslator.class})
+    classes = {CommunicationMessageApiImpl.class, CommunicationMessageApiController.class, ExceptionTranslator.class,
+        MessageHandlerService.class, CustomCommunicationMessageHandler.class, CustomMessageResolver.class,
+        CustomMessageCreateResolver.class})
 public class CommunicationMessageApiITest {
 
     public static final String CONTEXT_OF_SMS = "Context of sms";
@@ -48,10 +54,10 @@ public class CommunicationMessageApiITest {
     private MockMvc mockMvc;
 
     @MockBean
-    private SmppService smppService;
+    SmppMessagingHandler smppMessagingHandler;
 
     @MockBean
-    private FirebaseService firebaseService;
+    private MobileAppMessageHandler mobileAppMessageHandler;
 
     @Test
     @SneakyThrows
@@ -68,8 +74,12 @@ public class CommunicationMessageApiITest {
                .andDo(print())
                .andExpect(status().isOk());
 
-        verify(smppService).sendMultipleMessages(eq(asList("380900510000", "380900510001", "380900510002")),
-                                                 eq(CONTEXT_OF_SMS), eq(SENDER_ID), eq((byte) 0));
+        ArgumentCaptor<CommunicationMessageCreate> captor = ArgumentCaptor.forClass(CommunicationMessageCreate.class);
+        Set<String> phones = CollectionHelper.asSet("380900510000", "380900510001", "380900510002");
+        verify(smppMessagingHandler).handle(captor.capture());
+        assertEquals(captor.getValue().getSender().getId(), SENDER_ID);
+        assertEquals(captor.getValue().getType(), "SMS");
+        assertTrue(captor.getValue().getReceiver().stream().allMatch(r-> phones.contains(r.getPhoneNumber())));
     }
 
     @Test
@@ -87,11 +97,12 @@ public class CommunicationMessageApiITest {
             .andDo(print())
             .andExpect(status().isOk());
 
-        ArgumentCaptor<ApiMapper.CommunicationMessageWrapper> captor = ArgumentCaptor.forClass(ApiMapper.CommunicationMessageWrapper.class);
-        verify(firebaseService).sendPushNotification(captor.capture());
 
-        assertThat(captor.getValue().getReceivers().get(0).getAppUserId(), equalTo("111111"));
-        assertThat(captor.getValue().getType(), equalTo(MobileApp));
+        ArgumentCaptor<CommunicationMessageCreate> captor = ArgumentCaptor.forClass(CommunicationMessageCreate.class);
+        verify(mobileAppMessageHandler).handle(captor.capture());
+
+        assertThat(captor.getValue().getReceiver().get(0).getAppUserId(), equalTo("111111"));
+        assertThat(captor.getValue().getType(), equalTo(MobileApp.name()));
     }
 
 

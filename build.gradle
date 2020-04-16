@@ -228,6 +228,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-web"
     implementation "org.springframework.security.oauth:spring-security-oauth2"
     implementation "org.springframework.security:spring-security-jwt"
+    implementation 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
     runtimeOnly "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     implementation ("io.springfox:springfox-swagger2") {
         exclude module: "mapstruct"

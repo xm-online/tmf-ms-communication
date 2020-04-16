@@ -27,6 +27,7 @@ import java.util.Optional;
 
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.failed;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.success;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.CommunicationMessageMapper.INSTANCE;
 import static java.util.stream.Collectors.toList;
 
 @Service
@@ -74,28 +75,9 @@ public class SmppMessagingHandler implements BasicMessageHandler {
 
     @Override
     public void handle(CommunicationMessageCreate messageCreate) {
-        CommunicationMessage message = new CommunicationMessage();
-        message.setAtBaseType(messageCreate.getAtBaseType());
-        message.setAtSchemaLocation(messageCreate.getAtSchemaLocation());
-        message.setAttachment(messageCreate.getAttachment());
-        message.setAtType(messageCreate.getAtType());
-        message.setCallbackFlag(messageCreate.getCallbackFlag());
-        message.setCharacteristic(messageCreate.getCharacteristic());
-        message.setContent(messageCreate.getContent());
-        message.setDescription(messageCreate.getDescription());
-        message.setLogFlag(messageCreate.getLogFlag());
-        message.setPriority(messageCreate.getPriority());
-        message.setReceiver(messageCreate.getReceiver());
-        message.setSender(messageCreate.getSender());
-        message.setSendTime(messageCreate.getSendTime());
-        message.setSendTimeComplete(messageCreate.getSendTimeComplete());
-        message.setStatus(messageCreate.getStatus());
-        message.setSubject(messageCreate.getSubject());
-        message.setTryTimes(messageCreate.getTryTimes());
-        message.setType(messageCreate.getType());
-        message.setVersion(messageCreate.getVersion());
 
-        this.handle(message);
+        CommunicationMessage communicationMessage = INSTANCE.messageCreateToMessage(messageCreate);
+        this.handle(communicationMessage);
     }
 
     private void sendSmppMessage(CommunicationMessage message, Messaging messaging,

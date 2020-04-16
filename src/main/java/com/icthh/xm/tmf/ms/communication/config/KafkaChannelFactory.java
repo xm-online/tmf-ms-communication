@@ -7,20 +7,16 @@ import static org.springframework.kafka.support.KafkaHeaders.ACKNOWLEDGMENT;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.logging.util.MdcUtils;
-import com.icthh.xm.tmf.ms.communication.lep.LepMessageHandler;
+import com.icthh.xm.tmf.ms.communication.lep.LepKafkaMessageHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.MessageHandlerService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
-
 import java.util.Collections;
-
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.PostConstruct;
-
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.logstash.logback.encoder.org.apache.commons.lang3.StringUtils;
@@ -63,7 +59,7 @@ public class KafkaChannelFactory {
     private final ObjectMapper objectMapper;
     private final ApplicationProperties applicationProperties;
     private final KafkaProperties kafkaProperties;
-    private final LepMessageHandler lepMessageHandler;
+    private final LepKafkaMessageHandler lepMessageHandler;
 
     private CompositeHealthIndicator bindersHealthIndicator;
     private KafkaBinderHealthIndicator kafkaBinderHealthIndicator;
@@ -78,7 +74,7 @@ public class KafkaChannelFactory {
                                MessageHandlerService messagingHandler,
                                CompositeHealthIndicator bindersHealthIndicator,
                                KafkaBinderHealthIndicator kafkaBinderHealthIndicator,
-                               LepMessageHandler lepMessageHandler) {
+                               LepKafkaMessageHandler lepMessageHandler) {
         this.bindingServiceProperties = bindingServiceProperties;
         this.bindingTargetFactory = bindingTargetFactory;
         this.bindingService = bindingService;

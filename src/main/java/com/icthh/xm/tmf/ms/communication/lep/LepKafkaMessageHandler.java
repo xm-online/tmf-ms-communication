@@ -18,7 +18,7 @@ import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class LepMessageHandler {
+public class LepKafkaMessageHandler {
 
     private final TenantContextHolder tenantContextHolder;
     private final XmAuthenticationContextHolder authContextHolder;
