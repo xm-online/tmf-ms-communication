@@ -51,6 +51,7 @@ public class KafkaChannelFactory {
 
     private static final String KAFKA = "kafka";
     public static final String TENANT_NAME = "TENANT.NAME";
+    public static final String XM = "XM";
 
     private final BindingServiceProperties bindingServiceProperties;
     private final SubscribableChannelBindingTargetFactory bindingTargetFactory;
@@ -193,6 +194,6 @@ public class KafkaChannelFactory {
 
     private String getTenant(CommunicationMessage message) {
         return message.getCharacteristic().stream().filter(ch -> TENANT_NAME.equals(ch.getName())).findFirst()
-            .map(ch -> ch.getValue()).orElse(StringUtils.EMPTY);
+            .map(ch -> ch.getValue()).orElse(XM);
     }
 }
