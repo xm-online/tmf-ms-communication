@@ -103,7 +103,7 @@ public class CustomCommunicationMessageHandlerTest {
     }
 
     private void addLep(String pattern, String lepName) {
-        String lepBody = loadFile("config/testlep/Save$$TEST_MESSAGE_SEND$$around.groovy");
+        String lepBody = loadFile("config/testLep/Save$$TEST_MESSAGE_SEND$$around.groovy");
         lepBody = StrSubstitutor.replace(lepBody, of("lepName", lepName));
         leps.onRefresh(pattern + "Send$$" + lepName + "$$around.groovy", lepBody);
         lepsForCleanUp.add(pattern + "Send$$" + lepName + "$$around.groovy");
@@ -111,8 +111,8 @@ public class CustomCommunicationMessageHandlerTest {
 
     @SneakyThrows
     public String loadFile(String path) {
-        File file = new File("src/test/resources/"+path);
-        return IOUtils.toString(new FileInputStream(file), UTF_8);
+        InputStream cfgInputStream = new ClassPathResource(path).getInputStream();
+        return IOUtils.toString(cfgInputStream, UTF_8);
     }
 
     @Test
