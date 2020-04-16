@@ -107,8 +107,8 @@ public class CustomCommunicationMessageHandlerTest {
     }
 
     @SneakyThrows
-    public static String loadFile(String path) {
-        InputStream cfgInputStream = new ClassPathResource(path).getInputStream();
+    public String loadFile(String path) {
+        InputStream cfgInputStream = getClass().getClassLoader().getResourceAsStream(path);
         return IOUtils.toString(cfgInputStream, UTF_8);
     }
 
