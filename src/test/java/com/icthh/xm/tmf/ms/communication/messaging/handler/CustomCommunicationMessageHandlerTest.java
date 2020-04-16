@@ -16,6 +16,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.text.StrSubstitutor;
+import org.eclipse.jgit.util.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,6 +32,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -108,8 +111,8 @@ public class CustomCommunicationMessageHandlerTest {
 
     @SneakyThrows
     public String loadFile(String path) {
-        InputStream cfgInputStream = getClass().getClassLoader().getResourceAsStream(path);
-        return IOUtils.toString(cfgInputStream, UTF_8);
+        File file = new File("src/test/resources/"+path);
+        return IOUtils.toString(new FileInputStream(file), UTF_8);
     }
 
     @Test
