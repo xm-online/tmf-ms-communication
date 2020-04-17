@@ -7,9 +7,9 @@ import static org.springframework.kafka.support.KafkaHeaders.ACKNOWLEDGMENT;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.logging.util.MdcUtils;
-import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
+import com.icthh.xm.tmf.ms.communication.lep.LepKafkaMessageHandler;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.MessageHandlerService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
-
 import java.util.Collections;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import java.util.HashMap;
@@ -19,6 +19,7 @@ import java.util.Optional;
 import javax.annotation.PostConstruct;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import net.logstash.logback.encoder.org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.springframework.boot.actuate.health.CompositeHealthIndicator;
 import org.springframework.boot.actuate.health.HealthIndicatorRegistry;
@@ -49,6 +50,8 @@ import org.springframework.messaging.SubscribableChannel;
 public class KafkaChannelFactory {
 
     private static final String KAFKA = "kafka";
+    public static final String TENANT_NAME = "TENANT.NAME";
+    public static final String XM = "XM";
 
     private final BindingServiceProperties bindingServiceProperties;
     private final SubscribableChannelBindingTargetFactory bindingTargetFactory;
@@ -57,26 +60,32 @@ public class KafkaChannelFactory {
     private final ObjectMapper objectMapper;
     private final ApplicationProperties applicationProperties;
     private final KafkaProperties kafkaProperties;
-    private final MessagingHandler messagingHandler;
+    private final LepKafkaMessageHandler lepMessageHandler;
+
     private CompositeHealthIndicator bindersHealthIndicator;
     private KafkaBinderHealthIndicator kafkaBinderHealthIndicator;
+    private MessageHandlerService messageHandlerService;
+
 
     public KafkaChannelFactory(BindingServiceProperties bindingServiceProperties,
                                SubscribableChannelBindingTargetFactory bindingTargetFactory,
                                BindingService bindingService, ObjectMapper objectMapper,
                                ApplicationProperties applicationProperties, KafkaProperties kafkaProperties,
-                               KafkaMessageChannelBinder kafkaMessageChannelBinder, MessagingHandler messagingHandler,
+                               KafkaMessageChannelBinder kafkaMessageChannelBinder,
+                               MessageHandlerService messagingHandler,
                                CompositeHealthIndicator bindersHealthIndicator,
-                               KafkaBinderHealthIndicator kafkaBinderHealthIndicator) {
+                               KafkaBinderHealthIndicator kafkaBinderHealthIndicator,
+                               LepKafkaMessageHandler lepMessageHandler) {
         this.bindingServiceProperties = bindingServiceProperties;
         this.bindingTargetFactory = bindingTargetFactory;
         this.bindingService = bindingService;
         this.objectMapper = objectMapper;
         this.applicationProperties = applicationProperties;
         this.kafkaProperties = kafkaProperties;
-        this.messagingHandler = messagingHandler;
+        this.messageHandlerService = messagingHandler;
         this.bindersHealthIndicator = bindersHealthIndicator;
         this.kafkaBinderHealthIndicator = kafkaBinderHealthIndicator;
+        this.lepMessageHandler = lepMessageHandler;
 
         kafkaMessageChannelBinder.setExtendedBindingProperties(kafkaExtendedBindingProperties);
     }
@@ -139,11 +148,15 @@ public class KafkaChannelFactory {
             payloadString = unwrap(payloadString, "\"");
             log.info("start processing message, json body = {}", payloadString);
             CommunicationMessage communicationMessage = mapToCommunicationMessage(payloadString);
+            lepMessageHandler.preHandler(getTenant(communicationMessage));
             addReceivedByChannelCharacteristic(communicationMessage, message);
-            messagingHandler.receiveMessage(communicationMessage);
+            messageHandlerService.getHandler(communicationMessage.getType())
+                .handle(communicationMessage);
             log.info("stop processing message, time = {}", stopWatch.getTime());
         } catch (Exception e) {
             log.error("Error process event", e);
+        } finally {
+            lepMessageHandler.destroy();
         }
     }
 
@@ -177,5 +190,10 @@ public class KafkaChannelFactory {
                         .value(kafkaReceivedTimestamp)
                 )
             );
+    }
+
+    private String getTenant(CommunicationMessage message) {
+        return message.getCharacteristic().stream().filter(ch -> TENANT_NAME.equals(ch.getName())).findFirst()
+            .map(ch -> ch.getValue()).orElse(XM);
     }
 }
