@@ -33,6 +33,7 @@ public class KafkaChannelFactory {
 
     private static final String KAFKA = "kafka";
 
+
     private final BindingServiceProperties bindingServiceProperties;
     private final SubscribableChannelBindingTargetFactory bindingTargetFactory;
     private final BindingService bindingService;
@@ -42,7 +43,6 @@ public class KafkaChannelFactory {
     private final KafkaHandelMessageService kafkaHandelMessageService;
     private CompositeHealthIndicator bindersHealthIndicator;
     private KafkaBinderHealthIndicator kafkaBinderHealthIndicator;
-
 
     public KafkaChannelFactory(BindingServiceProperties bindingServiceProperties,
                                SubscribableChannelBindingTargetFactory bindingTargetFactory,
@@ -60,7 +60,6 @@ public class KafkaChannelFactory {
         this.bindersHealthIndicator = bindersHealthIndicator;
         this.kafkaBinderHealthIndicator = kafkaBinderHealthIndicator;
         this.kafkaHandelMessageService = kafkaHandelMessageService;
-
         kafkaMessageChannelBinder.setExtendedBindingProperties(kafkaExtendedBindingProperties);
     }
 
@@ -96,6 +95,5 @@ public class KafkaChannelFactory {
             registry.register(KAFKA, kafkaBinderHealthIndicator);
         }
         channel.subscribe(kafkaHandelMessageService::handle);
-
     }
 }

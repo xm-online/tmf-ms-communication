@@ -1,25 +1,4 @@
-package com.icthh.xm.tmf.ms.communication.messaging;
-
-import static com.icthh.xm.tmf.ms.communication.domain.DeliveryReport.deliveryReport;
-import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.DISTRIBUTION_ID;
-import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
-import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
-import static com.icthh.xm.tmf.ms.communication.utils.ApiMapper.CommunicationMessageWrapper.DELIVERY_REPORT;
-import static java.nio.charset.StandardCharsets.ISO_8859_1;
-import static java.nio.charset.StandardCharsets.UTF_16;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Collections.singletonList;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.jsmpp.bean.MessageState.DELIVERED;
-import static org.jsmpp.bean.MessageState.UNDELIVERABLE;
-import static org.jsmpp.bean.OptionalParameter.Tag.MESSAGE_STATE;
-import static org.jsmpp.bean.OptionalParameter.Tag.RECEIPTED_MESSAGE_ID;
-import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
@@ -27,26 +6,25 @@ import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.BusinessRu
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Messaging;
 import com.icthh.xm.tmf.ms.communication.domain.DeliveryReport;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
+import com.icthh.xm.tmf.ms.communication.messaging.MessagingAdapter;
+import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaDeliveryReportListener;
+import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaMoDeliveryReportListener;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler;
 import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
 import com.icthh.xm.tmf.ms.communication.rules.RuleResponse;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
-import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
-import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
-import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
-import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
+import com.icthh.xm.tmf.ms.communication.web.api.model.*;
 import io.netty.util.concurrent.ImmediateEventExecutor;
-
-import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jsmpp.InvalidResponseException;
 import org.jsmpp.PDUException;
 import org.jsmpp.bean.DeliverSm;
 import org.jsmpp.bean.MessageType;
-import org.jsmpp.bean.OptionalParameter;
-import org.jsmpp.bean.OptionalParameter.OctetString;
 import org.jsmpp.extra.NegativeResponseException;
+import org.jsmpp.extra.ResponseTimeoutException;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,11 +35,28 @@ import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.messaging.MessageChannel;
 import org.testcontainers.shaded.com.google.common.collect.Lists;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+
+import static com.icthh.xm.tmf.ms.communication.domain.DeliveryReport.deliveryReport;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.DISTRIBUTION_ID;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.DELIVERY_REPORT;
+import static java.nio.charset.StandardCharsets.*;
+import static java.util.Collections.singletonList;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+
 @RunWith(MockitoJUnitRunner.class)
-public class MessagingTest {
+public class SmppMessagingHandlerTest {
 
     public static final String SUCCESS_SENT = "success_sent";
     public static final String FAIL_SEND = "fail_send";
@@ -71,7 +66,7 @@ public class MessagingTest {
     public static final String MO_QUEUE = "MO-QUEUE";
 
     @InjectMocks
-    private MessagingHandler messagingHandler;
+    private SmppMessagingHandler smppMessagingHandler;
     @Mock
     private KafkaTemplate<String, Object> kafkaTemplate;
     @Mock
@@ -113,7 +108,7 @@ public class MessagingTest {
 
     @Test
     public void receiveMessageSuccessTest() {
-        messagingHandler.receiveMessage(message());
+        smppMessagingHandler.handle(message());
 
         MessageResponse messageResponse = new MessageResponse(SUCCESS, message());
 
@@ -131,7 +126,7 @@ public class MessagingTest {
     public void receiveMessageSuccessWithDistributionIdTest() {
         CommunicationMessage message = message();
         addDistributionId(message);
-        messagingHandler.receiveMessage(message);
+        smppMessagingHandler.handle(message);
 
         CommunicationMessage assertMessage = message();
         addDistributionId(assertMessage);
@@ -170,7 +165,7 @@ public class MessagingTest {
     private void failMessage(Exception e, String errorCode, String testMessage) {
         when(smppService.send("PH", "TestContext", "TestSender", (byte) 1)).thenThrow(e);
 
-        messagingHandler.receiveMessage(message());
+        smppMessagingHandler.handle(message());
 
         MessageResponse messageResponse = new MessageResponse(FAILED, message());
         messageResponse.setErrorCode(errorCode);
@@ -247,6 +242,32 @@ public class MessagingTest {
         JSONAssert.assertEquals(argumentCaptor.getValue(), messageJson.trim(), false);
     }
 
+    @Test
+    public void deliveryReportTest() {
+        assertEquals(smppMessagingHandler.getDeliveryReport(message("1").getCharacteristic()), (byte) 1);
+        assertEquals(smppMessagingHandler.getDeliveryReport(message("0").getCharacteristic()), (byte) 0);
+        assertEquals(smppMessagingHandler.getDeliveryReport(message("9").getCharacteristic()), (byte) 9);
+        assertEquals(smppMessagingHandler.getDeliveryReport(message("bart").getCharacteristic()), (byte) 0);
+    }
+
+    @Test
+    public void communicationMessageCreateMappingTest() throws Exception {
+        CommunicationMessageCreate messageCreate = messageCreate();
+        smppMessagingHandler.handle(messageCreate);
+        verify(smppService).send(messageCreate.getReceiver().get(0).getPhoneNumber(), messageCreate.getContent(),
+            messageCreate.getSender().getId(), (byte)1);
+    }
+
+    public static CommunicationMessage message(String deliveryValue) {
+        return new CommunicationMessage() {{
+            setType(com.icthh.xm.tmf.ms.communication.domain.MessageType.SMS.name());
+            setCharacteristic(Lists.newArrayList(new CommunicationRequestCharacteristic() {{
+                name(DELIVERY_REPORT);
+                value(deliveryValue);
+            }}));
+        }};
+    }
+
     public static CommunicationMessage message() {
         CommunicationMessage message = new CommunicationMessage();
         Receiver receiver = new Receiver();
@@ -267,4 +288,25 @@ public class MessagingTest {
         }));
         return message;
     }
+
+    public static CommunicationMessageCreate messageCreate() {
+        CommunicationMessageCreate message = new CommunicationMessageCreate();
+        Receiver receiver = new Receiver();
+        receiver.setPhoneNumber("PH");
+        receiver.setId("ID");
+        Sender sender = new Sender();
+        sender.setId("TestSender");
+        message.setSender(sender);
+        message.setContent("TestContext");
+        message.setReceiver(singletonList(receiver));
+        message.setType("SMS");
+        message.setCharacteristic(Lists.newArrayList(new CommunicationRequestCharacteristic() {
+            {
+                name(DELIVERY_REPORT);
+                value("1");
+            }
+        }));
+        return message;
+    }
+
 }
