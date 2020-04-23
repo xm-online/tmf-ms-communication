@@ -85,7 +85,7 @@ public class MessagingHandler {
                     return;
                 }
                 String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId(),
-                    wrapper.getDeliveryReport());
+                    wrapper.getDeliveryReport(), wrapper.getValidityPeriod());
                 String queueName = messaging.getSentQueueName();
                 sendMessage(success(messageId, message), queueName);
                 log.info("Message success sent to {}", queueName);

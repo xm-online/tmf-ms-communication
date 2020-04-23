@@ -32,6 +32,7 @@ public class ApiMapper {
     public static class CommunicationMessageWrapper {
 
         public static final String DELIVERY_REPORT = "DELIVERY.REPORT";
+        public static final String VALIDITY_PERIOD = "VALIDITY.PERIOD";
 
         @Getter
         private final MessageType type;
@@ -57,6 +58,15 @@ public class ApiMapper {
                 .findFirst()
                 .map(c -> NumberUtils.toByte(c.getValue(), (byte) 0))
                 .orElse((byte) 0);
+        }
+
+        public String getValidityPeriod() {
+            return Optional.ofNullable(characteristics).orElse(Collections.emptyList())
+                .stream()
+                .filter(c -> VALIDITY_PERIOD.equals(c.getName()))
+                .map(CommunicationRequestCharacteristic::getValue)
+                .findFirst()
+                .orElse("");
         }
     }
 }

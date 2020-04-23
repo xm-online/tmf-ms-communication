@@ -168,7 +168,7 @@ public class MessagingTest {
 
     @SneakyThrows
     private void failMessage(Exception e, String errorCode, String testMessage) {
-        when(smppService.send("PH", "TestContext", "TestSender", (byte) 1)).thenThrow(e);
+        when(smppService.send("PH", "TestContext", "TestSender", (byte) 1,"")).thenThrow(e);
 
         messagingHandler.receiveMessage(message());
 

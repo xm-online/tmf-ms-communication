@@ -50,7 +50,7 @@ public class SmppTest {
     @Test
     @SneakyThrows
     public void testSendingSms() {
-        String messageId = service.send("+380636666666", "test", "1616", (byte) 1);
+        String messageId = service.send("+380636666666", "test", "1616", (byte) 1, "");
         assertNotNull(messageId);
     }
 
