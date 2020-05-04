@@ -1,6 +1,5 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
-import static java.nio.charset.StandardCharsets.UTF_16;
 import static java.nio.charset.StandardCharsets.UTF_16BE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.jsmpp.bean.Alphabet.ALPHA_DEFAULT;
