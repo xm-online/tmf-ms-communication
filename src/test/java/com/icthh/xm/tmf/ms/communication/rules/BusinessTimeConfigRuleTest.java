@@ -2,10 +2,6 @@ package com.icthh.xm.tmf.ms.communication.rules;
 
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
-import static com.icthh.xm.tmf.ms.communication.messaging.MessagingTest.FAIL_SEND;
-import static com.icthh.xm.tmf.ms.communication.messaging.MessagingTest.SUCCESS_SENT;
-import static com.icthh.xm.tmf.ms.communication.messaging.MessagingTest.createApplicationProperties;
-import static com.icthh.xm.tmf.ms.communication.messaging.MessagingTest.message;
 import static java.nio.charset.Charset.defaultCharset;
 import static java.time.LocalDate.parse;
 import static java.time.LocalTime.MAX;
@@ -26,7 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.config.client.config.XmConfigProperties;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
-import com.icthh.xm.tmf.ms.communication.messaging.MessagingHandler;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler;
 import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessDayConfig.BusinessTime;
 import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessDayConfig.BusinessTimeConfig;
 import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessTimeConfigService;
@@ -34,10 +30,6 @@ import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessTimeRule;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -51,6 +43,25 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.List;
+
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ERROR_BUSINESS_RULE_VALIDATION;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandlerTest.*;
+import static java.nio.charset.Charset.defaultCharset;
+import static java.time.LocalDate.parse;
+import static java.time.LocalTime.*;
+import static java.util.Collections.singletonList;
+import static java.util.Objects.requireNonNull;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @Slf4j
 @RunWith(SpringRunner.class)
@@ -89,7 +100,7 @@ public class BusinessTimeConfigRuleTest {
     @Autowired
     private BusinessTimeConfigService businessTimeConfigService;
 
-    private MessagingHandler messagingHandler;
+    private SmppMessagingHandler smppMessagingHandler;
 
     @SneakyThrows
     @Before
@@ -100,8 +111,7 @@ public class BusinessTimeConfigRuleTest {
 
         BusinessTimeRule businessTimeRule = new BusinessTimeRule(businessTimeConfigService, clock);
         BusinessRuleValidator businessRuleValidator = new BusinessRuleValidator(singletonList(businessTimeRule));
-        messagingHandler = new MessagingHandler(new ObjectMapper(),
-                                                kafkaTemplate,
+        smppMessagingHandler = new SmppMessagingHandler(kafkaTemplate,
                                                 smppService,
                                                 createApplicationProperties(),
                                                 businessRuleValidator);
@@ -176,7 +186,7 @@ public class BusinessTimeConfigRuleTest {
 
 
     private void successCheck(CommunicationMessage message) {
-        messagingHandler.receiveMessage(message);
+        smppMessagingHandler.handle(message);
         MessageResponse messageResponse = new MessageResponse(SUCCESS, message);
         ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
         verify(kafkaTemplate).send(eq(SUCCESS_SENT), argumentCaptor.capture());
@@ -189,10 +199,10 @@ public class BusinessTimeConfigRuleTest {
     }
 
     private void failureCheck() {
-        messagingHandler.receiveMessage(message());
+        smppMessagingHandler.handle(message());
         MessageResponse messageResponse = new MessageResponse(FAILED, message());
         messageResponse.setErrorCode("error.business.sending.notBusinessTime");
-        messageResponse.setErrorMessage(MessagingHandler.ERROR_BUSINESS_RULE_VALIDATION);
+        messageResponse.setErrorMessage(ERROR_BUSINESS_RULE_VALIDATION);
         ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
         verify(kafkaTemplate).send(eq(FAIL_SEND), argumentCaptor.capture());
         verify(kafkaTemplate, never()).send(eq(SUCCESS_SENT), argumentCaptor.capture());

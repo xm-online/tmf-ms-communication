@@ -44,6 +44,7 @@ assert System.properties["java.specification.version"] == "11" || "12" || "13"
 apply from: "gradle/docker.gradle"
 apply from: "gradle/sonar.gradle"
 apply from: "gradle/swagger.gradle"
+apply from: "gradle/version.gradle"
 //jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
 
 if (project.hasProperty("prod")) {
@@ -228,6 +229,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-web"
     implementation "org.springframework.security.oauth:spring-security-oauth2"
     implementation "org.springframework.security:spring-security-jwt"
+    implementation 'org.codehaus.groovy.modules.http-builder:http-builder:0.7.1'
     runtimeOnly "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     implementation ("io.springfox:springfox-swagger2") {
         exclude module: "mapstruct"
@@ -307,12 +309,10 @@ wrapper {
     gradleVersion = "6.0.1"
 }
 
-compileJava.dependsOn processResources
+compileJava {
+    dependsOn processResources
+    // add method parameters names to .class (used by LEP scripts)
+    options.compilerArgs << '-parameters'
+}
 processResources.dependsOn cleanResources,bootBuildInfo
 bootBuildInfo.mustRunAfter cleanResources
-
-task getProjectVersion {
-    doLast {
-        println project.version
-    }
-}

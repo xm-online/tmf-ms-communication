@@ -189,15 +189,6 @@ public class SmppService {
         return isBlank(senderId) ? smpp.getSourceAddr() : senderId;
     }
 
-    @SneakyThrows
-    public List<String> sendMultipleMessages(List<String> phones, String body, String senderId, byte deliveryReport) {
-        List<String> results = new ArrayList<>();
-        for (String phone : phones) {
-            results.add(send(phone, body, senderId, deliveryReport,appProps.getSmpp().getValidityPeriod()));
-        }
-        return results;
-    }
-
     @PreDestroy
     public void onDestroy() throws Exception {
         session.unbindAndClose();
