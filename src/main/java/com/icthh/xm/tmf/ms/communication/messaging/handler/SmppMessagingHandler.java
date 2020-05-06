@@ -38,6 +38,7 @@ public class SmppMessagingHandler implements BasicMessageHandler {
     public static final String ERROR_PROCESS_COMMUNICATION_MESSAGE = "Error process communicationMessage ";
     public static final String ERROR_BUSINESS_RULE_VALIDATION = "Error business rule validation";
     public static final String DELIVERY_REPORT = "DELIVERY.REPORT";
+    public static final String VALIDITY_PERIOD = "VALIDITY.PERIOD";
     private final KafkaTemplate<String, Object> channelResolver;
     private final SmppService smppService;
     private final ApplicationProperties applicationProperties;
@@ -87,7 +88,7 @@ public class SmppMessagingHandler implements BasicMessageHandler {
             return;
         }
         String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId(),
-            getDeliveryReport(message.getCharacteristic()));
+            getDeliveryReport(message.getCharacteristic()), getValidityPeriod(message.getCharacteristic()));
         String queueName = messaging.getSentQueueName();
         sendMessage(success(messageId, message), queueName);
         log.info("Message success sent to {}", queueName);
@@ -113,4 +114,12 @@ public class SmppMessagingHandler implements BasicMessageHandler {
             .orElse((byte) 0);
     }
 
+    private String getValidityPeriod(List<CommunicationRequestCharacteristic> characteristics) {
+        return Optional.ofNullable(characteristics).orElse(Collections.emptyList())
+            .stream()
+            .filter(c -> VALIDITY_PERIOD.equals(c.getName()))
+            .map(CommunicationRequestCharacteristic::getValue)
+            .findFirst()
+            .orElse("");
+    }
 }

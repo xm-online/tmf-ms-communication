@@ -143,7 +143,7 @@ public class SmppMessagingHandlerTest {
     private void addDistributionId(CommunicationMessage message) {
         message.setCharacteristic(new ArrayList<>());
         CommunicationRequestCharacteristic distributionId = new CommunicationRequestCharacteristic().name(DISTRIBUTION_ID)
-                                                                                                     .value("TEST_D_ID");
+            .value("TEST_D_ID");
         message.getCharacteristic().add(distributionId);
     }
 
@@ -163,7 +163,7 @@ public class SmppMessagingHandlerTest {
 
     @SneakyThrows
     private void failMessage(Exception e, String errorCode, String testMessage) {
-        when(smppService.send("PH", "TestContext", "TestSender", (byte) 1,"")).thenThrow(e);
+        when(smppService.send("PH", "TestContext", "TestSender", (byte) 1, "")).thenThrow(e);
 
         smppMessagingHandler.handle(message());
 
@@ -255,7 +255,7 @@ public class SmppMessagingHandlerTest {
         CommunicationMessageCreate messageCreate = messageCreate();
         smppMessagingHandler.handle(messageCreate);
         verify(smppService).send(messageCreate.getReceiver().get(0).getPhoneNumber(), messageCreate.getContent(),
-            messageCreate.getSender().getId(), (byte)1);
+            messageCreate.getSender().getId(), (byte) 1, "");
     }
 
     public static CommunicationMessage message(String deliveryValue) {
