@@ -1,6 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
-import static java.nio.charset.StandardCharsets.UTF_16;
+import static java.nio.charset.StandardCharsets.UTF_16BE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.jsmpp.bean.Alphabet.ALPHA_DEFAULT;
 import static org.jsmpp.bean.Alphabet.ALPHA_UCS2;
@@ -181,7 +181,7 @@ public class SmppService {
         if (isAlpha(message)) {
             return new OctetString(MESSAGE_PAYLOAD.code(), message);
         } else {
-            return new OctetString(MESSAGE_PAYLOAD.code(), message, UTF_16.name());
+            return new OctetString(MESSAGE_PAYLOAD.code(), message, UTF_16BE.name());
         }
     }
 
