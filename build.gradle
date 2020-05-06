@@ -44,6 +44,7 @@ assert System.properties["java.specification.version"] == "11" || "12" || "13"
 apply from: "gradle/docker.gradle"
 apply from: "gradle/sonar.gradle"
 apply from: "gradle/swagger.gradle"
+apply from: "gradle/version.gradle"
 //jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
 
 if (project.hasProperty("prod")) {
@@ -315,9 +316,3 @@ compileJava {
 }
 processResources.dependsOn cleanResources,bootBuildInfo
 bootBuildInfo.mustRunAfter cleanResources
-
-task getProjectVersion {
-    doLast {
-        println project.version
-    }
-}
