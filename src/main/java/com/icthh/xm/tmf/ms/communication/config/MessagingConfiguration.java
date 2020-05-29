@@ -5,12 +5,13 @@ import com.icthh.xm.tmf.ms.communication.lep.LepKafkaMessageHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingAdapter;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaDeliveryReportListener;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaMoDeliveryReportListener;
+import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
+import com.icthh.xm.tmf.ms.communication.service.KafkaHandelMessageService;
+import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.MessageHandlerService;
-
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.CompositeHealthIndicator;
@@ -45,18 +46,17 @@ public class MessagingConfiguration {
     @Bean
     public KafkaChannelFactory kafkaChannelFactory(BindingServiceProperties bindingServiceProperties,
                                                    SubscribableChannelBindingTargetFactory bindingTargetFactory,
-                                                   BindingService bindingService, ObjectMapper objectMapper,
+                                                   BindingService bindingService,
                                                    ApplicationProperties applicationProperties,
                                                    KafkaMessageChannelBinder kafkaMessageChannelBinder,
                                                    KafkaProperties kafkaProperties,
-                                                   MessageHandlerService messageHandler,
                                                    CompositeHealthIndicator bindersHealthIndicator,
                                                    KafkaBinderHealthIndicator kafkaBinderHealthIndicator,
-                                                   LepKafkaMessageHandler lepMessageHandler
+                                                   KafkaHandelMessageService kafkaHandelMessageService
     ) {
-        return new KafkaChannelFactory(bindingServiceProperties, bindingTargetFactory, bindingService, objectMapper,
+        return new KafkaChannelFactory(bindingServiceProperties, bindingTargetFactory, bindingService,
             applicationProperties, kafkaProperties, kafkaMessageChannelBinder,
-            messageHandler, bindersHealthIndicator, kafkaBinderHealthIndicator, lepMessageHandler);
+            bindersHealthIndicator, kafkaBinderHealthIndicator, kafkaHandelMessageService);
     }
 
     @Bean
@@ -74,7 +74,7 @@ public class MessagingConfiguration {
             new ThreadPoolExecutor(deliveryProcessorThreadCount,
                 deliveryMessageQueueMaxSize, 0L,
                 TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>()));
+                new LinkedBlockingQueue<>()), applicationProperties.isConvertToHexDeliveredId());
     }
 
     @Bean
@@ -88,5 +88,4 @@ public class MessagingConfiguration {
                 TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<>()));
     }
-
 }

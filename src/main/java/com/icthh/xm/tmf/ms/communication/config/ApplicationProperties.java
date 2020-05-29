@@ -3,6 +3,7 @@ package com.icthh.xm.tmf.ms.communication.config;
 import com.icthh.xm.commons.lep.TenantScriptStorage;
 import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.jsmpp.bean.BindType;
 import org.jsmpp.bean.NumberingPlanIndicator;
@@ -27,14 +28,24 @@ public class ApplicationProperties {
     private final Retry retry = new Retry();
     private final Firebase firebase = new Firebase();
     private int kafkaConcurrencyCount;
+    private boolean convertToHexDeliveredId;
     private String kafkaSystemTopic;
     private String kafkaSystemQueue;
+    private Kafka kafka;
     private List<String> tenantIgnoredPathList = Collections.emptyList();
     private boolean streamBindingEnabled;
     private String channelSpecificationPathPattern;
 
     private Messaging messaging = new Messaging();
     private BusinessRule businessRule = new BusinessRule();
+
+    @Getter
+    @Setter
+    public static class Kafka {
+        private String bootstrapServers;
+        private int rateLimit;
+        private int poolSize;
+    }
 
     @Getter
     @Setter
@@ -73,6 +84,7 @@ public class ApplicationProperties {
 
     @Getter
     @Setter
+    @NoArgsConstructor
     public static class Smpp {
         private Boolean enabled = true;
         private String host;
@@ -108,4 +120,5 @@ public class ApplicationProperties {
         private long delay;
         private int multiplier;
     }
+
 }

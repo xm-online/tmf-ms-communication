@@ -83,7 +83,7 @@ public class SmppMessagingHandlerTest {
     public void setUp() {
         ExecutorService executorService = ImmediateEventExecutor.INSTANCE;
         MessagingAdapter messagingAdapter = new MessagingAdapter(kafkaTemplate, applicationProperties);
-        sendToKafkaDeliveryReportListener = new SendToKafkaDeliveryReportListener(messagingAdapter, executorService);
+        sendToKafkaDeliveryReportListener = new SendToKafkaDeliveryReportListener(messagingAdapter, executorService, true);
         sendToKafkaMoDeliveryReportListener = new SendToKafkaMoDeliveryReportListener(messagingAdapter, executorService);
         RuleResponse response = new RuleResponse();
         response.setSuccess(true);

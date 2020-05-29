@@ -38,7 +38,6 @@ public class SmppMessagingHandler implements BasicMessageHandler {
     public static final String ERROR_PROCESS_COMMUNICATION_MESSAGE = "Error process communicationMessage ";
     public static final String ERROR_BUSINESS_RULE_VALIDATION = "Error business rule validation";
     public static final String DELIVERY_REPORT = "DELIVERY.REPORT";
-
     private final KafkaTemplate<String, Object> channelResolver;
     private final SmppService smppService;
     private final ApplicationProperties applicationProperties;

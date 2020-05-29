@@ -180,6 +180,7 @@ xm-config:
 
 # application:
 application:
+    convert-to-hex-delivered-id: true
     kafka-system-topic: system_topic
     kafka-system-queue: system_queue
     # The concurrency of the inbound consumer.
@@ -189,6 +190,10 @@ application:
     kafka-concurrency-count: 16
     stream-binding-enabled: true
     channel-specification-path-pattern: /config/tenants/{tenantName}/communication/communication.yml
+    kafka:
+        bootstrap-servers: localhost:9092
+        rateLimit: 400
+        poolSize: 40
     messaging:
         send-queue-name-template: communication_%s_%s_send
         recive-queue-name-template: communication_%s_%s_recive
