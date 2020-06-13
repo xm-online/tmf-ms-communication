@@ -298,7 +298,6 @@ dependencies {
     testAnnotationProcessor "org.projectlombok:lombok:${lombok_version}"
     testImplementation "com.github.stefanbirkner:system-rules:${system_rules_version}"
     testImplementation "org.testcontainers:testcontainers:${testcontainers_version}"
-    testImplementation "org.springframework.cloud:spring-cloud-stream-test-support"
     testImplementation "org.testcontainers:kafka:${testcontainers_version}"
     testImplementation "com.github.tomakehurst:wiremock-jre8:${wiremock_version}"
 }

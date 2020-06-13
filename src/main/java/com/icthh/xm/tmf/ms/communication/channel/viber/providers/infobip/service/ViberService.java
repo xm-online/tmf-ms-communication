@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.common.InfobipStatusEnum;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sending.request.InfobipSendRequest;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sending.response.InfobipSendResponse;
+import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.config.InfobipViberConfig;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.mapping.CommunicationMessageToViberSendRequestMapper;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.DeliveryReport;
@@ -35,30 +36,33 @@ public class ViberService {
     private static final String SEND_PATH = "/omni/1/advanced";
     private static final Gson gson = new Gson();
 
-    private final RestTemplate restTemplate;
     private final ApplicationProperties applicationProperties;
-    private final KafkaTemplate<String, Object> channelResolver;
+    private final RestTemplate restTemplate;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final ViberConfigGetter viberConfigGetter;
 
     private final CommunicationMessageToViberSendRequestMapper communicationMessageToViberSendRequestMapper;
 
     public void send(CommunicationMessage communicationMessage) {
+        InfobipViberConfig viberConfig = viberConfigGetter.getForMessage(communicationMessage);
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(APPLICATION_JSON);
-        headers.set(AUTHORIZATION, applicationProperties.getInfobip().getToken());
+        headers.set(AUTHORIZATION, viberConfig.getToken());
 
-        InfobipSendRequest request = communicationMessageToViberSendRequestMapper.toSendRequest(communicationMessage);
-        HttpEntity<String> requestEntity = new HttpEntity<>(gson.toJson(request), headers);
+        InfobipSendRequest sendRequest = communicationMessageToViberSendRequestMapper.toSendRequest(viberConfig, communicationMessage);
+        HttpEntity<String> requestEntity = new HttpEntity<>(gson.toJson(sendRequest), headers);
 
         ResponseEntity<InfobipSendResponse> exchange;
         try {
-            exchange = restTemplate.exchange(applicationProperties.getInfobip().getAddress() + SEND_PATH, HttpMethod.POST, requestEntity, InfobipSendResponse.class);
+            exchange = restTemplate.exchange(viberConfig.getAddress() + SEND_PATH, HttpMethod.POST, requestEntity, InfobipSendResponse.class);
             processMessageStatus(
                 Objects.requireNonNull(exchange.getBody()).getMessages().stream()
                     .map(infobipSendResponseMessage -> new MessageStatusInfo(communicationMessage.getId(), communicationMessage, infobipSendResponseMessage.getStatus()))
                     .collect(Collectors.toList()));
         } catch (HttpStatusCodeException e) {
             if (e.getRawStatusCode() != 200) {
-                channelResolver.send(
+                kafkaTemplate.send(
                     applicationProperties.getMessaging().getSendFailedQueueName(),
                     gson.toJson(MessageResponse.failed(communicationMessage, "error.system.sending.viber.gateway.internalError", String.format("Viber provider responded with %s http code", e.getRawStatusCode())))
                 );
@@ -69,30 +73,29 @@ public class ViberService {
     public void processMessageStatus(List<MessageStatusInfo> messageStatusInfo) {
         for (MessageStatusInfo statusInfo : messageStatusInfo) {
             if (InfobipStatusEnum.PENDING.getGroupId() == statusInfo.getInfobipStatus().getGroupId()) {
-                channelResolver.send(
+                kafkaTemplate.send(
                     applicationProperties.getMessaging().getSentQueueName(),
                     gson.toJson(MessageResponse.success(statusInfo.getMessageId(), statusInfo.getCommunicationMessage()))
                 );
             } else if (InfobipStatusEnum.REJECTED.getGroupId() == statusInfo.getInfobipStatus().getGroupId()) {
-                channelResolver.send(
+                kafkaTemplate.send(
                     applicationProperties.getMessaging().getSendFailedQueueName(),
                     gson.toJson(MessageResponse.failed(statusInfo.getCommunicationMessage(), "error.system.sending.viber.gateway.rejection", statusInfo.getInfobipStatus().getDescription()))
                 );
-            }
-            if (InfobipStatusEnum.DELIVERED.getGroupId() == statusInfo.getInfobipStatus().getGroupId()) {
-                channelResolver.send(
+            } else if (InfobipStatusEnum.DELIVERED.getGroupId() == statusInfo.getInfobipStatus().getGroupId()) {
+                kafkaTemplate.send(
                     applicationProperties.getMessaging().getDeliveredQueueName(),
-                    DeliveryReport.deliveryReport(statusInfo.getMessageId(), ObmDeliveryReportStatusEnum.DELIVERED.name())
+                    gson.toJson(DeliveryReport.deliveryReport(statusInfo.getMessageId(), ObmDeliveryReportStatusEnum.DELIVERED.name()))
                 );
             } else if (InfobipStatusEnum.EXPIRED.getGroupId() == statusInfo.getInfobipStatus().getGroupId()) {
-                channelResolver.send(
+                kafkaTemplate.send(
                     applicationProperties.getMessaging().getDeliveryFailedQueueName(),
-                    DeliveryReport.deliveryReport(statusInfo.getMessageId(), ObmDeliveryReportStatusEnum.EXPIRED.name())
+                    gson.toJson(DeliveryReport.deliveryReport(statusInfo.getMessageId(), ObmDeliveryReportStatusEnum.EXPIRED.name()))
                 );
             } else if (InfobipStatusEnum.UNDELIVERABLE.getGroupId() == statusInfo.getInfobipStatus().getGroupId()) {
-                channelResolver.send(
+                kafkaTemplate.send(
                     applicationProperties.getMessaging().getDeliveryFailedQueueName(),
-                    DeliveryReport.deliveryReport(statusInfo.getMessageId(), ObmDeliveryReportStatusEnum.UNDELIVERABLE.name())
+                    gson.toJson(DeliveryReport.deliveryReport(statusInfo.getMessageId(), ObmDeliveryReportStatusEnum.UNDELIVERABLE.name()))
                 );
             } else {
                 log.error("Unknown group id {}", statusInfo.getInfobipStatus().getGroupId());

@@ -5,7 +5,7 @@ import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sen
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sending.request.InfobipSendRequestDestination;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sending.request.InfobipSendRequestDestinationTo;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sending.request.InfobipSendRequestViber;
-import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.service.ViberConfigGetter;
+import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.config.InfobipViberConfig;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import lombok.AllArgsConstructor;
@@ -18,9 +18,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class CommunicationMessageToViberSendRequestMapper {
 
-    private final ViberConfigGetter infobipViberConfig;
-
-    public InfobipSendRequest toSendRequest(CommunicationMessage message) {
+    public InfobipSendRequest toSendRequest(InfobipViberConfig infobipViberConfig, CommunicationMessage message) {
         Map<String, String> characteristicsMap = message.getCharacteristic()
             .stream()
             .collect(Collectors.toMap(
@@ -50,7 +48,7 @@ public class CommunicationMessageToViberSendRequestMapper {
                 .text(message.getContent())
                 .build()
             )
-            .scenarioKey(infobipViberConfig.apply(message).getScenarioKey())
+            .scenarioKey(infobipViberConfig.getScenarioKey())
             .build();
     }
 

@@ -2,6 +2,7 @@ package com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.servic
 
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.reports.response.InfobipReportsResponse;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sending.request.InfobipSendRequest;
+import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.config.InfobipViberConfig;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpEntity;
@@ -20,12 +21,13 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @Component
 @RequiredArgsConstructor
-public class ScheduledInfobipReportsGetter {
+public class ScheduledInfobipReportsProcessor {
 
     public static final String REPORTS_PATH = "/omni/1/reports";
     private final ApplicationProperties applicationProperties;
     private final ViberService viberService;
     private final RestTemplate restTemplate;
+    private final ViberConfigGetter viberConfigGetter;
 
     @Scheduled(fixedDelayString = "${application.infobip.statuses.acquiring.delay-millis}")
     public void processStatuses() {
@@ -33,13 +35,15 @@ public class ScheduledInfobipReportsGetter {
             return;
         }
 
+        InfobipViberConfig config = viberConfigGetter.getCommon();
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(APPLICATION_JSON);
-        headers.set(AUTHORIZATION, applicationProperties.getInfobip().getToken());
+        headers.set(AUTHORIZATION, config.getToken());
 
         HttpEntity<InfobipSendRequest> requestEntity = new HttpEntity<>(null, headers);
 
-        ResponseEntity<InfobipReportsResponse> exchange = restTemplate.exchange(applicationProperties.getInfobip().getAddress() + REPORTS_PATH, HttpMethod.GET, requestEntity, InfobipReportsResponse.class);
+        ResponseEntity<InfobipReportsResponse> exchange = restTemplate.exchange(config.getAddress() + REPORTS_PATH, HttpMethod.GET, requestEntity, InfobipReportsResponse.class);
         viberService.processMessageStatus(Objects.requireNonNull(exchange.getBody()).getResults()
             .stream()
             .map(infobipReportsMessageResult -> new MessageStatusInfo(infobipReportsMessageResult.getMessageId(), null, infobipReportsMessageResult.getStatus()))

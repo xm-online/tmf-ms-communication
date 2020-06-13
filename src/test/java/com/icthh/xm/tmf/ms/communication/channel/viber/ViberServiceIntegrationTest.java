@@ -10,6 +10,8 @@ import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.service
 import com.icthh.xm.tmf.ms.communication.config.LepConfiguration;
 import com.icthh.xm.tmf.ms.communication.config.RestTemplateConfiguration;
 import com.icthh.xm.tmf.ms.communication.config.SecurityBeanOverrideConfiguration;
+import com.icthh.xm.tmf.ms.communication.config.kafka.KafkaContainerStaticKeeper;
+import com.icthh.xm.tmf.ms.communication.config.kafka.KafkaContextInitializer;
 import com.icthh.xm.tmf.ms.communication.domain.DeliveryReport;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
@@ -17,10 +19,7 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,6 +29,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.testcontainers.containers.KafkaContainer;
 
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
@@ -46,26 +46,36 @@ import static org.mockito.BDDMockito.given;
 @SpringBootTest()
 @RunWith(SpringRunner.class)
 @ContextConfiguration(
-    classes = {CommunicationApp.class,
+    classes = {
         SecurityBeanOverrideConfiguration.class,
         LepConfiguration.class,
         RestTemplateConfiguration.class,
         TestTopicCreationConfiguration.class,
         TestKafkaProducer.class,
-        TestKafkaListener.class})
-//@ContextConfiguration(initializers = KafkaContextInitializer.class)
+        TestKafkaListener.class,
+        CommunicationApp.class,
+    }, initializers = KafkaContextInitializer.class)
 @TestPropertySource(properties = {
     "spring.kafka.producer.value-serializer=org.apache.kafka.common.serialization.StringSerializer",
-    "spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer",
-    "spring.kafka.consumer.value-serializer=org.apache.kafka.common.serialization.StringSerializerArrayListValuedHashMap",
+    "spring.kafka.producer.key-serializer=com.icthh.xm.tmf.ms.communication.messaging.RoutingSerializer",
+    "spring.kafka.consumer.value-serializer=org.apache.kafka.common.serialization.StringDeserializer",
     "spring.kafka.consumer.key-serializer=org.apache.kafka.common.serialization.StringSerializer",
+    "spring.kafka.consumer.key-deserializer: org.apache.kafka.common.serialization.StringDeserializer",
+    "spring.kafka.consumer.value-deserializer: org.apache.kafka.common.serialization.StringDeserializer",
+    "spring.kafka.consumer.group-id=test",
     "application.messaging.to-send-queue-name=communication_to_send_sms",
     "application.messaging.sent-queue-name=communication_sent_sms",
     "application.messaging.send-failed-queue-name=communication_failed_sms",
     "application.messaging.delivery-failed-queue-name=communication_delivery_failed",
     "application.messaging.delivered-queue-name=communication_delivered_reports",
+    "application.messaging.retries-count=3",
+    "application.messaging.deliveryProcessorThreadCount=3",
+    "application.messaging.deliveryMessageQueueMaxSize=16000",
+    "application.stream-binding-enabled=true",
+    "application.kafka-concurrency-count=16",
+    "application.infobip.statuses.acquiring.delay-millis=300",
+    "application.infobip.statuses.acquiring.enabled=true"
 })
-//)
 public class ViberServiceIntegrationTest {
 
     private static final Gson gson = new Gson();
@@ -73,18 +83,18 @@ public class ViberServiceIntegrationTest {
     @MockBean
     private ViberConfigGetter viberConfigGetter;
 
-    //@ClassRule
-//    public static KafkaContainer kafka =
-//        KafkaContainerStaticKeeper.keepContainer(
-//            new KafkaContainer()
-//                .withExposedPorts(9092)
-//                .withExposedPorts(9093));
-
-    @MockBean
-    private SmppService smppMessagingHandler;
+    @ClassRule
+    public static KafkaContainer kafka =
+        KafkaContainerStaticKeeper.keepContainer(
+            new KafkaContainer()
+                .withExposedPorts(9092)
+                .withExposedPorts(9093));
 
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(8888), false);
+
+    @MockBean
+    private SmppService smppService;
 
     @Autowired
     private TestKafkaProducer testKafkaProducer;
@@ -94,11 +104,11 @@ public class ViberServiceIntegrationTest {
 
     @Before
     public void prepare() {
-        given(viberConfigGetter.apply(any()))
-            .willReturn(
-                new InfobipViberConfig(
-                    format("http://localhost:%s", wireMockRule.port()),
-                    "Basic 123", "test_scenario_key"));
+        InfobipViberConfig viberConfig = new InfobipViberConfig(
+            format("http://localhost:%s", wireMockRule.port()),
+            "Basic 123", "test_scenario_key");
+        given(viberConfigGetter.getForMessage(any())).willReturn(viberConfig);
+        given(viberConfigGetter.getCommon()).willReturn(viberConfig);
     }
 
     @Test
