@@ -19,6 +19,8 @@ public class MessageHandlerServiceTest {
     private CustomCommunicationMessageHandler customCommunicationMessageHandler;
     @Mock
     private MobileAppMessageHandler mobileAppMessageHandler;
+    @Mock
+    private ViberMessageHandler viberMessageHandler;
 
     @InjectMocks
     MessageHandlerService messageHandlerService;
@@ -33,7 +35,7 @@ public class MessageHandlerServiceTest {
         messageHandlerService.init();
         assertEquals(messageHandlerService.getHandler(MessageType.MobileApp.name()), mobileAppMessageHandler);
         assertEquals(messageHandlerService.getHandler(MessageType.SMS.name()), smppMessagingHandler);
-        assertEquals(messageHandlerService.getHandler(MessageType.Viber.name()), customCommunicationMessageHandler);
+        assertEquals(messageHandlerService.getHandler(MessageType.Viber.name()), viberMessageHandler);
         assertEquals(messageHandlerService.getHandler(MessageType.Telegram.name()), customCommunicationMessageHandler);
     }
 }

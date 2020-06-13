@@ -231,6 +231,13 @@ application:
     firebase:
         url:
         token:
+    infobip:
+        statuses:
+            acquiring:
+                delay-millis: 400
+                enabled: true
+        address: http://localhost:8888
+        token: Basic 123
     retry:
         max-attempts: 3
         delay: 1000 #in milliseconds

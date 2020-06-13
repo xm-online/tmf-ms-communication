@@ -26,6 +26,7 @@ public class ApplicationProperties {
     private final Smpp smpp = new Smpp();
     private final Retry retry = new Retry();
     private final Firebase firebase = new Firebase();
+    private final Infobip infobip = new Infobip();
     private int kafkaConcurrencyCount;
     private String kafkaSystemTopic;
     private String kafkaSystemQueue;
@@ -41,6 +42,24 @@ public class ApplicationProperties {
     public static class Firebase {
         private String url;
         private String token;
+    }
+
+    @Data
+    public static class Infobip {
+        private String address;
+        private String token;
+        private Statuses statuses;
+
+        @Data
+        public static class Statuses {
+            private Acquiring acquiring;
+
+            @Data
+            public static class Acquiring {
+                boolean enabled;
+                int delayMillis;
+            }
+        }
     }
 
     @Data

@@ -137,5 +137,4 @@ public class CustomCommunicationMessageHandlerTest {
             .anyMatch(ch -> ch.getName().equals("test") && ch.getValue().equals("ok")));
     }
 
-
 }

@@ -15,6 +15,7 @@ public class MessagingAdapter {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final ApplicationProperties applicationProperties;
 
+
     public void deliveryReport(DeliveryReport deliveryReport) {
         ApplicationProperties.Messaging messaging = applicationProperties.getMessaging();
         String topic = deliveryReport.getDeliveryStatus().equals(DELIVERED.name()) ? messaging.getDeliveredQueueName() :
