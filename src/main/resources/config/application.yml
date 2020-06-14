@@ -236,6 +236,13 @@ application:
     firebase:
         url:
         token:
+    infobip:
+        statuses:
+            acquiring:
+                delay-millis: 400
+                enabled: true
+        address:
+        token:
     retry:
         max-attempts: 3
         delay: 1000 #in milliseconds

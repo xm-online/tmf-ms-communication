@@ -30,7 +30,7 @@ import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.success;
 import static com.icthh.xm.tmf.ms.communication.messaging.handler.CommunicationMessageMapper.INSTANCE;
 import static java.util.stream.Collectors.toList;
 
-@Service
+//@Service
 @RequiredArgsConstructor
 @Slf4j
 public class SmppMessagingHandler implements BasicMessageHandler {
