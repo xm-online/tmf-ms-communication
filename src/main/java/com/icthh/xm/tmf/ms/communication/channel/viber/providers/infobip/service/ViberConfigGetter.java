@@ -4,36 +4,35 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.config.InfobipViberConfig;
-import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessTimeConfigService;
+import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.config.ViberTenantConfig;
+import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.config.ViberTenantConfigService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Component
 @RequiredArgsConstructor
 public class ViberConfigGetter {
 
-    private final BusinessTimeConfigService tenantConfigService;
+    private final ViberTenantConfigService viberTenantConfigService;
     private final CacheKey cacheKey = new CacheKey();
 
     private LoadingCache<CacheKey, InfobipViberConfig> configCache = CacheBuilder.newBuilder()
-        .expireAfterAccess(10, TimeUnit.SECONDS)
+        .expireAfterWrite(10, TimeUnit.SECONDS)
         .build(new CacheLoader<>() {
             @Override
             public InfobipViberConfig load(CacheKey key) {
                 InfobipViberConfig.InfobipViberConfigBuilder builder = InfobipViberConfig.builder();
 
-                Map<String, Object> config = tenantConfigService.getConfig();
-                Map<String, String> viberConfig = (Map<String, String>) config.get("viber");
+                ViberTenantConfig viberTenantConfig = viberTenantConfigService.getViberTenantConfig();
 
-                builder.address(viberConfig.get("url"));
-                builder.token(viberConfig.get("token"));
-                builder.scenarioKey(viberConfig.get("scenario"));
+                builder.address(viberTenantConfig.getUrl());
+                builder.token(viberTenantConfig.getToken());
+                builder.scenarioKey(viberTenantConfig.getScenario());
 
                 return builder.build();
             }
@@ -50,7 +49,7 @@ public class ViberConfigGetter {
     @Data
     @Builder
     static class CacheKey {
-        //to be specified later. Probably we'll need to get scenario key by sender from communication message
+        //to be specified later. Probably we'll need to get scenario key by sender from communication message so we'll add sender id to this class
     }
 
 }
