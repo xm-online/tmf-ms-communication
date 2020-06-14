@@ -7,4 +7,5 @@ import lombok.Data;
 @Builder
 public class InfobipSendRequestDestination {
     InfobipSendRequestDestinationTo to;
+    String messageId;
 }

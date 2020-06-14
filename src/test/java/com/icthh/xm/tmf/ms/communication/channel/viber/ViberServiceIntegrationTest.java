@@ -6,6 +6,7 @@ import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import com.google.gson.Gson;
 import com.icthh.xm.tmf.ms.communication.CommunicationApp;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.config.InfobipViberConfig;
+import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.config.ViberTenantConfigService;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.service.ViberConfigGetter;
 import com.icthh.xm.tmf.ms.communication.config.LepConfiguration;
 import com.icthh.xm.tmf.ms.communication.config.RestTemplateConfiguration;
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static com.icthh.xm.tmf.ms.communication.utils.AssertionUtils.tryAssertionUntilTimeout;
 import static java.lang.String.format;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -63,9 +65,9 @@ import static org.mockito.BDDMockito.given;
     "spring.kafka.consumer.key-deserializer: org.apache.kafka.common.serialization.StringDeserializer",
     "spring.kafka.consumer.value-deserializer: org.apache.kafka.common.serialization.StringDeserializer",
     "spring.kafka.consumer.group-id=test",
-    "application.messaging.to-send-queue-name=communication_to_send_sms",
-    "application.messaging.sent-queue-name=communication_sent_sms",
-    "application.messaging.send-failed-queue-name=communication_failed_sms",
+    "application.messaging.to-send-queue-name=communication_to_send_viber",
+    "application.messaging.sent-queue-name=communication_sent_viber",
+    "application.messaging.send-failed-queue-name=communication_failed_viber",
     "application.messaging.delivery-failed-queue-name=communication_delivery_failed",
     "application.messaging.delivered-queue-name=communication_delivered_reports",
     "application.messaging.retries-count=3",
@@ -91,10 +93,13 @@ public class ViberServiceIntegrationTest {
                 .withExposedPorts(9093));
 
     @Rule
-    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(8888), false);
+    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort(), false);
 
     @MockBean
     private SmppService smppService;
+
+    @MockBean
+    private ViberTenantConfigService viberTenantConfigService;
 
     @Autowired
     private TestKafkaProducer testKafkaProducer;
@@ -104,6 +109,7 @@ public class ViberServiceIntegrationTest {
 
     @Before
     public void prepare() {
+        wireMockRule.resetAll();
         InfobipViberConfig viberConfig = new InfobipViberConfig(
             format("http://localhost:%s", wireMockRule.port()),
             "Basic 123", "test_scenario_key");
@@ -112,16 +118,16 @@ public class ViberServiceIntegrationTest {
     }
 
     @Test
-    public void message_should_be_generated_when_successfully_sent_message() throws InterruptedException {
+    public void message_should_be_generated_when_successfully_sent_message() throws Exception {
         //GIVEN
         stubFor(WireMock.post(urlEqualTo("/omni/1/advanced"))
             .withHeader("Authorization", equalTo("Basic 123"))
             .withRequestBody(equalToJson(
                 "{\n" +
-                    "  \"messageId\": \"test_message_id_1\",\n" +
                     "  \"scenarioKey\": \"test_scenario_key\",\n" +
                     "  \"destinations\": [\n" +
                     "    {\n" +
+                    "      \"messageId\": \"test_message_id_1\",\n" +
                     "      \"to\": {\n" +
                     "        \"phoneNumber\": \"380501111111\"\n" +
                     "      }\n" +
@@ -174,7 +180,7 @@ public class ViberServiceIntegrationTest {
         communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER_IMAGE_URL").value("test image url"));
         communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("DISTRIBUTION.ID").value("distribution_id_1"));
 
-        testKafkaProducer.sendMessage("communication_to_send_sms", communicationMessage);
+        testKafkaProducer.sendMessage("communication_to_send_viber", communicationMessage);
 
         TimeUnit.SECONDS.sleep(1);
 
@@ -182,24 +188,25 @@ public class ViberServiceIntegrationTest {
         MultiValueMap<String, Object> expectedMessages = new LinkedMultiValueMap<>();
         MessageResponse value = new MessageResponse(MessageResponse.Status.SUCCESS, communicationMessage);
         value.setMessageId("test_message_id_1");
-        expectedMessages.add("communication_sent_sms", value);
+        expectedMessages.add("communication_sent_viber", value);
 
-        MultiValueMap<String, Object> actualMessages = getActualMessages(producedRawMessages);
-
-        Assert.assertEquals(expectedMessages, actualMessages);
+        tryAssertionUntilTimeout(() -> {
+            MultiValueMap<String, Object> actualMessages = getActualMessages(producedRawMessages);
+            Assert.assertEquals(expectedMessages, actualMessages);
+        }, 10, TimeUnit.SECONDS);
     }
 
     @Test
-    public void message_should_be_generated_when_sending_failed_due_to_infobip_500_error() throws InterruptedException {
+    public void message_should_be_generated_when_sending_failed_due_to_infobip_500_error() throws Exception {
         //GIVEN
         stubFor(WireMock.post(urlEqualTo("/omni/1/advanced"))
             .withHeader("Authorization", equalTo("Basic 123"))
             .withRequestBody(equalToJson(
                 "{\n" +
-                    "  \"messageId\": \"test_message_id_1\",\n" +
                     "  \"scenarioKey\": \"test_scenario_key\",\n" +
                     "  \"destinations\": [\n" +
                     "    {\n" +
+                    "      \"messageId\": \"test_message_id_1\",\n" +
                     "      \"to\": {\n" +
                     "        \"phoneNumber\": \"380501111111\"\n" +
                     "      }\n" +
@@ -238,7 +245,7 @@ public class ViberServiceIntegrationTest {
         communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER_IMAGE_URL").value("test image url"));
         communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("DISTRIBUTION.ID").value("distribution_id_1"));
 
-        testKafkaProducer.sendMessage("communication_to_send_sms", communicationMessage);
+        testKafkaProducer.sendMessage("communication_to_send_viber", communicationMessage);
 
         TimeUnit.SECONDS.sleep(1);
 
@@ -247,24 +254,25 @@ public class ViberServiceIntegrationTest {
         MessageResponse expectedMessageResponse = new MessageResponse(MessageResponse.Status.FAILED, communicationMessage);
         expectedMessageResponse.setErrorCode("error.system.sending.viber.gateway.internalError");
         expectedMessageResponse.setErrorMessage("Viber provider responded with 500 http code");
-        expectedMessages.add("communication_failed_sms", expectedMessageResponse);
+        expectedMessages.add("communication_failed_viber", expectedMessageResponse);
 
-        MultiValueMap<String, Object> actualMessages = getActualMessages(producedRawMessages);
-
-        Assert.assertEquals(expectedMessages, actualMessages);
+        tryAssertionUntilTimeout(() -> {
+            MultiValueMap<String, Object> actualMessages = getActualMessages(producedRawMessages);
+            Assert.assertEquals(expectedMessages, actualMessages);
+        }, 10, TimeUnit.SECONDS);
     }
 
     @Test
-    public void message_should_be_generated_when_sending_failed_due_to_infobip_503_error() throws InterruptedException {
+    public void message_should_be_generated_when_sending_failed_due_to_infobip_503_error() throws Exception {
         //GIVEN
         stubFor(WireMock.post(urlEqualTo("/omni/1/advanced"))
             .withHeader("Authorization", equalTo("Basic 123"))
             .withRequestBody(equalToJson(
                 "{\n" +
-                    "  \"messageId\": \"test_message_id_1\",\n" +
                     "  \"scenarioKey\": \"test_scenario_key\",\n" +
                     "  \"destinations\": [\n" +
                     "    {\n" +
+                    "      \"messageId\": \"test_message_id_1\",\n" +
                     "      \"to\": {\n" +
                     "        \"phoneNumber\": \"380501111111\"\n" +
                     "      }\n" +
@@ -303,7 +311,7 @@ public class ViberServiceIntegrationTest {
         communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER_IMAGE_URL").value("test image url"));
         communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("DISTRIBUTION.ID").value("distribution_id_1"));
 
-        testKafkaProducer.sendMessage("communication_to_send_sms", communicationMessage);
+        testKafkaProducer.sendMessage("communication_to_send_viber", communicationMessage);
 
         TimeUnit.SECONDS.sleep(1);
 
@@ -312,24 +320,25 @@ public class ViberServiceIntegrationTest {
         MessageResponse expectedMessageResponse = new MessageResponse(MessageResponse.Status.FAILED, communicationMessage);
         expectedMessageResponse.setErrorCode("error.system.sending.viber.gateway.internalError");
         expectedMessageResponse.setErrorMessage("Viber provider responded with 503 http code");
-        expectedMessages.add("communication_failed_sms", expectedMessageResponse);
+        expectedMessages.add("communication_failed_viber", expectedMessageResponse);
 
-        MultiValueMap<String, Object> actualMessages = getActualMessages(producedRawMessages);
-
-        Assert.assertEquals(expectedMessages, actualMessages);
+        tryAssertionUntilTimeout(() -> {
+            MultiValueMap<String, Object> actualMessages = getActualMessages(producedRawMessages);
+            Assert.assertEquals(expectedMessages, actualMessages);
+        }, 10, TimeUnit.SECONDS);
     }
 
     @Test
-    public void message_should_be_generated_when_sending_failed_due_to_message_rejection() throws InterruptedException {
+    public void message_should_be_generated_when_sending_failed_due_to_message_rejection() throws Exception {
         //GIVEN
         stubFor(WireMock.post(urlEqualTo("/omni/1/advanced"))
             .withHeader("Authorization", equalTo("Basic 123"))
             .withRequestBody(equalToJson(
                 "{\n" +
-                    "  \"messageId\": \"test_message_id_1\",\n" +
                     "  \"scenarioKey\": \"test_scenario_key\",\n" +
                     "  \"destinations\": [\n" +
                     "    {\n" +
+                    "      \"messageId\": \"test_message_id_1\",\n" +
                     "      \"to\": {\n" +
                     "        \"phoneNumber\": \"380501111111\"\n" +
                     "      }\n" +
@@ -383,24 +392,25 @@ public class ViberServiceIntegrationTest {
         communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER_IMAGE_URL").value("test image url"));
         communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("DISTRIBUTION.ID").value("distribution_id_1"));
 
-        testKafkaProducer.sendMessage("communication_to_send_sms", communicationMessage);
+        testKafkaProducer.sendMessage("communication_to_send_viber", communicationMessage);
 
-        TimeUnit.SECONDS.sleep(1);
+        TimeUnit.SECONDS.sleep(2);
 
         //THEN
         MultiValueMap<String, Object> expectedMessages = new LinkedMultiValueMap<>();
         MessageResponse expectedMessageResponse = new MessageResponse(MessageResponse.Status.FAILED, communicationMessage);
         expectedMessageResponse.setErrorCode("error.system.sending.viber.gateway.rejection");
         expectedMessageResponse.setErrorMessage("message rejected");
-        expectedMessages.add("communication_failed_sms", expectedMessageResponse);
+        expectedMessages.add("communication_failed_viber", expectedMessageResponse);
 
-        MultiValueMap<String, Object> actualMessages = getActualMessages(producedRawMessages);
-
-        Assert.assertEquals(expectedMessages, actualMessages);
+        tryAssertionUntilTimeout(() -> {
+            MultiValueMap<String, Object> actualMessages = getActualMessages(producedRawMessages);
+            Assert.assertEquals(expectedMessages, actualMessages);
+        }, 10, TimeUnit.SECONDS);
     }
 
     @Test
-    public void message_should_be_generated_when_obtained_report_with_delivered_status() throws InterruptedException {
+    public void message_should_be_generated_when_obtained_report_with_delivered_status() throws Exception {
         //GIVEN
         stubFor(WireMock.get(urlEqualTo("/omni/1/reports"))
             .inScenario("reports_polling")
@@ -449,13 +459,14 @@ public class ViberServiceIntegrationTest {
         DeliveryReport expectedDeliveryReport = DeliveryReport.deliveryReport("test_message_id_1", "DELIVERED");
         expectedMessages.add("communication_delivered_reports", expectedDeliveryReport);
 
-        MultiValueMap<String, Object> actualMessages = getActualMessages(producedRawMessages);
-
-        Assert.assertEquals(expectedMessages, actualMessages);
+        tryAssertionUntilTimeout(() -> {
+            MultiValueMap<String, Object> actualMessages = getActualMessages(producedRawMessages);
+            Assert.assertEquals(expectedMessages, actualMessages);
+        }, 10, TimeUnit.SECONDS);
     }
 
     @Test
-    public void message_should_be_generated_when_obtained_report_with_undeliverable_status() throws InterruptedException {
+    public void message_should_be_generated_when_obtained_report_with_undeliverable_status() throws Exception {
         //GIVEN
         stubFor(WireMock.get(urlEqualTo("/omni/1/reports"))
             .inScenario("reports_polling")
@@ -504,13 +515,14 @@ public class ViberServiceIntegrationTest {
         DeliveryReport expectedDeliveryReport = DeliveryReport.deliveryReport("test_message_id_1", "UNDELIVERABLE");
         expectedMessages.add("communication_delivery_failed", expectedDeliveryReport);
 
-        MultiValueMap<String, Object> actualMessages = getActualMessages(producedRawMessages);
-
-        Assert.assertEquals(expectedMessages, actualMessages);
+        tryAssertionUntilTimeout(() -> {
+            MultiValueMap<String, Object> actualMessages = getActualMessages(producedRawMessages);
+            Assert.assertEquals(expectedMessages, actualMessages);
+        }, 10, TimeUnit.SECONDS);
     }
 
     @Test
-    public void message_should_be_generated_when_obtained_report_with_expired_status() throws InterruptedException {
+    public void message_should_be_generated_when_obtained_report_with_expired_status() throws Exception {
         //GIVEN
         stubFor(WireMock.get(urlEqualTo("/omni/1/reports"))
             .inScenario("reports_polling")
@@ -559,9 +571,10 @@ public class ViberServiceIntegrationTest {
         DeliveryReport expectedDeliveryReport = DeliveryReport.deliveryReport("test_message_id_1", "EXPIRED");
         expectedMessages.add("communication_delivery_failed", expectedDeliveryReport);
 
-        MultiValueMap<String, Object> actualMessages = getActualMessages(producedRawMessages);
-
-        Assert.assertEquals(expectedMessages, actualMessages);
+        tryAssertionUntilTimeout(() -> {
+            MultiValueMap<String, Object> actualMessages = getActualMessages(producedRawMessages);
+            Assert.assertEquals(expectedMessages, actualMessages);
+        }, 10, TimeUnit.SECONDS);
     }
 
     private void stubEmptyReports() {
@@ -581,26 +594,26 @@ public class ViberServiceIntegrationTest {
     private MultiValueMap<String, Object> getActualMessages(MultiValueMap<String, String> producedRawMessages) {
         MultiValueMap<String, Object> actualMessages = new LinkedMultiValueMap<>();
 
-        if (producedRawMessages.get("communication_sent_sms") != null) {
-            for (String communicationSentSms : Objects.requireNonNull(producedRawMessages.get("communication_sent_sms"))) {
+        if (producedRawMessages.get("communication_sent_viber") != null) {
+            for (String communicationSentSms : Objects.requireNonNull(producedRawMessages.get("communication_sent_viber"))) {
                 MessageResponse mr = gson.fromJson(communicationSentSms, MessageResponse.class);
                 mr.getResponseTo().setCharacteristic(mr.getResponseTo().getCharacteristic()
                     .stream()
                     .filter(characteristic -> !characteristic.getName().equals("MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP"))
                     .collect(Collectors.toList()));
 
-                actualMessages.add("communication_sent_sms", mr);
+                actualMessages.add("communication_sent_viber", mr);
             }
         }
-        if (producedRawMessages.get("communication_failed_sms") != null) {
-            for (String communicationSentSms : Objects.requireNonNull(producedRawMessages.get("communication_failed_sms"))) {
+        if (producedRawMessages.get("communication_failed_viber") != null) {
+            for (String communicationSentSms : Objects.requireNonNull(producedRawMessages.get("communication_failed_viber"))) {
                 MessageResponse mr = gson.fromJson(communicationSentSms, MessageResponse.class);
                 mr.getResponseTo().setCharacteristic(mr.getResponseTo().getCharacteristic()
                     .stream()
                     .filter(characteristic -> !characteristic.getName().equals("MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP"))
                     .collect(Collectors.toList()));
 
-                actualMessages.add("communication_failed_sms", mr);
+                actualMessages.add("communication_failed_viber", mr);
             }
         }
         if (producedRawMessages.get("communication_delivered_reports") != null) {

@@ -18,6 +18,12 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class CommunicationMessageToViberSendRequestMapper {
 
+    public static final String VIBER_BUTTON_TEXT_CHARACTERISTIC = "VIBER_BUTTON_TEXT";
+    public static final String VIBER_BUTTON_URL_CHARACTERISTIC = "VIBER_BUTTON_URL";
+    public static final String VIBER_IMAGE_URL_CHARACTERISTIC = "VIBER_IMAGE_URL";
+    public static final String VIBER_PROMOTIONAL_CHARACTERISTIC = "VIBER_PROMOTIONAL";
+    public static final String VIBER_VALIDITY_PERIOD_CHARACTERISTIC = "VIBER_VALIDITY_PERIOD";
+
     public InfobipSendRequest toSendRequest(InfobipViberConfig infobipViberConfig, CommunicationMessage message) {
         Map<String, String> characteristicsMap = message.getCharacteristic()
             .stream()
@@ -28,9 +34,9 @@ public class CommunicationMessageToViberSendRequestMapper {
 
         return InfobipSendRequest
             .builder()
-            .messageId(message.getId())
             .destinations(Lists.newArrayList(InfobipSendRequestDestination
                     .builder()
+                    .messageId(message.getId())
                     .to(InfobipSendRequestDestinationTo
                         .builder()
                         .phoneNumber(message.getReceiver().get(0).getPhoneNumber())
@@ -40,9 +46,9 @@ public class CommunicationMessageToViberSendRequestMapper {
             )
             .viber(InfobipSendRequestViber
                 .builder()
-                .buttonText(characteristicsMap.get("VIBER_BUTTON_TEXT"))
-                .buttonUrl(characteristicsMap.get("VIBER_BUTTON_URL"))
-                .imageUrl(characteristicsMap.get("VIBER_IMAGE_URL"))
+                .buttonText(characteristicsMap.get(VIBER_BUTTON_TEXT_CHARACTERISTIC))
+                .buttonUrl(characteristicsMap.get(VIBER_BUTTON_URL_CHARACTERISTIC))
+                .imageUrl(characteristicsMap.get(VIBER_IMAGE_URL_CHARACTERISTIC))
                 .isPromotional(isPromotional(characteristicsMap))
                 .validityPeriod(getValidityPeriod(characteristicsMap))
                 .text(message.getContent())
@@ -53,12 +59,12 @@ public class CommunicationMessageToViberSendRequestMapper {
     }
 
     private Boolean isPromotional(Map<String, String> characteristics) {
-        String promotionalCharacteristic = characteristics.get("VIBER_PROMOTIONAL");
+        String promotionalCharacteristic = characteristics.get(VIBER_PROMOTIONAL_CHARACTERISTIC);
         return promotionalCharacteristic != null ? Boolean.valueOf(promotionalCharacteristic) : null;
     }
 
     private Integer getValidityPeriod(Map<String, String> characteristics) {
-        String validityPeriodCharacteristic = characteristics.get("VIBER_VALIDITY_PERIOD");
+        String validityPeriodCharacteristic = characteristics.get(VIBER_VALIDITY_PERIOD_CHARACTERISTIC);
         return validityPeriodCharacteristic != null ? Integer.valueOf(validityPeriodCharacteristic) : null;
     }
 

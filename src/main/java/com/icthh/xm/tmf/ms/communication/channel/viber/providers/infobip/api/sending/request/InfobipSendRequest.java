@@ -8,7 +8,6 @@ import java.util.List;
 @Data
 @Builder
 public class InfobipSendRequest {
-    String messageId;
     String scenarioKey;
     List<InfobipSendRequestDestination> destinations;
     InfobipSendRequestViber viber;
