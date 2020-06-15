@@ -18,11 +18,11 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class CommunicationMessageToViberSendRequestMapper {
 
-    public static final String VIBER_BUTTON_TEXT_CHARACTERISTIC = "VIBER_BUTTON_TEXT";
-    public static final String VIBER_BUTTON_URL_CHARACTERISTIC = "VIBER_BUTTON_URL";
-    public static final String VIBER_IMAGE_URL_CHARACTERISTIC = "VIBER_IMAGE_URL";
-    public static final String VIBER_PROMOTIONAL_CHARACTERISTIC = "VIBER_PROMOTIONAL";
-    public static final String VIBER_VALIDITY_PERIOD_CHARACTERISTIC = "VIBER_VALIDITY_PERIOD";
+    public static final String VIBER_BUTTON_TEXT_CHARACTERISTIC = "VIBER.BUTTON.TEXT";
+    public static final String VIBER_BUTTON_URL_CHARACTERISTIC = "VIBER.BUTTON.URL";
+    public static final String VIBER_IMAGE_URL_CHARACTERISTIC = "VIBER.IMAGE.URL";
+    public static final String VIBER_PROMOTIONAL_CHARACTERISTIC = "VIBER.PROMOTIONAL";
+    public static final String VIBER_VALIDITY_PERIOD_CHARACTERISTIC = "VIBER.VALIDITY.PERIOD";
 
     public InfobipSendRequest toSendRequest(InfobipViberConfig infobipViberConfig, CommunicationMessage message) {
         Map<String, String> characteristicsMap = message.getCharacteristic()
