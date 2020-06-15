@@ -182,7 +182,83 @@ public class ViberServiceIntegrationTest {
 
         testKafkaProducer.sendMessage("communication_to_send_viber", communicationMessage);
 
-        TimeUnit.SECONDS.sleep(1);
+        //THEN
+        MultiValueMap<String, Object> expectedMessages = new LinkedMultiValueMap<>();
+        MessageResponse value = new MessageResponse(MessageResponse.Status.SUCCESS, communicationMessage);
+        value.setMessageId("test_message_id_1");
+        expectedMessages.add("communication_sent_viber", value);
+
+        tryAssertionUntilTimeout(() -> {
+            MultiValueMap<String, Object> actualMessages = getActualMessages(producedRawMessages);
+            Assert.assertEquals(expectedMessages, actualMessages);
+        }, 10, TimeUnit.SECONDS);
+    }
+
+    @Test
+    public void scenario_key_from_characteristics_should_be_used_instead_of_default() throws Exception {
+        //GIVEN
+        stubFor(WireMock.post(urlEqualTo("/omni/1/advanced"))
+            .withHeader("Authorization", equalTo("Basic 123"))
+            .withRequestBody(equalToJson(
+                "{\n" +
+                    "  \"scenarioKey\": \"test_scenario_key_from_characteristics\",\n" +
+                    "  \"destinations\": [\n" +
+                    "    {\n" +
+                    "      \"messageId\": \"test_message_id_1\",\n" +
+                    "      \"to\": {\n" +
+                    "        \"phoneNumber\": \"380501111111\"\n" +
+                    "      }\n" +
+                    "    }\n" +
+                    "  ],\n" +
+                    "  \"viber\": {\n" +
+                    "    \"text\" : \"test viber text message\",\n" +
+                    "    \"imageURL\": \"test image url\",\n" +
+                    "    \"buttonText\": \"test button text\",\n" +
+                    "    \"buttonURL\": \"test button url\"\n" +
+                    "  }\n" +
+                    "}"
+            ))
+            .willReturn(aResponse()
+                .withHeader("Content-Type", "application/json; charset=utf-8")
+                .withBody("{\n" +
+                    "  \"messages\": [\n" +
+                    "    {\n" +
+                    "      \"messageId\": \"test_message_id_1\",\n" +
+                    "      \"to\": {\n" +
+                    "        \"phoneNumber\": \"380501111111\"\n" +
+                    "      },\n" +
+                    "      \"status\": {\n" +
+                    "        \"groupId\": 1\n" +
+                    "      }\n" +
+                    "    }\n" +
+                    "  ]\n" +
+                    "}\n")));
+        stubEmptyReports();
+
+        MultiValueMap<String, String> producedRawMessages = new LinkedMultiValueMap<>();
+        testKafkaListener.addListener(producedRawMessages::add);
+
+        //WHEN
+        CommunicationMessage communicationMessage = new CommunicationMessage();
+        communicationMessage.setContent("test viber text message");
+        communicationMessage.setId("test_message_id_1");
+        communicationMessage.setType("Viber");
+        Receiver receiver = new Receiver();
+        receiver.setId("380501111111");
+        receiver.setPhoneNumber("380501111111");
+        communicationMessage.addReceiverItem(receiver);
+        Sender sender = new Sender();
+        sender.setId("test_sender_id");
+        sender.setName("test sender name");
+        communicationMessage.setSender(sender);
+        communicationMessage.setCharacteristic(new ArrayList<>());
+        communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER_BUTTON_TEXT").value("test button text"));
+        communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER_BUTTON_URL").value("test button url"));
+        communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER_IMAGE_URL").value("test image url"));
+        communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("DISTRIBUTION.ID").value("distribution_id_1"));
+        communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER_INFOBIP_SCENARIO_KEY").value("test_scenario_key_from_characteristics"));
+
+        testKafkaProducer.sendMessage("communication_to_send_viber", communicationMessage);
 
         //THEN
         MultiValueMap<String, Object> expectedMessages = new LinkedMultiValueMap<>();
@@ -247,8 +323,6 @@ public class ViberServiceIntegrationTest {
 
         testKafkaProducer.sendMessage("communication_to_send_viber", communicationMessage);
 
-        TimeUnit.SECONDS.sleep(1);
-
         //THEN
         MultiValueMap<String, Object> expectedMessages = new LinkedMultiValueMap<>();
         MessageResponse expectedMessageResponse = new MessageResponse(MessageResponse.Status.FAILED, communicationMessage);
@@ -312,8 +386,6 @@ public class ViberServiceIntegrationTest {
         communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("DISTRIBUTION.ID").value("distribution_id_1"));
 
         testKafkaProducer.sendMessage("communication_to_send_viber", communicationMessage);
-
-        TimeUnit.SECONDS.sleep(1);
 
         //THEN
         MultiValueMap<String, Object> expectedMessages = new LinkedMultiValueMap<>();
@@ -394,8 +466,6 @@ public class ViberServiceIntegrationTest {
 
         testKafkaProducer.sendMessage("communication_to_send_viber", communicationMessage);
 
-        TimeUnit.SECONDS.sleep(2);
-
         //THEN
         MultiValueMap<String, Object> expectedMessages = new LinkedMultiValueMap<>();
         MessageResponse expectedMessageResponse = new MessageResponse(MessageResponse.Status.FAILED, communicationMessage);
@@ -450,9 +520,7 @@ public class ViberServiceIntegrationTest {
         testKafkaListener.addListener(producedRawMessages::add);
 
         //WHEN
-
-        //wait until messages are acquired by communication
-        TimeUnit.MILLISECONDS.sleep(1000);
+        //wait until messages are processed
 
         //THEN
         MultiValueMap<String, Object> expectedMessages = new LinkedMultiValueMap<>();
@@ -506,9 +574,7 @@ public class ViberServiceIntegrationTest {
         testKafkaListener.addListener(producedRawMessages::add);
 
         //WHEN
-
-        //wait until messages are acquired by communication
-        TimeUnit.MILLISECONDS.sleep(1000);
+        //wait until messages are processed
 
         //THEN
         MultiValueMap<String, Object> expectedMessages = new LinkedMultiValueMap<>();
@@ -562,9 +628,7 @@ public class ViberServiceIntegrationTest {
         testKafkaListener.addListener(producedRawMessages::add);
 
         //WHEN
-
-        //wait until messages are acquired by communication
-        TimeUnit.MILLISECONDS.sleep(1500);
+        //wait until messages are processed
 
         //THEN
         MultiValueMap<String, Object> expectedMessages = new LinkedMultiValueMap<>();
