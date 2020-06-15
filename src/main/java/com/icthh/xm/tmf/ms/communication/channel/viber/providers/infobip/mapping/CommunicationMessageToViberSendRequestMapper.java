@@ -23,6 +23,7 @@ public class CommunicationMessageToViberSendRequestMapper {
     public static final String VIBER_IMAGE_URL_CHARACTERISTIC = "VIBER_IMAGE_URL";
     public static final String VIBER_PROMOTIONAL_CHARACTERISTIC = "VIBER_PROMOTIONAL";
     public static final String VIBER_VALIDITY_PERIOD_CHARACTERISTIC = "VIBER_VALIDITY_PERIOD";
+    public static final String VIBER_INFOBIP_SCENARIO_KEY_CHARACTERISTIC = "VIBER_INFOBIP_SCENARIO_KEY";
 
     public InfobipSendRequest toSendRequest(InfobipViberConfig infobipViberConfig, CommunicationMessage message) {
         Map<String, String> characteristicsMap = message.getCharacteristic()
@@ -54,7 +55,7 @@ public class CommunicationMessageToViberSendRequestMapper {
                 .text(message.getContent())
                 .build()
             )
-            .scenarioKey(infobipViberConfig.getScenarioKey())
+            .scenarioKey(firstNonNull(characteristicsMap.get(VIBER_INFOBIP_SCENARIO_KEY_CHARACTERISTIC), infobipViberConfig.getScenarioKey()))
             .build();
     }
 
@@ -66,6 +67,10 @@ public class CommunicationMessageToViberSendRequestMapper {
     private Integer getValidityPeriod(Map<String, String> characteristics) {
         String validityPeriodCharacteristic = characteristics.get(VIBER_VALIDITY_PERIOD_CHARACTERISTIC);
         return validityPeriodCharacteristic != null ? Integer.valueOf(validityPeriodCharacteristic) : null;
+    }
+
+    private static <T> T firstNonNull(T object1, T object2) {
+        return object1 != null ? object1 : object2;
     }
 
 }
