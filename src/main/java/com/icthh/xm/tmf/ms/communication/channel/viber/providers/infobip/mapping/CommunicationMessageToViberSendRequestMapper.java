@@ -1,6 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.mapping;
 
 import com.google.common.collect.Lists;
+import com.google.gson.Gson;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sending.request.InfobipSendRequest;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sending.request.InfobipSendRequestDestination;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sending.request.InfobipSendRequestDestinationTo;
@@ -9,6 +10,7 @@ import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.config.
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
 
 @Component
 @AllArgsConstructor
+@Slf4j
 public class CommunicationMessageToViberSendRequestMapper {
 
     public static final String VIBER_BUTTON_TEXT_CHARACTERISTIC = "VIBER.BUTTON.TEXT";
@@ -26,6 +29,8 @@ public class CommunicationMessageToViberSendRequestMapper {
     public static final String VIBER_INFOBIP_SCENARIO_KEY_CHARACTERISTIC = "VIBER.INFOBIP.SCENARIO.KEY";
 
     public InfobipSendRequest toSendRequest(InfobipViberConfig infobipViberConfig, CommunicationMessage message) {
+        log.info("infobipViberConfig: " + new Gson().toJson(infobipViberConfig));
+        log.info("message: " + new Gson().toJson(message));
         Map<String, String> characteristicsMap = message.getCharacteristic()
             .stream()
             .collect(Collectors.toMap(
