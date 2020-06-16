@@ -180,7 +180,98 @@ public class ViberServiceIntegrationTest {
         communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER.IMAGE.URL").value("test image url"));
         communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("DISTRIBUTION.ID").value("distribution_id_1"));
 
-        testKafkaProducer.sendMessage("communication_to_send_viber", communicationMessage);
+        testKafkaProducer.sendMessage("communication_to_send_viber",
+            "{\n" +
+                "  \"callbackFlag\": null,\n" +
+                "  \"content\": \"awdawd\",\n" +
+                "  \"description\": null,\n" +
+                "  \"href\": null,\n" +
+                "  \"id\": \"34971-SMS-380500311111-1\",\n" +
+                "  \"logFlag\": null,\n" +
+                "  \"priority\": null,\n" +
+                "  \"sendTime\": null,\n" +
+                "  \"sendTimeComplete\": null,\n" +
+                "  \"status\": null,\n" +
+                "  \"subject\": null,\n" +
+                "  \"tryTimes\": null,\n" +
+                "  \"type\": \"Viber\",\n" +
+                "  \"version\": null,\n" +
+                "  \"attachment\": null,\n" +
+                "  \"receiver\": [\n" +
+                "    {\n" +
+                "      \"appUserId\": null,\n" +
+                "      \"email\": null,\n" +
+                "      \"id\": \"380500311111\",\n" +
+                "      \"ip\": null,\n" +
+                "      \"name\": null,\n" +
+                "      \"phoneNumber\": \"380500311111\",\n" +
+                "      \"type\": null,\n" +
+                "      \"relatedParty\": null,\n" +
+                "      \"@type\": null,\n" +
+                "      \"@baseType\": null,\n" +
+                "      \"@schemaLocation\": null\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"sender\": {\n" +
+                "    \"email\": null,\n" +
+                "    \"id\": \"test viber\",\n" +
+                "    \"name\": \"test viber\",\n" +
+                "    \"phoneNumber\": null,\n" +
+                "    \"relatedParty\": null,\n" +
+                "    \"@type\": null,\n" +
+                "    \"@baseType\": null,\n" +
+                "    \"@schemaLocation\": null\n" +
+                "  },\n" +
+                "  \"characteristic\": [\n" +
+                "    {\n" +
+                "      \"name\": \"RATE-LIMIT.INTERVAL\",\n" +
+                "      \"value\": \"SECOND\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"RATE-LIMIT.VALUE\",\n" +
+                "      \"value\": \"20\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"ALPHA.NAME.ID\",\n" +
+                "      \"value\": \"34966\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"BUSINESS-CHECKS.LDB\",\n" +
+                "      \"value\": \"true\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"DISTRIBUTION.ID\",\n" +
+                "      \"value\": \"34971\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"DELIVERY.REPORT\",\n" +
+                "      \"value\": \"1\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"USER.KEY\",\n" +
+                "      \"value\": \"xm_uaa\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"CUSTOM.LIST.ENABLED\",\n" +
+                "      \"value\": \"true\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"SMS.PART.COUNT\",\n" +
+                "      \"value\": \"1\"\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"NUMBER.LOCATION\",\n" +
+                "      \"value\": null\n" +
+                "    },\n" +
+                "    {\n" +
+                "      \"name\": \"DISTRIBUTION.TYPE\",\n" +
+                "      \"value\": \"LIST_BASED\"\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"@type\": null,\n" +
+                "  \"@schemaLocation\": null,\n" +
+                "  \"@baseType\": null\n" +
+                "}\n");
 
         //THEN
         MultiValueMap<String, Object> expectedMessages = new LinkedMultiValueMap<>();

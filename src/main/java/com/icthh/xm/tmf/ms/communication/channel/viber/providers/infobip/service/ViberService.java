@@ -74,31 +74,26 @@ public class ViberService {
     public void processMessageStatus(List<MessageStatusInfo> messageStatusInfo) {
         for (MessageStatusInfo statusInfo : messageStatusInfo) {
             if (InfobipStatusEnum.PENDING.getGroupId() == statusInfo.getInfobipStatus().getGroupId()) {
-                log.info("PRODUCING MESSAGE TO applicationProperties.getMessaging().getSentQueueName(): " + applicationProperties.getMessaging().getSentQueueName());
                 kafkaTemplate.send(
                     applicationProperties.getMessaging().getSentQueueName(),
                     gson.toJson(MessageResponse.success(statusInfo.getMessageId(), statusInfo.getCommunicationMessage()))
                 );
             } else if (InfobipStatusEnum.REJECTED.getGroupId() == statusInfo.getInfobipStatus().getGroupId()) {
-                log.info("PRODUCING MESSAGE TO applicationProperties.getMessaging().getSendFailedQueueName(): " + applicationProperties.getMessaging().getSendFailedQueueName());
                 kafkaTemplate.send(
                     applicationProperties.getMessaging().getSendFailedQueueName(),
                     gson.toJson(MessageResponse.failed(statusInfo.getCommunicationMessage(), "error.system.sending.viber.gateway.rejection", statusInfo.getInfobipStatus().getDescription()))
                 );
             } else if (InfobipStatusEnum.DELIVERED.getGroupId() == statusInfo.getInfobipStatus().getGroupId()) {
-                log.info("PRODUCING MESSAGE TO applicationProperties.getMessaging().getDeliveredQueueName(): " + applicationProperties.getMessaging().getDeliveredQueueName());
                 kafkaTemplate.send(
                     applicationProperties.getMessaging().getDeliveredQueueName(),
                     gson.toJson(DeliveryReport.deliveryReport(statusInfo.getMessageId(), ObmDeliveryReportStatusEnum.DELIVERED.name()))
                 );
             } else if (InfobipStatusEnum.EXPIRED.getGroupId() == statusInfo.getInfobipStatus().getGroupId()) {
-                log.info("PRODUCING MESSAGE TO applicationProperties.getMessaging().getDeliveryFailedQueueName(): " + applicationProperties.getMessaging().getDeliveryFailedQueueName());
                 kafkaTemplate.send(
                     applicationProperties.getMessaging().getDeliveryFailedQueueName(),
                     gson.toJson(DeliveryReport.deliveryReport(statusInfo.getMessageId(), ObmDeliveryReportStatusEnum.EXPIRED.name()))
                 );
             } else if (InfobipStatusEnum.UNDELIVERABLE.getGroupId() == statusInfo.getInfobipStatus().getGroupId()) {
-                log.info("PRODUCING MESSAGE TO applicationProperties.getMessaging().getDeliveryFailedQueueName(): " + applicationProperties.getMessaging().getDeliveryFailedQueueName());
                 kafkaTemplate.send(
                     applicationProperties.getMessaging().getDeliveryFailedQueueName(),
                     gson.toJson(DeliveryReport.deliveryReport(statusInfo.getMessageId(), ObmDeliveryReportStatusEnum.UNDELIVERABLE.name()))
