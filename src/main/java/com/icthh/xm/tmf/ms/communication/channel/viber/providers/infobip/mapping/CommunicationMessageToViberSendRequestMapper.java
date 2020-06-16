@@ -1,7 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.mapping;
 
 import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sending.request.InfobipSendRequest;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sending.request.InfobipSendRequestDestination;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sending.request.InfobipSendRequestDestinationTo;
@@ -29,10 +28,9 @@ public class CommunicationMessageToViberSendRequestMapper {
     public static final String VIBER_INFOBIP_SCENARIO_KEY_CHARACTERISTIC = "VIBER.INFOBIP.SCENARIO.KEY";
 
     public InfobipSendRequest toSendRequest(InfobipViberConfig infobipViberConfig, CommunicationMessage message) {
-        log.info("infobipViberConfig: " + new Gson().toJson(infobipViberConfig));
-        log.info("message: " + new Gson().toJson(message));
         Map<String, String> characteristicsMap = message.getCharacteristic()
             .stream()
+            .filter(characteristic -> characteristic.getName() != null && characteristic.getValue() != null)
             .collect(Collectors.toMap(
                 CommunicationRequestCharacteristic::getName,
                 CommunicationRequestCharacteristic::getValue)
