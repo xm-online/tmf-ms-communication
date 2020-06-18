@@ -49,8 +49,8 @@ public class ScheduledInfobipReportsProcessor {
 
         ResponseEntity<InfobipReportsResponse> exchange = restTemplate.exchange(config.getAddress() + REPORTS_PATH, HttpMethod.GET, requestEntity, InfobipReportsResponse.class);
 
-        if (log.isDebugEnabled()) {
-            log.debug("Reports: {}", gson.toJson(exchange.getBody()));
+        if (log.isInfoEnabled()) {
+            log.info("Reports: {}", gson.toJson(exchange.getBody()));
         }
 
         viberService.processMessageStatus(Objects.requireNonNull(exchange.getBody()).getResults()

@@ -57,8 +57,8 @@ public class ViberService {
         try {
             exchange = restTemplate.exchange(viberConfig.getAddress() + SEND_PATH, HttpMethod.POST, requestEntity, InfobipSendResponse.class);
 
-            if (log.isDebugEnabled()) {
-                log.debug("Reports: {}", toLog(exchange.getBody()));
+            if (log.isInfoEnabled()) {
+                log.info("Reports: {}", toLog(exchange.getBody()));
             }
 
             processMessageStatus(
@@ -76,8 +76,8 @@ public class ViberService {
     }
 
     public void processMessageStatus(List<MessageStatusInfo> messageStatusInfo) {
-        if (log.isDebugEnabled()) {
-            log.debug("Processing messages statuses: {}", toLog(messageStatusInfo));
+        if (log.isInfoEnabled()) {
+            log.info("Processing messages statuses: {}", toLog(messageStatusInfo));
         }
 
         for (MessageStatusInfo statusInfo : messageStatusInfo) {
