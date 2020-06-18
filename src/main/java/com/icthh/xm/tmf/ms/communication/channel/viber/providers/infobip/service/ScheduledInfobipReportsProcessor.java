@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.service;
 
+import com.google.gson.Gson;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.reports.response.InfobipReportsResponse;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sending.request.InfobipSendRequest;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.config.InfobipViberConfig;
@@ -25,6 +26,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON;
 @RequiredArgsConstructor
 public class ScheduledInfobipReportsProcessor {
 
+    private final Gson gson = new Gson();
     public static final String REPORTS_PATH = "/omni/1/reports";
     private final ApplicationProperties applicationProperties;
     private final ViberService viberService;
@@ -48,7 +50,7 @@ public class ScheduledInfobipReportsProcessor {
         ResponseEntity<InfobipReportsResponse> exchange = restTemplate.exchange(config.getAddress() + REPORTS_PATH, HttpMethod.GET, requestEntity, InfobipReportsResponse.class);
 
         if (log.isDebugEnabled()) {
-            log.debug("Reports: {}", exchange.getBody());
+            log.debug("Reports: {}", gson.toJson(exchange.getBody()));
         }
 
         viberService.processMessageStatus(Objects.requireNonNull(exchange.getBody()).getResults()

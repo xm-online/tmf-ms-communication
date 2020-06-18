@@ -58,7 +58,7 @@ public class ViberService {
             exchange = restTemplate.exchange(viberConfig.getAddress() + SEND_PATH, HttpMethod.POST, requestEntity, InfobipSendResponse.class);
 
             if (log.isDebugEnabled()) {
-                log.debug("Reports: {}", exchange.getBody());
+                log.debug("Reports: {}", toLog(exchange.getBody()));
             }
 
             processMessageStatus(
@@ -67,7 +67,6 @@ public class ViberService {
                     .collect(Collectors.toList()));
         } catch (HttpStatusCodeException e) {
             if (e.getRawStatusCode() != 200) {
-                log.info("PRODUCING MESSAGE TO applicationProperties.getMessaging().getSendFailedQueueName(): " + applicationProperties.getMessaging().getSendFailedQueueName());
                 kafkaTemplate.send(
                     applicationProperties.getMessaging().getSendFailedQueueName(),
                     gson.toJson(MessageResponse.failed(communicationMessage, "error.system.sending.viber.gateway.internalError", String.format("Viber provider responded with %s http code", e.getRawStatusCode())))
@@ -77,6 +76,10 @@ public class ViberService {
     }
 
     public void processMessageStatus(List<MessageStatusInfo> messageStatusInfo) {
+        if (log.isDebugEnabled()) {
+            log.debug("Processing messages statuses: {}", toLog(messageStatusInfo));
+        }
+
         for (MessageStatusInfo statusInfo : messageStatusInfo) {
             if (InfobipStatusEnum.PENDING.getGroupId() == statusInfo.getInfobipStatus().getGroupId()) {
                 kafkaTemplate.send(
@@ -107,6 +110,10 @@ public class ViberService {
                 log.error("Unknown group id {}", statusInfo.getInfobipStatus().getGroupId());
             }
         }
+    }
+
+    private static String toLog(Object o) {
+        return gson.toJson(o);
     }
 
 }
