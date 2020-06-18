@@ -5,6 +5,7 @@ import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sen
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.config.InfobipViberConfig;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -19,6 +20,7 @@ import static java.util.stream.Collectors.toList;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ScheduledInfobipReportsProcessor {
@@ -44,6 +46,11 @@ public class ScheduledInfobipReportsProcessor {
         HttpEntity<InfobipSendRequest> requestEntity = new HttpEntity<>(null, headers);
 
         ResponseEntity<InfobipReportsResponse> exchange = restTemplate.exchange(config.getAddress() + REPORTS_PATH, HttpMethod.GET, requestEntity, InfobipReportsResponse.class);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Reports: {}", exchange.getBody());
+        }
+
         viberService.processMessageStatus(Objects.requireNonNull(exchange.getBody()).getResults()
             .stream()
             .map(infobipReportsMessageResult -> new MessageStatusInfo(infobipReportsMessageResult.getMessageId(), null, infobipReportsMessageResult.getStatus()))
