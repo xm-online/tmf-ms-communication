@@ -56,6 +56,11 @@ public class ViberService {
         ResponseEntity<InfobipSendResponse> exchange;
         try {
             exchange = restTemplate.exchange(viberConfig.getAddress() + SEND_PATH, HttpMethod.POST, requestEntity, InfobipSendResponse.class);
+
+            if (log.isDebugEnabled()) {
+                log.debug("Reports: {}", exchange.getBody());
+            }
+
             processMessageStatus(
                 Objects.requireNonNull(exchange.getBody()).getMessages().stream()
                     .map(infobipSendResponseMessage -> new MessageStatusInfo(communicationMessage.getId(), communicationMessage, infobipSendResponseMessage.getStatus()))
