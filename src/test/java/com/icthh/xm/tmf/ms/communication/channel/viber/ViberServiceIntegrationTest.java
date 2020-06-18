@@ -343,11 +343,11 @@ public class ViberServiceIntegrationTest {
         sender.setName("test sender name");
         communicationMessage.setSender(sender);
         communicationMessage.setCharacteristic(new ArrayList<>());
-        communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER_BUTTON_TEXT").value("test button text"));
-        communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER_BUTTON_URL").value("test button url"));
-        communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER_IMAGE_URL").value("test image url"));
+        communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER.BUTTON.TEXT").value("test button text"));
+        communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER.BUTTON.URL").value("test button url"));
+        communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER.IMAGE.URL").value("test image url"));
         communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("DISTRIBUTION.ID").value("distribution_id_1"));
-        communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER_INFOBIP_SCENARIO_KEY").value("test_scenario_key_from_characteristics"));
+        communicationMessage.addCharacteristicItem(new CommunicationRequestCharacteristic().name("VIBER.INFOBIP.SCENARIO.KEY").value("test_scenario_key_from_characteristics"));
 
         testKafkaProducer.sendMessage("communication_to_send_viber", communicationMessage);
 
