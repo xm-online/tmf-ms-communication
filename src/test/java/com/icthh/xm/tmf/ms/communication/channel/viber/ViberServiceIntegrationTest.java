@@ -93,7 +93,7 @@ public class ViberServiceIntegrationTest {
                 .withExposedPorts(9093));
 
     @Rule
-    public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort(), false);
+    public WireMockRule infobipMockRules = new WireMockRule(wireMockConfig().dynamicPort(), false);
 
     @MockBean
     private SmppService smppService;
@@ -109,9 +109,9 @@ public class ViberServiceIntegrationTest {
 
     @Before
     public void prepare() {
-        wireMockRule.resetAll();
+        infobipMockRules.resetAll();
         InfobipViberConfig viberConfig = new InfobipViberConfig(
-            format("http://localhost:%s", wireMockRule.port()),
+            format("http://localhost:%s", infobipMockRules.port()),
             "Basic 123", "test_scenario_key");
         given(viberConfigGetter.getForMessage(any())).willReturn(viberConfig);
         given(viberConfigGetter.getCommon()).willReturn(viberConfig);
