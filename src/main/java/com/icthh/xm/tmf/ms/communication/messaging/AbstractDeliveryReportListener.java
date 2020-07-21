@@ -16,16 +16,20 @@ import java.math.BigInteger;
 import java.nio.charset.Charset;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
 import static java.util.Optional.ofNullable;
-import static org.jsmpp.bean.MessageState.ACCEPTED;
-import static org.jsmpp.bean.MessageState.DELIVERED;
 import static org.jsmpp.bean.OptionalParameter.Tag.MESSAGE_STATE;
 import static org.jsmpp.bean.OptionalParameter.Tag.RECEIPTED_MESSAGE_ID;
-import static org.jsmpp.util.DeliveryReceiptState.*;
+import static org.jsmpp.util.DeliveryReceiptState.ACCEPTD;
+import static org.jsmpp.util.DeliveryReceiptState.DELETED;
+import static org.jsmpp.util.DeliveryReceiptState.DELIVRD;
+import static org.jsmpp.util.DeliveryReceiptState.ENROUTE;
+import static org.jsmpp.util.DeliveryReceiptState.EXPIRED;
+import static org.jsmpp.util.DeliveryReceiptState.REJECTD;
+import static org.jsmpp.util.DeliveryReceiptState.UNDELIV;
+import static org.jsmpp.util.DeliveryReceiptState.UNKNOWN;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -58,22 +62,24 @@ public abstract class AbstractDeliveryReportListener implements DeliveryReportLi
         return null;
     }
 
-    protected String getMessageId(DeliveryReceipt deliveryReceipt){
-        String messageId = deliveryReceipt.getId();
+    protected String getMessageId(DeliveryReceipt deliveryReceipt) {
         try {
-            return ofNullable(messageId)
-                .map(id-> new BigInteger(id, DECIMAL_SYSTEM))
-                .map(id-> id.toString(HEX_SYSTEM))
+            return ofNullable(deliveryReceipt)
+                .map(DeliveryReceipt::getId)
+                .map(messageId -> new BigInteger(messageId, DECIMAL_SYSTEM))
+                .map(id -> id.toString(HEX_SYSTEM))
                 .orElse(null);
         } catch (Exception e) {
-            log.error("Cannot convert delivered message id to big integer, id: {}", messageId);
+            log.error("Cannot convert delivered message id to big integer: {}", deliveryReceipt);
             return null;
         }
     }
 
     protected MessageState getState(DeliveryReceipt deliveryReceipt) {
-        DeliveryReceiptState finalStatus = deliveryReceipt.getFinalStatus();
-        return ofNullable(finalStatus).map(messageStatusMap::get).orElse(null);
+        return ofNullable(deliveryReceipt)
+            .map(DeliveryReceipt::getFinalStatus)
+            .map(messageStatusMap::get)
+            .orElse(null);
     }
 
     protected String getMessageId(DeliverSm deliverSm) {
@@ -85,9 +91,8 @@ public abstract class AbstractDeliveryReportListener implements DeliveryReportLi
     }
 
     protected MessageState getState(DeliverSm deliverSm) {
-        return getTagValue(deliverSm, MESSAGE_STATE, op -> {
-            return MessageState.valueOf(((OptionalParameter.Byte) op).getValue());
-        });
+        return getTagValue(deliverSm, MESSAGE_STATE, op ->
+            MessageState.valueOf(((OptionalParameter.Byte) op).getValue()));
     }
 
     protected <T> T getTagValue(DeliverSm deliverSm, OptionalParameter.Tag tag, Function<OptionalParameter, T> converter) {
@@ -105,15 +110,14 @@ public abstract class AbstractDeliveryReportListener implements DeliveryReportLi
 
     public abstract void processDeliveryReport(DeliverSm deliverSm);
 
-    private static final Map<DeliveryReceiptState, MessageState> messageStatusMap = new EnumMap(DeliveryReceiptState.class) {{
-        put(ACCEPTD, ACCEPTED);
+    private static final Map<DeliveryReceiptState, MessageState> messageStatusMap = new EnumMap<>(DeliveryReceiptState.class) {{
+        put(ACCEPTD, MessageState.ACCEPTED);
         put(DELETED, MessageState.DELETED);
-        put(DELIVRD, DELIVERED);
+        put(DELIVRD, MessageState.DELIVERED);
         put(ENROUTE, MessageState.ENROUTE);
         put(EXPIRED, MessageState.EXPIRED);
         put(UNKNOWN, MessageState.UNKNOWN);
         put(UNDELIV, MessageState.UNDELIVERABLE);
         put(REJECTD, MessageState.REJECTED);
     }};
-
 }
