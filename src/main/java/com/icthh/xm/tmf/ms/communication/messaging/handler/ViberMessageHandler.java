@@ -1,6 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.service.ViberService;
+import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import lombok.RequiredArgsConstructor;
@@ -25,5 +26,10 @@ public class ViberMessageHandler implements BasicMessageHandler {
     public void handle(CommunicationMessageCreate messageCreate) {
         CommunicationMessage communicationMessage = INSTANCE.messageCreateToMessage(messageCreate);
         this.handle(communicationMessage);
+    }
+
+    @Override
+    public MessageType getType() {
+        return MessageType.Viber;
     }
 }

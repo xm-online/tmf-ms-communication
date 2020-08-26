@@ -4,6 +4,7 @@ import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Messaging;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
+import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
 import com.icthh.xm.tmf.ms.communication.rules.RuleResponse;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
@@ -18,6 +19,7 @@ import org.jsmpp.InvalidResponseException;
 import org.jsmpp.PDUException;
 import org.jsmpp.extra.NegativeResponseException;
 import org.jsmpp.extra.ResponseTimeoutException;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +32,7 @@ import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.success;
 import static com.icthh.xm.tmf.ms.communication.messaging.handler.CommunicationMessageMapper.INSTANCE;
 import static java.util.stream.Collectors.toList;
 
+@ConditionalOnProperty(value = "application.smpp.enabled")
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -78,6 +81,11 @@ public class SmppMessagingHandler implements BasicMessageHandler {
 
         CommunicationMessage communicationMessage = INSTANCE.messageCreateToMessage(messageCreate);
         this.handle(communicationMessage);
+    }
+
+    @Override
+    public MessageType getType() {
+        return MessageType.SMS;
     }
 
     private void sendSmppMessage(CommunicationMessage message, Messaging messaging,

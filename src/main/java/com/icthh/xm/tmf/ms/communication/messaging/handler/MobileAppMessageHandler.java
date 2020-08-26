@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
+import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.service.FirebaseService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
@@ -21,5 +22,10 @@ public class MobileAppMessageHandler implements BasicMessageHandler {
     @Override
     public void handle(CommunicationMessageCreate messageCreate) {
         firebaseService.sendPushNotification(messageCreate.getReceiver(), messageCreate.getCharacteristic());
+    }
+
+    @Override
+    public MessageType getType() {
+        return MessageType.MobileApp;
     }
 }

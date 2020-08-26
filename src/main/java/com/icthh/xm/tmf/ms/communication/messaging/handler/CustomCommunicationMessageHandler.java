@@ -2,6 +2,7 @@ package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
+import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageCreateResolver;
 import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageResolver;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
@@ -23,6 +24,11 @@ public class CustomCommunicationMessageHandler implements BasicMessageHandler{
     @LogicExtensionPoint(value = "Send", resolver = CustomMessageCreateResolver.class)
     public void handle(CommunicationMessageCreate message) {
         warnIfNoLogic(message.getType());
+    }
+
+    @Override
+    public MessageType getType() {
+        return null;
     }
 
     private void warnIfNoLogic(String type) {
