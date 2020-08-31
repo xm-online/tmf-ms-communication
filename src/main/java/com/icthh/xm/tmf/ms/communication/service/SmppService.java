@@ -99,6 +99,8 @@ public class SmppService {
     public void init() {
         if (appProps.getSmpp().getEnabled()) {
             getActualSession();
+        } else {
+            log.warn("SMPP is disabled");
         }
     }
 
