@@ -1,60 +1,68 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
-import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
-import com.icthh.xm.tmf.ms.communication.domain.FirebaseRequest;
-import com.icthh.xm.tmf.ms.communication.domain.FirebaseRequestData;
+import static java.util.stream.Collectors.toList;
+
+import com.google.firebase.messaging.BatchResponse;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.MulticastMessage;
+import com.google.firebase.messaging.Notification;
+import com.google.firebase.messaging.SendResponse;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
-import com.icthh.xm.tmf.ms.communication.web.rest.errors.FirebaseCommunicatoinException;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.List;
-
-import static java.util.stream.Collectors.toList;
-import static org.springframework.http.HttpHeaders.AUTHORIZATION;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
+import org.springframework.util.Assert;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class FirebaseService {
 
-    private final RestTemplate restTemplate;
+    @SneakyThrows
+    public void sendPushNotification(CommunicationMessage message) { //todo V: return type?
+//todo V: 500 receivers cap
+        Assert.notNull(message, "Message is not specified");
 
-    private final ApplicationProperties applicationProperties;
+        List<String> userRegistrationTokens = message.getReceiver().stream()
+            .map(Receiver::getAppUserId)
+            .filter(StringUtils::isNoneBlank)
+            .collect(toList());
 
-    public void sendPushNotification(List<Receiver> receivers,
-                                     List<CommunicationRequestCharacteristic> characteristics) {
+        Map<String, String> data = message.getCharacteristic().stream()
+            .collect(Collectors.toMap(CommunicationRequestCharacteristic::getName,
+                CommunicationRequestCharacteristic::getValue));
 
-        FirebaseRequest request = new FirebaseRequest();
-        List<String> tokens = receivers.stream().map(Receiver::getAppUserId)
-            .filter(StringUtils::isNoneBlank).collect(toList());
-        request.setRegistrationIds(tokens);
+        MulticastMessage firebaseMessage = MulticastMessage.builder()
+            .putAllData(data)
+            .setNotification(Notification.builder()
+                .setBody(message.getContent())
+                .setTitle(message.getSubject())
+                .build())
+            .addAllTokens(userRegistrationTokens)
+            .build();
 
+        BatchResponse response = FirebaseMessaging.getInstance()
+            .sendMulticast(firebaseMessage); //todo V: think over exception handling
 
-        FirebaseRequestData data = new FirebaseRequestData();
-        characteristics.forEach(item -> data.addAdditionalData(item.getName(), item.getValue()));
-        request.setRequestData(data);
+        log.debug("Total messages {}, success count {}, failure count {}",
+            response.getResponses().size(), response.getSuccessCount(), response.getFailureCount());
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(APPLICATION_JSON);
-        headers.set(AUTHORIZATION, applicationProperties.getFirebase().getToken());
-        HttpEntity<FirebaseRequest> requestEntity = new HttpEntity<>(request, headers);
-        ResponseEntity<String> responseEntity = restTemplate.postForEntity(applicationProperties.getFirebase().getUrl(),
-            requestEntity, String.class);
-        if (!HttpStatus.OK.equals(responseEntity.getStatusCode())) {
-            log.error("Request to Firebase is failed. status: {}, response: {}", responseEntity.getStatusCode(),
-                responseEntity.getBody());
-            throw new FirebaseCommunicatoinException(
-                String.format("Request to Firebase failed. Status: %s", responseEntity.getStatusCode()));
+        if (response.getFailureCount() != 0) {
+            log.info("Error response details {}", response.getResponses().stream()
+                .map(SendResponse::getException)
+                .filter(Objects::nonNull)
+                .map(e -> String.format("%s: %s",
+                    e.getMessagingErrorCode(), e.getMessage()))
+                .collect(Collectors.toList())
+            );
         }
     }
 }

@@ -12,14 +12,15 @@ import org.springframework.stereotype.Service;
 public class MobileAppMessageHandler implements BasicMessageHandler {
 
     private final FirebaseService firebaseService;
+    private final CommunicationMessageMapper mapper;
 
     @Override
-    public void handle(CommunicationMessage message) {
-        firebaseService.sendPushNotification(message.getReceiver(), message.getCharacteristic());
+    public void handle(CommunicationMessage message) { //todo V!: add LEP here
+        firebaseService.sendPushNotification(message);
     }
 
     @Override
-    public void handle(CommunicationMessageCreate messageCreate) {
-        firebaseService.sendPushNotification(messageCreate.getReceiver(), messageCreate.getCharacteristic());
+    public void handle(CommunicationMessageCreate messageCreate) { //todo V!: add LEP here
+        firebaseService.sendPushNotification(mapper.messageCreateToMessage(messageCreate));
     }
 }

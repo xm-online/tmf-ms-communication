@@ -229,8 +229,8 @@ application:
         alphaEncoding:
         notAlphaEncoding:
     firebase:
+        # use the following syntax 'https://<DATABASE_NAME>.firebaseio.com' (the url is fully customizable for testing purposes).
         url:
-        token:
     retry:
         max-attempts: 3
         delay: 1000 #in milliseconds

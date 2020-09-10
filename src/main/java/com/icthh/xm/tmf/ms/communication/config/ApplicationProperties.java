@@ -40,7 +40,6 @@ public class ApplicationProperties {
     @Setter
     public static class Firebase {
         private String url;
-        private String token;
     }
 
     @Data

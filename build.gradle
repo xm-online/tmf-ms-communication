@@ -299,6 +299,8 @@ dependencies {
     testImplementation "com.github.stefanbirkner:system-rules:${system_rules_version}"
     testImplementation "org.testcontainers:testcontainers:${testcontainers_version}"
     testImplementation "org.springframework.cloud:spring-cloud-stream-test-support"
+
+    implementation 'com.google.firebase:firebase-admin:7.0.0'
 }
 
 task cleanResources(type: Delete) {
