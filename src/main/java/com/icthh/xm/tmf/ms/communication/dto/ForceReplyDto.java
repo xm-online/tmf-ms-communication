@@ -8,7 +8,7 @@ import lombok.Data;
 import static java.lang.Boolean.TRUE;
 
 @Data
-@JsonTypeName("ForceReply")
+@JsonTypeName("force")
 public class ForceReplyDto extends KeyboardDto {
     private Boolean selective;
 

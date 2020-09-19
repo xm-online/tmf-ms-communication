@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.dto;
 
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import com.pengrad.telegrambot.model.request.InlineKeyboardMarkup;
 import com.pengrad.telegrambot.model.request.Keyboard;
@@ -8,6 +9,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
+@JsonTypeName("inline")
 public class InlineKeyboardMarkupDto extends KeyboardDto {
 
     private List<List<InlineKeyboardButtonDto>> inlineKeyboard;

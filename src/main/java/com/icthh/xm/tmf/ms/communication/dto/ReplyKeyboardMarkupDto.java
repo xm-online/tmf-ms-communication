@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.dto;
 
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.pengrad.telegrambot.model.request.Keyboard;
 import com.pengrad.telegrambot.model.request.KeyboardButton;
 import com.pengrad.telegrambot.model.request.ReplyKeyboardMarkup;
@@ -11,6 +12,7 @@ import static java.lang.Boolean.TRUE;
 import static java.util.stream.Collectors.toList;
 
 @Data
+@JsonTypeName("reply")
 public class ReplyKeyboardMarkupDto extends KeyboardDto {
 
     private List<List<KeyboardButtonDto>> keyboard;

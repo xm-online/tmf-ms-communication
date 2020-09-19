@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.dto;
 
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.pengrad.telegrambot.model.request.CallbackGame;
 import com.pengrad.telegrambot.model.request.InlineKeyboardButton;
 import com.pengrad.telegrambot.model.request.LoginUrl;
