@@ -3,6 +3,7 @@ package com.icthh.xm.tmf.ms.communication.channel.telegram;
 import com.icthh.xm.commons.topic.domain.ConsumerHolder;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec;
+import com.icthh.xm.tmf.ms.communication.service.TelegramBotRegisterService;
 import com.icthh.xm.tmf.ms.communication.service.TelegramService;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,6 +48,9 @@ public class TelegramChannelHandlerUnitTest {
     @Mock
     private TelegramService telegramService;
 
+    @Mock
+    private TelegramBotRegisterService telegramRegisterService;
+
     @Before
     public void setUp() {
         ApplicationProperties.Messaging messaging = new ApplicationProperties.Messaging();
@@ -64,7 +68,7 @@ public class TelegramChannelHandlerUnitTest {
         verify(container, times(1)).start();
         verify(container, times(0)).stop();
 
-        verify(telegramService, times(3)).registerBot(any(), any());
+        verify(telegramRegisterService, times(3)).registerBot(any(), any(), any());
 
         Map<String, Map<String, ConsumerHolder>> consumers = telegramChannelHandler.getTenantTelegramConsumers();
         assertEquals(1, consumers.keySet().size());

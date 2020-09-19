@@ -15,7 +15,7 @@ public interface MessageService {
      * @param message   received message
      * @return message with updated status, flags, etc
      */
-    CommunicationMessage recive(String tenantKey, CommunicationMessage message);
+    CommunicationMessage receive(String tenantKey, CommunicationMessage message);
 
     /**
      * Send message to the channel

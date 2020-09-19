@@ -9,6 +9,7 @@ import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec.Channels;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec.Telegram;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
+import com.icthh.xm.tmf.ms.communication.service.TelegramBotRegisterService;
 import com.icthh.xm.tmf.ms.communication.service.TelegramService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,7 @@ public class TelegramChannelHandler implements ChannelHandler {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final KafkaProperties kafkaProperties;
     private final TelegramService telegramService;
+    private final TelegramBotRegisterService registerService;
 
     @Getter
     private Map<String, Map<String, ConsumerHolder>> tenantTelegramConsumers = new ConcurrentHashMap<>();
@@ -51,7 +53,7 @@ public class TelegramChannelHandler implements ChannelHandler {
 
         if (CollectionUtils.isEmpty(botConfigs)) {
             stopAllTenantConsumers(tenantKey);
-            telegramService.unregisterBot(tenantKey);
+            registerService.unregisterBot(tenantKey);
             return;
         }
 
@@ -61,7 +63,7 @@ public class TelegramChannelHandler implements ChannelHandler {
         // processCustomTelegramConsumers(tenantKey, botConfigs);
 
         //register bots
-        botConfigs.forEach(botConfig -> telegramService.registerBot(tenantKey, botConfig));
+        botConfigs.forEach(botConfig -> registerService.registerBot(tenantKey, botConfig, telegramService::receive));
     }
 
     private void processDefaultTelegramConsumer(String tenantKey) {
