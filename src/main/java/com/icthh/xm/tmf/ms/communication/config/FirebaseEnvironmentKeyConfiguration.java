@@ -9,6 +9,7 @@ import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,6 +19,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @AllArgsConstructor
+@ConditionalOnProperty(name = "application.firebase.enabled", havingValue = "true")
 public class FirebaseEnvironmentKeyConfiguration {
 
     public static final String FIREBASE_PRIVATE_KEY_NAME = "FIREBASE_PRIVATE_KEY";
@@ -31,8 +33,8 @@ public class FirebaseEnvironmentKeyConfiguration {
             new ByteArrayInputStream(Optional.ofNullable(
                 System.getenv().get(FIREBASE_PRIVATE_KEY_NAME))
                 .filter(StringUtils::isNotBlank)
-                .orElseThrow(() -> new IllegalStateException("Environment variable %s is not specified." +
-                    "Please securely put Firebase private key json file here."))
+                .orElseThrow(() -> new IllegalStateException(String.format("Environment variable %s is not specified." +
+                    "Please securely put Firebase private key json file here.", FIREBASE_PRIVATE_KEY_NAME)))
                 .getBytes());
 
         FirebaseOptions options = FirebaseOptions.builder()

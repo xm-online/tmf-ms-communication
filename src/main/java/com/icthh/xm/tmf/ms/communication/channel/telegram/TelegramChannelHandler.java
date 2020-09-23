@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class TelegramChannelHandler implements ChannelHandler {
+public class TelegramChannelHandler implements ChannelHandler { //todo V: find out why telegram impl differs from other ones (sms)
 
     private static final String DEFAULT_TELEGRAM_CONSUMER_KEY = "default";
 

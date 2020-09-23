@@ -229,6 +229,7 @@ application:
         alphaEncoding:
         notAlphaEncoding:
     firebase:
+        enabled: false
         # use the following syntax 'https://<DATABASE_NAME>.firebaseio.com' (the url is fully customizable for testing purposes).
         url:
     retry:

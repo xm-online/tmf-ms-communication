@@ -45,7 +45,7 @@ public class SmppMessagingHandler implements BasicMessageHandler {
     private final BusinessRuleValidator businessRuleValidator;
 
     @Override
-    public void handle(CommunicationMessage message) {
+    public CommunicationMessage handle(CommunicationMessage message) {
         Messaging messaging = applicationProperties.getMessaging();
         List<String> phoneNumbers = message.getReceiver().stream().map(Receiver::getPhoneNumber).collect(toList());
         for (String phoneNumber : phoneNumbers) {
@@ -71,13 +71,14 @@ public class SmppMessagingHandler implements BasicMessageHandler {
                 failMessage(message, "error.system.general.internalServerError", e.toString());
             }
         }
+        return message;
     }
 
     @Override
-    public void handle(CommunicationMessageCreate messageCreate) {
-
+    public CommunicationMessageCreate handle(CommunicationMessageCreate messageCreate) {
         CommunicationMessage communicationMessage = INSTANCE.messageCreateToMessage(messageCreate);
         this.handle(communicationMessage);
+        return messageCreate;//todo V: think it over, perhaps re-map the response is correct way here
     }
 
     private void sendSmppMessage(CommunicationMessage message, Messaging messaging,

@@ -15,14 +15,16 @@ import org.springframework.stereotype.Service;
 public class CustomCommunicationMessageHandler implements BasicMessageHandler{
 
     @LogicExtensionPoint(value = "Send", resolver = CustomMessageResolver.class)
-    public void handle(CommunicationMessage message){
+    public CommunicationMessage handle(CommunicationMessage message){
         warnIfNoLogic(message.getType());
+        return message;
     }
 
     @Override
     @LogicExtensionPoint(value = "Send", resolver = CustomMessageCreateResolver.class)
-    public void handle(CommunicationMessageCreate message) {
+    public CommunicationMessageCreate handle(CommunicationMessageCreate message) {
         warnIfNoLogic(message.getType());
+        return message;
     }
 
     private void warnIfNoLogic(String type) {
