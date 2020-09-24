@@ -3,6 +3,7 @@ package com.icthh.xm.tmf.ms.communication.messaging.handler;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageCreateResolver;
+import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageResolver;
 import com.icthh.xm.tmf.ms.communication.service.FirebaseService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
@@ -21,7 +22,7 @@ public class MobileAppMessageHandler implements BasicMessageHandler {
     private final CommunicationMessageMapper mapper;
 
     @Override
-    @LogicExtensionPoint(value = "Send", resolver = CustomMessageCreateResolver.class)
+    @LogicExtensionPoint(value = "Send", resolver = CustomMessageResolver.class)
     public CommunicationMessage handle(CommunicationMessage message) {
         log.debug("Handling message {}", message);
         return firebaseService.sendPushNotification(message);
