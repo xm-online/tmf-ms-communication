@@ -1,6 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.CommunicationMessageMapper;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.MessageHandlerService;
 import com.icthh.xm.tmf.ms.communication.web.api.CommunicationMessageApiDelegate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
@@ -18,7 +19,7 @@ public class CommunicationMessageApiImpl implements CommunicationMessageApiDeleg
     @Timed
     public ResponseEntity<CommunicationMessage> createsANewCommunicationMessageAndSendIt(
         CommunicationMessageCreate messageCreate) {
-        messageHandlerService.getHandler(messageCreate.getType()).handle(messageCreate);
-        return ResponseEntity.ok().build();
+        CommunicationMessage message = messageHandlerService.getHandler(messageCreate.getType()).handle(messageCreate);
+        return ResponseEntity.ok(message);
     }
 }

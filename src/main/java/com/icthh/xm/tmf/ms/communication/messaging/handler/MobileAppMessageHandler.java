@@ -7,12 +7,14 @@ import com.icthh.xm.tmf.ms.communication.service.FirebaseService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 
 @Service
 @RequiredArgsConstructor
 @LepService
+@Slf4j
 public class MobileAppMessageHandler implements BasicMessageHandler {
 
     private final FirebaseService firebaseService;
@@ -21,13 +23,14 @@ public class MobileAppMessageHandler implements BasicMessageHandler {
     @Override
     @LogicExtensionPoint(value = "Send", resolver = CustomMessageCreateResolver.class)
     public CommunicationMessage handle(CommunicationMessage message) {
+        log.debug("Handling message {}", message);
         return firebaseService.sendPushNotification(message);
     }
 
     @Override
     @LogicExtensionPoint(value = "Send", resolver = CustomMessageCreateResolver.class)
-    public CommunicationMessageCreate handle(CommunicationMessageCreate messageCreate) {
-        firebaseService.sendPushNotification(mapper.messageCreateToMessage(messageCreate));
-        return messageCreate; //todo V: think it over, perhaps re-map the response is correct way here
+    public CommunicationMessage handle(CommunicationMessageCreate messageCreate) {
+        log.debug("Handling message {}", messageCreate);
+        return firebaseService.sendPushNotification(mapper.messageCreateToMessage(messageCreate));
     }
 }

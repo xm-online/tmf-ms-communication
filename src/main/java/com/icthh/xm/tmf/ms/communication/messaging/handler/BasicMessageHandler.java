@@ -15,5 +15,5 @@ public interface BasicMessageHandler {
 
     CommunicationMessage handle(CommunicationMessage message);
 
-    CommunicationMessageCreate handle(CommunicationMessageCreate messageCreate);
+    CommunicationMessage handle(CommunicationMessageCreate messageCreate);
 }

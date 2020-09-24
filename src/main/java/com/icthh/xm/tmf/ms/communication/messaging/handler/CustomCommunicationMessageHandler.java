@@ -6,13 +6,17 @@ import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageCreateResol
 import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageResolver;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @LepService(group = "service.message")
 @Service
 @Slf4j
+@AllArgsConstructor
 public class CustomCommunicationMessageHandler implements BasicMessageHandler{
+
+    private final CommunicationMessageMapper communicationMessageMapper;
 
     @LogicExtensionPoint(value = "Send", resolver = CustomMessageResolver.class)
     public CommunicationMessage handle(CommunicationMessage message){
@@ -22,9 +26,9 @@ public class CustomCommunicationMessageHandler implements BasicMessageHandler{
 
     @Override
     @LogicExtensionPoint(value = "Send", resolver = CustomMessageCreateResolver.class)
-    public CommunicationMessageCreate handle(CommunicationMessageCreate message) {
+    public CommunicationMessage handle(CommunicationMessageCreate message) {
         warnIfNoLogic(message.getType());
-        return message;
+        return communicationMessageMapper.messageCreateToMessage(message);
     }
 
     private void warnIfNoLogic(String type) {

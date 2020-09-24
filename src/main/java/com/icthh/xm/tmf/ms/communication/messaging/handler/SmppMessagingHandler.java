@@ -75,10 +75,10 @@ public class SmppMessagingHandler implements BasicMessageHandler {
     }
 
     @Override
-    public CommunicationMessageCreate handle(CommunicationMessageCreate messageCreate) {
+    public CommunicationMessage handle(CommunicationMessageCreate messageCreate) {
         CommunicationMessage communicationMessage = INSTANCE.messageCreateToMessage(messageCreate);
         this.handle(communicationMessage);
-        return messageCreate;//todo V: think it over, perhaps re-map the response is correct way here
+        return communicationMessage;
     }
 
     private void sendSmppMessage(CommunicationMessage message, Messaging messaging,
