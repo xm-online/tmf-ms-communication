@@ -118,5 +118,6 @@ application:
         replace-if-present-flag: 0
         sm-default-msg-id: 0
     firebase:
-        url: http://localhost:9999
-        token: abcd
+        enabled: false
+        # use the following syntax 'https://<DATABASE_NAME>.firebaseio.com' (the url is fully customizable for testing purposes).
+        url:
