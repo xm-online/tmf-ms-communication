@@ -42,6 +42,8 @@ public class FirebaseService {
 
         MulticastMessage firebaseMessage = mapToFirebaseRequest(message);
 
+        log.debug("Sending messages");
+
         BatchResponse response = FirebaseMessaging.getInstance()
             .sendMulticast(firebaseMessage);
 

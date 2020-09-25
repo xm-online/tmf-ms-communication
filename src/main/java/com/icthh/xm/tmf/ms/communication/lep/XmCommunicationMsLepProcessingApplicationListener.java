@@ -1,6 +1,14 @@
 package com.icthh.xm.tmf.ms.communication.lep;
 
-import com.icthh.xm.commons.config.client.service.TenantConfigService;
+import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstants.BINDING_KEY_COMMONS;
+import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstants.BINDING_KEY_SERVICES;
+import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstants.BINDING_KEY_TEMPLATES;
+import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstants.BINDING_SUB_KEY_PERMISSION_SERVICE;
+import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstants.BINDING_SUB_KEY_SERVICE_TENANT_CONFIG_SERICE;
+import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstants.BINDING_SUB_KEY_TEMPLATE_KAFKA;
+import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstants.BINDING_SUB_KEY_TEMPLATE_LOAD_BALANCED_REST;
+import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstants.BINDING_SUB_KEY_TEMPLATE_REST;
+
 import com.icthh.xm.commons.lep.commons.CommonsExecutor;
 import com.icthh.xm.commons.lep.commons.CommonsService;
 import com.icthh.xm.commons.lep.spring.SpringLepProcessingApplicationListener;
@@ -8,26 +16,37 @@ import com.icthh.xm.commons.permission.service.PermissionCheckService;
 import com.icthh.xm.commons.topic.service.KafkaTemplateService;
 import com.icthh.xm.lep.api.ScopedContext;
 import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessTimeConfigService;
-import lombok.RequiredArgsConstructor;
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
-import java.util.Map;
 
-import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstants.*;
-
-
-@RequiredArgsConstructor
 @Service
 public class XmCommunicationMsLepProcessingApplicationListener extends SpringLepProcessingApplicationListener {
 
     private final BusinessTimeConfigService tenantConfigService;
     private final RestTemplate restTemplate;
+    private final RestTemplate loadBalancedRestTemplate;
     private final CommonsService commonsService;
     private final PermissionCheckService permissionCheckService;
     private final KafkaTemplateService kafkaTemplateService;
+
+    public XmCommunicationMsLepProcessingApplicationListener(BusinessTimeConfigService tenantConfigService,
+                                                             RestTemplate restTemplate,
+                                                             @Qualifier("loadBalancedRestTemplate") RestTemplate loadBalancedRestTemplate,
+                                                             CommonsService commonsService,
+                                                             PermissionCheckService permissionCheckService,
+                                                             KafkaTemplateService kafkaTemplateService) {
+
+        this.tenantConfigService = tenantConfigService;
+        this.restTemplate = restTemplate;
+        this.loadBalancedRestTemplate = loadBalancedRestTemplate;
+        this.commonsService = commonsService;
+        this.permissionCheckService = permissionCheckService;
+        this.kafkaTemplateService = kafkaTemplateService;
+    }
 
     @Override
     protected void bindExecutionContext(ScopedContext executionContext) {
@@ -42,6 +61,8 @@ public class XmCommunicationMsLepProcessingApplicationListener extends SpringLep
         // templates
         Map<String, Object> templates = new HashMap<>();
         templates.put(BINDING_SUB_KEY_TEMPLATE_REST, restTemplate);
+        templates.put(BINDING_SUB_KEY_TEMPLATE_LOAD_BALANCED_REST, loadBalancedRestTemplate);
+
         templates.put(BINDING_SUB_KEY_TEMPLATE_KAFKA, kafkaTemplateService);
 
         executionContext.setValue(BINDING_KEY_TEMPLATES, templates);
