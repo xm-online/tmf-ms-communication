@@ -273,6 +273,7 @@ dependencies {
 
     implementation "org.jsmpp:jsmpp:${jsmpp_version}"
     implementation "com.github.pengrad:java-telegram-bot-api:${telegrambots_version}"
+    implementation "com.twilio.sdk:twilio:${twilio_version}"
 
     implementation "io.dropwizard.metrics:metrics-json"
     implementation "io.dropwizard.metrics:metrics-jvm"
