@@ -16,3 +16,7 @@ services:
             options:
                 tag: communication
                 syslog-facility: local7
+
+networks:
+    xm2:
+        driver: overlay
