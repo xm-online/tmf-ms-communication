@@ -1,8 +1,11 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
+import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec;
+import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
@@ -19,6 +22,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.xml.bind.DatatypeConverter;
@@ -36,6 +40,10 @@ import static com.icthh.xm.tmf.ms.communication.messaging.handler.CommunicationM
 @IgnoreLogginAspect
 @RequiredArgsConstructor
 public class TwilioService  implements MessageService {
+
+    private final ObjectMapper objectMapper;
+    private final ApplicationProperties applicationProperties;
+    private final KafkaTemplate<String, String> kafkaTemplate;
 
     private Map<String, Map<String, TwilioRestClient>> twilioClients = new ConcurrentHashMap<>();
 
@@ -71,6 +79,9 @@ public class TwilioService  implements MessageService {
         result.setSendTimeComplete(OffsetDateTime.now());
         result.setStatus(createdMessage.getStatus().toString());
         result.setHref(createdMessage.getUri());
+
+        String topicName = buildReceiveMessageTopicName(tenantKey);
+        kafkaTemplate.send(topicName, toJson(message));
 
         return result;
     }
@@ -115,6 +126,11 @@ public class TwilioService  implements MessageService {
         return twilioClients.getOrDefault(tenantKey, new ConcurrentHashMap<>());
     }
 
+    private String buildReceiveMessageTopicName(String tenantKey) {
+        String sendQueuePattern = applicationProperties.getMessaging().getReciveQueueNameTemplate();
+        return String.format(sendQueuePattern, tenantKey.toLowerCase(), MessageType.Twilio.name().toLowerCase());
+    }
+
     @SneakyThrows
     private void startTwilioSender(String tenantKey, CommunicationSpec.Twilio twilioConfig) {
         // Use the default rest client
@@ -157,6 +173,11 @@ public class TwilioService  implements MessageService {
         log.info("start: {} {}", command, params);
         action.run();
         log.info(" stop: {}, time = {} ms.", command, stopWatch.getTime());
+    }
+
+    @SneakyThrows
+    private <T> String toJson(T message) {
+        return objectMapper.writeValueAsString(message);
     }
 
 }
