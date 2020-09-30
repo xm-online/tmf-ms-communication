@@ -3,6 +3,7 @@ package com.icthh.xm.tmf.ms.communication.config;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.servlet.InstrumentedFilter;
 import com.codahale.metrics.servlets.MetricsServlet;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.config.JHipsterProperties;
 import io.undertow.Undertow;
@@ -64,7 +65,7 @@ public class WebConfigurerTest {
         props = new JHipsterProperties();
         serverProperties = new ServerProperties();
 
-        webConfigurer = new WebConfigurer(env, props, serverProperties);
+        webConfigurer = new WebConfigurer(env, props, serverProperties, new ObjectMapper());
         metricRegistry = new MetricRegistry();
         webConfigurer.setMetricRegistry(metricRegistry);
     }

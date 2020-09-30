@@ -60,10 +60,10 @@ public class FirebaseService {
             );
         }
 
-        return buildCommunicationResponse(response);
+        return buildCommunicationResponse(response, message);
     }
 
-    private CommunicationMessage buildCommunicationResponse(BatchResponse batchResponse) {
+    private CommunicationMessage buildCommunicationResponse(BatchResponse batchResponse, CommunicationMessage message) {
 
         List<SendResponse> responses = batchResponse.getResponses();
         List<CommunicationRequestCharacteristic> characteristics = new ArrayList<>(responses.size());
@@ -82,7 +82,9 @@ public class FirebaseService {
             characteristics.add(new CommunicationRequestCharacteristic().name(rName).value(rValue));
         }
 
-        return new CommunicationMessage()
+        characteristics.addAll(message.getCharacteristic());
+
+        return message
             .id(UUID.randomUUID().toString())
             .characteristic(characteristics);
     }

@@ -1,12 +1,21 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.servlet.InstrumentedFilter;
 import com.codahale.metrics.servlets.MetricsServlet;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.logging.spring.config.ServiceLoggingAspectConfiguration;
 import io.github.jhipster.config.JHipsterProperties;
 import io.undertow.UndertowOptions;
-import lombok.RequiredArgsConstructor;
+import java.nio.charset.StandardCharsets;
+import java.util.EnumSet;
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRegistration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
@@ -25,14 +34,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRegistration;
-import java.nio.charset.StandardCharsets;
-import java.util.EnumSet;
-
 
 /**
  * Configuration of web application with Servlet 3.0 APIs.
@@ -42,7 +43,6 @@ import java.util.EnumSet;
     ServiceLoggingAspectConfiguration.class
 })
 @Slf4j
-@RequiredArgsConstructor
 public class WebConfigurer implements ServletContextInitializer, WebServerFactoryCustomizer<WebServerFactory> {
 
     private final Environment env;
@@ -52,6 +52,14 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     private final ServerProperties serverProperties;
 
     private MetricRegistry metricRegistry;
+
+    public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties,
+                         ServerProperties serverProperties, ObjectMapper objectMapper) {
+        this.env = env;
+        this.jHipsterProperties = jHipsterProperties;
+        this.serverProperties = serverProperties;
+        objectMapper.setSerializationInclusion(NON_NULL);
+    }
 
     @Override
     public void onStartup(ServletContext servletContext) throws ServletException {
