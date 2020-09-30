@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.api.RefreshableConfiguration;
 import com.icthh.xm.tmf.ms.communication.channel.telegram.TelegramChannelHandler;
+import com.icthh.xm.tmf.ms.communication.channel.twilio.TwilioChannelHandler;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -21,6 +22,7 @@ public class ChannelRefreshableConfiguration implements RefreshableConfiguration
 
     private final ApplicationProperties properties;
     private final TelegramChannelHandler telegramChannelHandler;
+    private final TwilioChannelHandler twilioChannelHandler;
 
     private AntPathMatcher matcher = new AntPathMatcher();
     private ObjectMapper ymlMapper = new ObjectMapper(new YAMLFactory());
@@ -51,6 +53,7 @@ public class ChannelRefreshableConfiguration implements RefreshableConfiguration
         String tenantKey = extractTenant(updatedKey);
 
         telegramChannelHandler.onRefresh(tenantKey, spec);
+        twilioChannelHandler.onRefresh(tenantKey, spec);
         //init other channels: sms, email, viber, etc
     }
 
