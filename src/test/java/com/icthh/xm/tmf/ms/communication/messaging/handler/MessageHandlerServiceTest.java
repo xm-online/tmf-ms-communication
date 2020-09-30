@@ -12,13 +12,14 @@ import static org.junit.Assert.*;
 @RunWith(MockitoJUnitRunner.class)
 public class MessageHandlerServiceTest {
 
-
     @Mock
     private SmppMessagingHandler smppMessagingHandler;
     @Mock
     private CustomCommunicationMessageHandler customCommunicationMessageHandler;
     @Mock
     private MobileAppMessageHandler mobileAppMessageHandler;
+    @Mock
+    private TwilioMessageHandler twilioMessageHandler;
 
     @InjectMocks
     MessageHandlerService messageHandlerService;
@@ -35,5 +36,6 @@ public class MessageHandlerServiceTest {
         assertEquals(messageHandlerService.getHandler(MessageType.SMS.name()), smppMessagingHandler);
         assertEquals(messageHandlerService.getHandler(MessageType.Viber.name()), customCommunicationMessageHandler);
         assertEquals(messageHandlerService.getHandler(MessageType.Telegram.name()), customCommunicationMessageHandler);
+        assertEquals(messageHandlerService.getHandler(MessageType.Twilio.name()), twilioMessageHandler);
     }
 }

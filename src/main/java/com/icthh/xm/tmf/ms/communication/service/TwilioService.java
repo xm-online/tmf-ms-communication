@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
+import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
@@ -23,9 +24,12 @@ import org.springframework.stereotype.Service;
 import javax.xml.bind.DatatypeConverter;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
+import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.CommunicationMessageMapper.INSTANCE;
 
 @Slf4j
 @Service
@@ -42,19 +46,33 @@ public class TwilioService  implements MessageService {
 
     @Override
     public CommunicationMessage send(String tenantKey, CommunicationMessageCreate message) {
-        String senderKey = message.getType();
+        String senderKey = message.getSender().getId();
         Map<String, TwilioRestClient> clients = getClientsByTenant(tenantKey);
         TwilioRestClient client = clients.get(senderKey);
+
         if (client == null) {
-            log.warn("TelegramBot not found for key: [{}]. Message: [{}] skipped.", senderKey, message.getContent());
+            log.warn("Twilio sender not found for key: [{}]. Message: [{}] skipped.", senderKey, message.getContent());
             return new CommunicationMessage();
         }
-        //
-        message.getReceiver().forEach(receiver ->
-            byNumberOrSid(receiver, message, client.getAccountSid()).create(client)
-        );
-        //
-        return new CommunicationMessage();
+
+        if (message.getReceiver().size() != 1) {
+            throw new BusinessException("Only one receiver should be provided. Current number=" + message.getReceiver().size());
+        }
+
+        String senderPhoneNumber = message.getSender().getPhoneNumber();
+        if (StringUtils.isEmpty(senderPhoneNumber)) {
+            throw new BusinessException("Sender PhoneNumber is not provided");
+        }
+
+        Message createdMessage = byPhoneNumber(message.getReceiver().get(0), senderPhoneNumber, message.getContent()).create(client);
+        log.debug("twilioResponse: {}", createdMessage);
+        CommunicationMessage result = INSTANCE.messageCreateToMessage(message);
+        result.setSendTime(OffsetDateTime.now());
+        result.setSendTimeComplete(OffsetDateTime.now());
+        result.setStatus(createdMessage.getStatus().toString());
+        result.setHref(createdMessage.getUri());
+
+        return result;
     }
 
     public void registerSender(String tenantKey, CommunicationSpec.Twilio twilioConfig) {
@@ -64,7 +82,7 @@ public class TwilioService  implements MessageService {
                 tenantKey, twilioConfig);
             return;
         }
-        withLog("startTelegramBot", () -> startTwilioSender(tenantKey, twilioConfig), twilioConfig);
+        withLog("twilioSender", () -> startTwilioSender(tenantKey, twilioConfig), twilioConfig.getKey());
     }
 
     public void unregisterTwilioSenders(String tenantKey) {
@@ -99,17 +117,27 @@ public class TwilioService  implements MessageService {
 
     @SneakyThrows
     private void startTwilioSender(String tenantKey, CommunicationSpec.Twilio twilioConfig) {
-        // Generate public/private key pair
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
-        keyGen.initialize(2048);
-        KeyPair pair = keyGen.generateKeyPair();
-        java.security.PublicKey pk = pair.getPublic();
-
         // Use the default rest client
         TwilioRestClient client =
             new TwilioRestClient.Builder(twilioConfig.getAccountSid(), twilioConfig.getAuthToken())
                 .build();
 
+        if (Boolean.TRUE.equals(twilioConfig.getUseClientValidationFeature())) {
+            client = validationClient(client, twilioConfig);
+        }
+
+        Map<String, TwilioRestClient> clients = twilioClients.getOrDefault(tenantKey, new ConcurrentHashMap<>());
+        clients.put(twilioConfig.getKey(), client);
+        twilioClients.put(tenantKey, clients);
+    }
+
+    @SneakyThrows
+    private TwilioRestClient validationClient(TwilioRestClient client, CommunicationSpec.Twilio twilioConfig) {
+        // Generate public/private key pair
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+        keyGen.initialize(2048);
+        KeyPair pair = keyGen.generateKeyPair();
+        java.security.PublicKey pk = pair.getPublic();
         // Create a public key and signing key using the default client
         PublicKey key = PublicKey.creator(
             DatatypeConverter.printBase64Binary(pk.getEncoded())
@@ -118,14 +146,10 @@ public class TwilioService  implements MessageService {
         NewSigningKey signingKey = NewSigningKey.creator().create(client);
 
         // Switch to validation client as the default client
-        TwilioRestClient validationClient = new TwilioRestClient.Builder(signingKey.getSid(), signingKey.getSecret())
+        return new TwilioRestClient.Builder(signingKey.getSid(), signingKey.getSecret())
             .accountSid(twilioConfig.getAccountSid())
             .httpClient(new ValidationClient(twilioConfig.getAccountSid(), key.getSid(), signingKey.getSid(), pair.getPrivate()))
             .build();
-
-        Map<String, TwilioRestClient> clients = twilioClients.getOrDefault(tenantKey, new ConcurrentHashMap<>());
-        clients.put(twilioConfig.getKey(), validationClient);
-        twilioClients.put(tenantKey, clients);
     }
 
     private void withLog(String command, Runnable action, Object... params) {

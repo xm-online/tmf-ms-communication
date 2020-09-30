@@ -34,7 +34,10 @@ public class CommunicationSpec implements Serializable {
     @Setter
     @ToString(callSuper = true)
     public static class Twilio extends Channel {
-
+        /**
+         * This is enterprise level feature. Details https://www.twilio.com/docs/iam/pkcv
+         */
+        private Boolean useClientValidationFeature;
         private String accountSid;
         private String authToken;
     }
