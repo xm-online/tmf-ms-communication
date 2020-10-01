@@ -16,6 +16,7 @@ public class MessageHandlerService {
     private final SmppMessagingHandler smppMessagingHandler;
     private final CustomCommunicationMessageHandler customCommunicationMessageHandler;
     private final MobileAppMessageHandler mobileAppMessageHandler;
+    private final TwilioMessageHandler twilioMessageHandler;
 
     private Map<String, BasicMessageHandler> messageHandlerMap;
 
@@ -23,7 +24,8 @@ public class MessageHandlerService {
     void init() {
         messageHandlerMap = Map.of(
             MessageType.SMS.name(), smppMessagingHandler,
-            MessageType.MobileApp.name(), mobileAppMessageHandler
+            MessageType.MobileApp.name(), mobileAppMessageHandler,
+            MessageType.Twilio.name(), twilioMessageHandler
         );
     }
 
