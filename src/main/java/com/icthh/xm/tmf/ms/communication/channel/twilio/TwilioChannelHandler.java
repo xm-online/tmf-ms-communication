@@ -4,13 +4,10 @@ import com.icthh.xm.commons.topic.config.MessageListenerContainerBuilder;
 import com.icthh.xm.commons.topic.domain.ConsumerHolder;
 import com.icthh.xm.commons.topic.domain.TopicConfig;
 import com.icthh.xm.tmf.ms.communication.channel.ChannelHandler;
-import com.icthh.xm.tmf.ms.communication.channel.telegram.KafkaToTelegramMessageHandler;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec.Channels;
-import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec.Telegram;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
-import com.icthh.xm.tmf.ms.communication.service.TelegramService;
 import com.icthh.xm.tmf.ms.communication.service.TwilioService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -59,10 +56,8 @@ public class TwilioChannelHandler implements ChannelHandler {
 
         //process channels queues
         processDefaultTwilioConsumer(tenantKey);
-        // todo custom queues for telegram bots will be implemented in next releases
-        // processCustomTelegramConsumers(tenantKey, botConfigs);
 
-        //register bots
+        //register senders
         twilioConfigs.forEach(twilioConfig -> twilioService.registerSender(tenantKey, twilioConfig));
     }
 
@@ -93,7 +88,7 @@ public class TwilioChannelHandler implements ChannelHandler {
     private void stopAllTenantConsumers(String tenantKey) {
         Map<String, ConsumerHolder> existingConsumers = getTenantConsumers(tenantKey);
         Collection<ConsumerHolder> holders = existingConsumers.values();
-        withLog(tenantKey, "stopAllTenantTelegramConsumers", () -> {
+        withLog(tenantKey, "stopAllTenantTwilioConsumers", () -> {
             holders.forEach(consumerHolder -> stopConsumer(tenantKey, consumerHolder));
             tenantTwilioConsumers.remove(tenantKey);
         }, "[{}]", holders);

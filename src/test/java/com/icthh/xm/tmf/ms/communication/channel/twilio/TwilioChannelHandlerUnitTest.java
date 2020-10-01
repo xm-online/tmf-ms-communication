@@ -58,7 +58,7 @@ public class TwilioChannelHandlerUnitTest {
     }
 
     @Test
-    public void testStartingOfNewTelegramBots() {
+    public void testStartingOfNewTwilioSenders() {
         twilioChannelHandler.onRefresh(TENANT_KEY, buildNTwilios(3));
 
         verify(container, times(1)).start();

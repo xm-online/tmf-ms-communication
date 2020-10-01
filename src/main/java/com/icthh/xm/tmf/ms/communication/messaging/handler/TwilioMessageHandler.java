@@ -27,7 +27,7 @@ public class TwilioMessageHandler implements BasicMessageHandler {
     @Override
     public void handle(CommunicationMessageCreate messageCreate) {
         CommunicationMessage send = twilioService.send(tenantContextHolder.getTenantKey(), messageCreate);
-
+        log.info("message status={} href={}", send.getStatus(), send.getHref());
     }
 
 }

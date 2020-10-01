@@ -1,7 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
-import com.pengrad.telegrambot.model.Message;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
