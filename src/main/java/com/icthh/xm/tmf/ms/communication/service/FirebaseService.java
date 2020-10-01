@@ -33,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 @Slf4j
 @Service
@@ -41,9 +42,10 @@ import org.springframework.util.Assert;
 public class FirebaseService {
 
     /**
-     * Request parameter name that indicates badge value.
+     * Characteristic names
      */
     public static final String BADGE = "badge";
+    public static final String IMAGE = "image";
 
     private final FirebaseApplicationConfigurationProvider firebaseApplicationConfigurationProvider;
     private final TenantContextHolder tenantContextHolder;
@@ -75,48 +77,20 @@ public class FirebaseService {
         return buildCommunicationResponse(response, message);
     }
 
-    private FirebaseMessaging getFirebaseMessaging(CommunicationMessage message) {
-        return Optional.ofNullable(firebaseApplicationConfigurationProvider.getApplication(
-            tenantContextHolder.getTenantKey(), message.getSender().getId()))
-            .map(FirebaseMessaging::getInstance)
-            .orElseThrow(() -> new BusinessException("error.fcm.sender.id.invalid", "Sender id is not valid"));
-    }
-
-    private CommunicationMessage buildCommunicationResponse(BatchResponse batchResponse, CommunicationMessage message) {
-
-        List<SendResponse> responses = batchResponse.getResponses();
-        List<CommunicationRequestCharacteristic> characteristics = new ArrayList<>(responses.size());
-        characteristics.add(new CommunicationRequestCharacteristic().name("successCount").value(String.valueOf(batchResponse.getSuccessCount())));
-        characteristics.add(new CommunicationRequestCharacteristic().name("failureCount").value(String.valueOf(batchResponse.getFailureCount())));
-
-        for (SendResponse response : responses) {
-            String rName, rValue;
-            if (response.isSuccessful()) {
-                rName = "messageId";
-                rValue = response.getMessageId();
-            } else {
-                rName = "error";
-                rValue = response.getException().getMessage();
-            }
-            characteristics.add(new CommunicationRequestCharacteristic().name(rName).value(rValue));
-        }
-
-        characteristics.addAll(message.getCharacteristic());
-
-        return message
-            .id(UUID.randomUUID().toString())
-            .characteristic(characteristics);
-    }
-
-
     @SneakyThrows
     private MulticastMessage mapToFirebaseRequest(CommunicationMessage message) {
+        if (CollectionUtils.isEmpty(message.getReceiver())) {
+            throw new BusinessException("error.fcm.receiver.empty", "Receiver list is empty");
+        }
+
         List<String> userRegistrationTokens = message.getReceiver().stream()
             .map(Receiver::getAppUserId)
             .filter(StringUtils::isNoneBlank)
             .collect(toList());
 
-        if (userRegistrationTokens.size() > 500) {
+        if (userRegistrationTokens.isEmpty()) {
+            throw new BusinessException("error.fcm.receiver.invalid", "Receiver list - no appUserId specified");
+        } else if (userRegistrationTokens.size() > 500) {
             throw new BusinessException("error.fcm.receiver.count", "The number of receivers exceeds 500 allowed");
         }
 
@@ -129,7 +103,7 @@ public class FirebaseService {
             .setNotification(Notification.builder()
                 .setBody(message.getContent())
                 .setTitle(message.getSubject())
-                .setImage(data.get("image"))
+                .setImage(data.get(IMAGE))
                 .build())
             .putAllData(data);
 
@@ -162,4 +136,37 @@ public class FirebaseService {
 
         return firebaseMessageBuilder.build();
     }
+
+    private FirebaseMessaging getFirebaseMessaging(CommunicationMessage message) {
+        return firebaseApplicationConfigurationProvider.getFirebaseMessaging(
+            tenantContextHolder.getTenantKey(), message.getSender().getId())
+            .orElseThrow(() -> new BusinessException("error.fcm.sender.id.invalid", "Sender id is not valid"));
+    }
+
+    private CommunicationMessage buildCommunicationResponse(BatchResponse batchResponse, CommunicationMessage message) {
+
+        List<SendResponse> responses = batchResponse.getResponses();
+        List<CommunicationRequestCharacteristic> characteristics = new ArrayList<>(responses.size());
+        characteristics.add(new CommunicationRequestCharacteristic().name("successCount").value(String.valueOf(batchResponse.getSuccessCount())));
+        characteristics.add(new CommunicationRequestCharacteristic().name("failureCount").value(String.valueOf(batchResponse.getFailureCount())));
+
+        for (SendResponse response : responses) {
+            String rName, rValue;
+            if (response.isSuccessful()) {
+                rName = "messageId";
+                rValue = response.getMessageId();
+            } else {
+                rName = "error";
+                rValue = response.getException().getMessage();
+            }
+            characteristics.add(new CommunicationRequestCharacteristic().name(rName).value(rValue));
+        }
+
+        characteristics.addAll(message.getCharacteristic());
+
+        return message
+            .id(UUID.randomUUID().toString())
+            .characteristic(characteristics);
+    }
+
 }
