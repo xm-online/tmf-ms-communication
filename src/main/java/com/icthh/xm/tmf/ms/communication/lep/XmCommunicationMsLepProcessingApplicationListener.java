@@ -62,7 +62,6 @@ public class XmCommunicationMsLepProcessingApplicationListener extends SpringLep
         Map<String, Object> templates = new HashMap<>();
         templates.put(BINDING_SUB_KEY_TEMPLATE_REST, restTemplate);
         templates.put(BINDING_SUB_KEY_TEMPLATE_LOAD_BALANCED_REST, loadBalancedRestTemplate);
-
         templates.put(BINDING_SUB_KEY_TEMPLATE_KAFKA, kafkaTemplateService);
 
         executionContext.setValue(BINDING_KEY_TEMPLATES, templates);

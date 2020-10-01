@@ -37,18 +37,18 @@ public class XmCommunicationMsLepProcessingApplicationListenerTest {
         ScopedContext context = new DefaultScopedContext("scope");
         listener.bindExecutionContext(context);
 
-        assertEquals(context.getValues().size(), 3);
+        assertEquals(3, context.getValues().size());
         assertNotNull(context.getValue(BINDING_KEY_COMMONS, CommonsExecutor.class));
         assertNotNull(context.getValue(BINDING_KEY_SERVICES, Map.class));
         assertNotNull(context.getValue(BINDING_KEY_TEMPLATES, Map.class));
 
         Map<String, Object> services = (HashMap<String, Object>)context.getValue(BINDING_KEY_SERVICES, HashMap.class);
-        assertEquals(services.values().size(), 2);
+        assertEquals(2, services.values().size());
         assertNotNull(services.get(BINDING_SUB_KEY_SERVICE_TENANT_CONFIG_SERICE));
         assertNotNull(services.get(BINDING_SUB_KEY_PERMISSION_SERVICE));
 
         Map<String, Object> templates = (HashMap<String, Object>)context.getValue(BINDING_KEY_TEMPLATES, HashMap.class);
-        assertEquals(templates.values().size(), 2);
+        assertEquals(3, templates.values().size());
         assertNotNull(templates.get(BINDING_SUB_KEY_TEMPLATE_REST));
     }
 }

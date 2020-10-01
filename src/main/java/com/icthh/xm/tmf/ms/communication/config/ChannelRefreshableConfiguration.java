@@ -3,8 +3,9 @@ package com.icthh.xm.tmf.ms.communication.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.api.RefreshableConfiguration;
-import com.icthh.xm.tmf.ms.communication.channel.telegram.TelegramChannelHandler;
+import com.icthh.xm.tmf.ms.communication.channel.ChannelHandler;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +21,7 @@ public class ChannelRefreshableConfiguration implements RefreshableConfiguration
     private static final String TENANT_NAME = "tenantName";
 
     private final ApplicationProperties properties;
-    private final TelegramChannelHandler telegramChannelHandler;
+    private final List<ChannelHandler> channelHandlers;
 
     private AntPathMatcher matcher = new AntPathMatcher();
     private ObjectMapper ymlMapper = new ObjectMapper(new YAMLFactory());
@@ -50,8 +51,7 @@ public class ChannelRefreshableConfiguration implements RefreshableConfiguration
         CommunicationSpec spec = readSpec(updatedKey, config);
         String tenantKey = extractTenant(updatedKey);
 
-        telegramChannelHandler.onRefresh(tenantKey, spec);
-        //init other channels: sms, email, viber, etc
+        channelHandlers.forEach(handler -> handler.onRefresh(tenantKey, spec));
     }
 
     private CommunicationSpec readSpec(String updatedKey, String config) {

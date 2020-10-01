@@ -27,7 +27,6 @@ import java.util.Optional;
 
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.failed;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.success;
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.CommunicationMessageMapper.INSTANCE;
 import static java.util.stream.Collectors.toList;
 
 @Service
@@ -43,6 +42,7 @@ public class SmppMessagingHandler implements BasicMessageHandler {
     private final SmppService smppService;
     private final ApplicationProperties applicationProperties;
     private final BusinessRuleValidator businessRuleValidator;
+    private final CommunicationMessageMapper mapper;
 
     @Override
     public CommunicationMessage handle(CommunicationMessage message) {
@@ -76,7 +76,7 @@ public class SmppMessagingHandler implements BasicMessageHandler {
 
     @Override
     public CommunicationMessage handle(CommunicationMessageCreate messageCreate) {
-        CommunicationMessage communicationMessage = INSTANCE.messageCreateToMessage(messageCreate);
+        CommunicationMessage communicationMessage = mapper.messageCreateToMessage(messageCreate);
         this.handle(communicationMessage);
         return communicationMessage;
     }

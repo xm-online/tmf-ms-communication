@@ -2,6 +2,7 @@ package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
+import com.icthh.xm.tmf.ms.communication.channel.mobileapp.FirebaseApplicationConfigurationProvider;
 import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageCreateResolver;
 import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageResolver;
 import com.icthh.xm.tmf.ms.communication.service.FirebaseService;
@@ -9,6 +10,7 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 
 
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @LepService
 @Slf4j
+@ConditionalOnBean(FirebaseApplicationConfigurationProvider.class)
 public class MobileAppMessageHandler implements BasicMessageHandler {
 
     private final FirebaseService firebaseService;

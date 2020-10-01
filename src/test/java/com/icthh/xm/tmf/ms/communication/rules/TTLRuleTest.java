@@ -18,6 +18,7 @@ import static org.mockito.Mockito.verify;
 import com.icthh.xm.commons.config.client.config.XmConfigProperties;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.CommunicationMessageMapper;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler;
 import com.icthh.xm.tmf.ms.communication.rules.ttl.TTLRule;
 import com.icthh.xm.tmf.ms.communication.rules.ttl.TTLRuleConfig;
@@ -57,6 +58,9 @@ public class TTLRuleTest {
 
     @Mock
     private Clock clock;
+
+    @Mock
+    private CommunicationMessageMapper mapper;
 
     @MockBean
     private XmConfigProperties xmConfigProperties;
@@ -196,7 +200,7 @@ public class TTLRuleTest {
         smppMessagingHandler = new SmppMessagingHandler(kafkaTemplate,
             smppService,
             createApplicationProperties(),
-            businessRuleValidator);
+            businessRuleValidator, mapper);
 
         return ttlRuleConfigService.getTtlRuleConfig();
     }

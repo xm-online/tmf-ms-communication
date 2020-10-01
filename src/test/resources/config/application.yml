@@ -119,5 +119,6 @@ application:
         sm-default-msg-id: 0
     firebase:
         enabled: false
-        # use the following syntax 'https://<DATABASE_NAME>.firebaseio.com' (the url is fully customizable for testing purposes).
-        url:
+        proxy:
+            host:
+            port:

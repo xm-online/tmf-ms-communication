@@ -1,5 +1,23 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
+import static com.icthh.xm.tmf.ms.communication.domain.DeliveryReport.deliveryReport;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.DISTRIBUTION_ID;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.DELIVERY_REPORT;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.UTF_16;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.singletonList;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.BusinessRule;
@@ -9,25 +27,27 @@ import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingAdapter;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaDeliveryReportListener;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaMoDeliveryReportListener;
-import com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler;
 import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
 import com.icthh.xm.tmf.ms.communication.rules.RuleResponse;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
-import com.icthh.xm.tmf.ms.communication.web.api.model.*;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
+import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
+import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
 import io.netty.util.concurrent.ImmediateEventExecutor;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
-import org.jetbrains.annotations.NotNull;
-import org.jsmpp.InvalidResponseException;
 import org.jsmpp.PDUException;
 import org.jsmpp.bean.DeliverSm;
 import org.jsmpp.bean.MessageType;
 import org.jsmpp.extra.NegativeResponseException;
-import org.jsmpp.extra.ResponseTimeoutException;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mapstruct.factory.Mappers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -36,24 +56,6 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.testcontainers.shaded.com.google.common.collect.Lists;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.concurrent.ExecutorService;
-
-import static com.icthh.xm.tmf.ms.communication.domain.DeliveryReport.deliveryReport;
-import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.DISTRIBUTION_ID;
-import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
-import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.DELIVERY_REPORT;
-import static java.nio.charset.StandardCharsets.*;
-import static java.util.Collections.singletonList;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SmppMessagingHandlerTest {
@@ -75,6 +77,8 @@ public class SmppMessagingHandlerTest {
     private BusinessRuleValidator businessRuleValidator;
     @Spy
     private ApplicationProperties applicationProperties = createApplicationProperties();
+    @Spy
+    CommunicationMessageMapper mapper = Mappers.getMapper(CommunicationMessageMapper.class);
 
     private SendToKafkaDeliveryReportListener sendToKafkaDeliveryReportListener;
     private SendToKafkaMoDeliveryReportListener sendToKafkaMoDeliveryReportListener;

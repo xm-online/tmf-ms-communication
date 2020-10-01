@@ -14,6 +14,8 @@ import com.google.firebase.messaging.SendResponse;
 import com.google.firebase.messaging.WebpushConfig;
 import com.google.firebase.messaging.WebpushNotification;
 import com.icthh.xm.commons.exceptions.BusinessException;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.tmf.ms.communication.channel.mobileapp.FirebaseApplicationConfigurationProvider;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
@@ -21,20 +23,30 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnBean(FirebaseApplicationConfigurationProvider.class)
 public class FirebaseService {
-    public static final String BADGE_PARAMETER_NAME = "badge";
+
+    /**
+     * Request parameter name that indicates badge value.
+     */
+    public static final String BADGE = "badge";
+
+    private final FirebaseApplicationConfigurationProvider firebaseApplicationConfigurationProvider;
+    private final TenantContextHolder tenantContextHolder;
 
     @SneakyThrows
     public CommunicationMessage sendPushNotification(CommunicationMessage message) {
@@ -44,7 +56,7 @@ public class FirebaseService {
 
         log.debug("Sending messages");
 
-        BatchResponse response = FirebaseMessaging.getInstance()
+        BatchResponse response = getFirebaseMessaging(message)
             .sendMulticast(firebaseMessage);
 
         log.debug("Total messages {}, success count {}, failure count {}",
@@ -61,6 +73,13 @@ public class FirebaseService {
         }
 
         return buildCommunicationResponse(response, message);
+    }
+
+    private FirebaseMessaging getFirebaseMessaging(CommunicationMessage message) {
+        return Optional.ofNullable(firebaseApplicationConfigurationProvider.getApplication(
+            tenantContextHolder.getTenantKey(), message.getSender().getId()))
+            .map(FirebaseMessaging::getInstance)
+            .orElseThrow(() -> new BusinessException("error.fcm.sender.id.invalid", "Sender id is not valid"));
     }
 
     private CommunicationMessage buildCommunicationResponse(BatchResponse batchResponse, CommunicationMessage message) {
@@ -114,7 +133,7 @@ public class FirebaseService {
                 .build())
             .putAllData(data);
 
-        String badge = data.get(BADGE_PARAMETER_NAME);
+        String badge = data.get(BADGE);
         if (badge != null) {
             int badgeIntValue = Integer.parseInt(badge);
 
@@ -136,12 +155,10 @@ public class FirebaseService {
                         .setNotification(
                             AndroidNotification.builder()
                                 .setNotificationCount(badgeIntValue)
-                                .build()
-                        )
+                                .build())
                         .build()
                 );
         }
-
 
         return firebaseMessageBuilder.build();
     }

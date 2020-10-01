@@ -3,11 +3,9 @@ package com.icthh.xm.tmf.ms.communication.messaging.handler;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import org.mapstruct.Mapper;
-import org.mapstruct.factory.Mappers;
 
 @Mapper(componentModel = "spring")
 public interface CommunicationMessageMapper {
-    CommunicationMessageMapper INSTANCE = Mappers.getMapper( CommunicationMessageMapper.class ); //todo V!: get rid of it
 
     CommunicationMessage messageCreateToMessage(CommunicationMessageCreate car);
 }

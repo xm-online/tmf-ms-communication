@@ -39,8 +39,14 @@ public class ApplicationProperties {
     @Getter
     @Setter
     public static class Firebase {
-        private String url;
         private Boolean enabled;
+        private Proxy proxy;
+
+        @Data
+        public static class Proxy {
+            private String host;
+            private String port;
+        }
     }
 
     @Data
