@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.firebase.messaging.BatchResponse;
@@ -102,6 +103,7 @@ public class FirebaseServiceTest {
 
         ArgumentCaptor<MulticastMessage> multicastCaptor = ArgumentCaptor.forClass(MulticastMessage.class);
         verify(messagingMock).sendMulticast(multicastCaptor.capture());
+        verifyNoMoreInteractions(messagingMock);
     }
 
     @Test
@@ -168,7 +170,7 @@ public class FirebaseServiceTest {
     }
 
     @SneakyThrows
-    private SendResponse newSendResponse(Object messageId) {
+    private SendResponse newSendResponse(String messageId) {
         Method method = SendResponse.class.getDeclaredMethod("fromMessageId", String.class);
         method.setAccessible(true);
         return (SendResponse) method.invoke(SendResponse.class, messageId);

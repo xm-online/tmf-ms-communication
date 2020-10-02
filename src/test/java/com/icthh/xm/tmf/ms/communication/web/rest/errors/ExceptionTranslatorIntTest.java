@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Test class for the ExceptionTranslator controller advice.
  *
- * @see ExceptionTranslator
+ * @see CustomExceptionTranslator
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = {SecurityBeanOverrideConfiguration.class, CommunicationApp.class})
@@ -34,7 +34,7 @@ public class ExceptionTranslatorIntTest {
     private ExceptionTranslatorTestController controller;
 
     @Autowired
-    private ExceptionTranslator exceptionTranslator;
+    private CustomExceptionTranslator exceptionTranslator;
 
     @Autowired
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
