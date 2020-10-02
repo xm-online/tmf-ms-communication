@@ -5,36 +5,28 @@ import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sen
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sending.request.InfobipSendRequestDestination;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sending.request.InfobipSendRequestDestinationTo;
 import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.api.sending.request.InfobipSendRequestViber;
-import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.config.InfobipViberConfig;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
-import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
-import java.util.stream.Collectors;
+
+import static com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.Constants.VIBER_BUTTON_TEXT_CHARACTERISTIC;
+import static com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.Constants.VIBER_BUTTON_URL_CHARACTERISTIC;
+import static com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.Constants.VIBER_IMAGE_URL_CHARACTERISTIC;
+import static com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.Constants.VIBER_INFOBIP_SCENARIO_KEY_CHARACTERISTIC;
+import static com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.Constants.VIBER_PROMOTIONAL_CHARACTERISTIC;
+import static com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.Constants.VIBER_VALIDITY_PERIOD_CHARACTERISTIC;
+import static com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.Utils.collectMessageCharacteristics;
 
 @Component
 @AllArgsConstructor
 @Slf4j
 public class CommunicationMessageToViberSendRequestMapper {
 
-    public static final String VIBER_BUTTON_TEXT_CHARACTERISTIC = "VIBER.BUTTON.TEXT";
-    public static final String VIBER_BUTTON_URL_CHARACTERISTIC = "VIBER.BUTTON.URL";
-    public static final String VIBER_IMAGE_URL_CHARACTERISTIC = "VIBER.IMAGE.URL";
-    public static final String VIBER_PROMOTIONAL_CHARACTERISTIC = "VIBER.PROMOTIONAL";
-    public static final String VIBER_VALIDITY_PERIOD_CHARACTERISTIC = "VALIDITY.PERIOD";
-    public static final String VIBER_INFOBIP_SCENARIO_KEY_CHARACTERISTIC = "VIBER.INFOBIP.SCENARIO.KEY";
-
-    public InfobipSendRequest toSendRequest(InfobipViberConfig infobipViberConfig, CommunicationMessage message) {
-        Map<String, String> characteristicsMap = message.getCharacteristic()
-            .stream()
-            .filter(characteristic -> characteristic.getName() != null && characteristic.getValue() != null)
-            .collect(Collectors.toMap(
-                CommunicationRequestCharacteristic::getName,
-                CommunicationRequestCharacteristic::getValue)
-            );
+    public InfobipSendRequest toSendRequest(CommunicationMessage message) {
+        Map<String, String> characteristicsMap = collectMessageCharacteristics(message);
 
         return InfobipSendRequest
             .builder()
@@ -58,7 +50,7 @@ public class CommunicationMessageToViberSendRequestMapper {
                 .text(message.getContent())
                 .build()
             )
-            .scenarioKey(firstNonNull(characteristicsMap.get(VIBER_INFOBIP_SCENARIO_KEY_CHARACTERISTIC), infobipViberConfig.getScenarioKey()))
+            .scenarioKey(characteristicsMap.get(VIBER_INFOBIP_SCENARIO_KEY_CHARACTERISTIC))
             .build();
     }
 
@@ -71,9 +63,4 @@ public class CommunicationMessageToViberSendRequestMapper {
         String validityPeriodCharacteristic = characteristics.get(VIBER_VALIDITY_PERIOD_CHARACTERISTIC);
         return validityPeriodCharacteristic != null ? Integer.valueOf(validityPeriodCharacteristic) : null;
     }
-
-    private static <T> T firstNonNull(T object1, T object2) {
-        return object1 != null ? object1 : object2;
-    }
-
 }

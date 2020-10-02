@@ -22,9 +22,12 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.Constants.VIBER_INFOBIP_TOKEN_CHARACTERISTIC;
+import static com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.Utils.collectMessageCharacteristics;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 
@@ -45,12 +48,12 @@ public class ViberService {
 
     public void send(CommunicationMessage communicationMessage) {
         InfobipViberConfig viberConfig = viberConfigGetter.getForMessage(communicationMessage);
-
+        Map<String, String> characteristicsMap = collectMessageCharacteristics(communicationMessage);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(APPLICATION_JSON);
-        headers.set(AUTHORIZATION, viberConfig.getToken());
+        headers.set(AUTHORIZATION, characteristicsMap.get(VIBER_INFOBIP_TOKEN_CHARACTERISTIC));
 
-        InfobipSendRequest sendRequest = communicationMessageToViberSendRequestMapper.toSendRequest(viberConfig, communicationMessage);
+        InfobipSendRequest sendRequest = communicationMessageToViberSendRequestMapper.toSendRequest(communicationMessage);
         HttpEntity<String> requestEntity = new HttpEntity<>(gson.toJson(sendRequest), headers);
 
         ResponseEntity<InfobipSendResponse> exchange;
