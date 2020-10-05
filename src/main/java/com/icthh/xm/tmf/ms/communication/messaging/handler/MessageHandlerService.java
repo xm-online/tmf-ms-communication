@@ -25,8 +25,8 @@ public class MessageHandlerService {
     @PostConstruct
     void init() {
         messageHandlerMap = new HashMap<>();
-        messageHandlerMap.put( MessageType.SMS.name(), smppMessagingHandler);
-        messageHandlerMap.put( MessageType.Twilio.name(), twilioMessageHandler);
+        messageHandlerMap.put(MessageType.SMS.name(), smppMessagingHandler);
+        messageHandlerMap.put(MessageType.Twilio.name(), twilioMessageHandler);
         mobileAppMessageHandler.ifPresent(mobileHandler ->
             messageHandlerMap.put(MessageType.MobileApp.name(), mobileHandler)
         );
