@@ -1,6 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.MessageHandlerService;
 import com.icthh.xm.tmf.ms.communication.web.api.CommunicationMessageApiDelegate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
@@ -8,6 +9,7 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreat
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -17,6 +19,9 @@ public class CommunicationMessageApiImpl implements CommunicationMessageApiDeleg
     private final MessageHandlerService messageHandlerService;
 
     @Timed
+    @PreAuthorize("hasPermission({'messageCreate': #messageCreate}, 'COMMUNICATION.MESSAGE.SEND')")
+    @PrivilegeDescription("Privilege to create and send communication messages")
+    @Override
     public ResponseEntity<CommunicationMessage> createsANewCommunicationMessageAndSendIt(
         CommunicationMessageCreate messageCreate) {
         CommunicationMessage message = messageHandlerService.getHandler(messageCreate.getType()).handle(messageCreate);
