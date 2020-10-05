@@ -19,13 +19,15 @@ public class MessageHandlerServiceTest {
     private CustomCommunicationMessageHandler customCommunicationMessageHandler;
     @Mock
     private MobileAppMessageHandler mobileAppMessageHandler;
+    @Mock
+    private TwilioMessageHandler twilioMessageHandler;
 
     MessageHandlerService messageHandlerService;
 
     @Before
     public void setup() {
         messageHandlerService = new MessageHandlerService(smppMessagingHandler,
-            customCommunicationMessageHandler,
+            customCommunicationMessageHandler, twilioMessageHandler,
             Optional.of(mobileAppMessageHandler));
     }
 
@@ -37,9 +39,10 @@ public class MessageHandlerServiceTest {
     @Test
     public void getHandlerTest() {
         messageHandlerService.init();
-        assertEquals(mobileAppMessageHandler, messageHandlerService.getHandler(MessageType.MobileApp.name()));
-        assertEquals(smppMessagingHandler, messageHandlerService.getHandler(MessageType.SMS.name()));
-        assertEquals(customCommunicationMessageHandler, messageHandlerService.getHandler(MessageType.Viber.name()));
-        assertEquals(customCommunicationMessageHandler, messageHandlerService.getHandler(MessageType.Telegram.name()));
+        assertEquals(messageHandlerService.getHandler(MessageType.MobileApp.name()), mobileAppMessageHandler);
+        assertEquals(messageHandlerService.getHandler(MessageType.SMS.name()), smppMessagingHandler);
+        assertEquals(messageHandlerService.getHandler(MessageType.Viber.name()), customCommunicationMessageHandler);
+        assertEquals(messageHandlerService.getHandler(MessageType.Telegram.name()), customCommunicationMessageHandler);
+        assertEquals(messageHandlerService.getHandler(MessageType.Twilio.name()), twilioMessageHandler);
     }
 }

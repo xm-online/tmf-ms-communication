@@ -24,7 +24,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 /**
- * Implementation the works with Firebase/MobileApp channel.
+ * Implementation that works with Firebase/MobileApp channel.
  */
 @Slf4j
 @Component

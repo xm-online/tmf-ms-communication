@@ -26,8 +26,21 @@ public class CommunicationSpec implements Serializable {
         private List<Telegram> telegram = new LinkedList<>();
         private List<Viber> viber = new LinkedList<>();
         private List<Sms> sms = new LinkedList<>();
+        private List<Twilio> twilio = new LinkedList<>();
         private List<MobileApp> mobileApp = new LinkedList<>();
         // other channels
+    }
+
+    @Getter
+    @Setter
+    @ToString(callSuper = true)
+    public static class Twilio extends Channel {
+        /**
+         * This is enterprise level feature. Details https://www.twilio.com/docs/iam/pkcv
+         */
+        private Boolean useClientValidationFeature;
+        private String accountSid;
+        private String authToken;
     }
 
     @Getter

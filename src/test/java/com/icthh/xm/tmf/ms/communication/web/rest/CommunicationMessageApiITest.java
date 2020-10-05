@@ -7,6 +7,7 @@ import com.icthh.xm.tmf.ms.communication.messaging.handler.CustomCommunicationMe
 import com.icthh.xm.tmf.ms.communication.messaging.handler.MessageHandlerService;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.MobileAppMessageHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.TwilioMessageHandler;
 import com.icthh.xm.tmf.ms.communication.web.api.CommunicationMessageApiController;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.rest.errors.CustomExceptionTranslator;
@@ -30,9 +31,12 @@ import java.util.Set;
 
 import static com.google.common.collect.ImmutableMap.of;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageType.MobileApp;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageType.Twilio;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -54,6 +58,9 @@ public class CommunicationMessageApiITest {
 
     @MockBean
     SmppMessagingHandler smppMessagingHandler;
+
+    @MockBean
+    TwilioMessageHandler twilioMessageHandler;
 
     @MockBean
     private MobileAppMessageHandler mobileAppMessageHandler;
@@ -104,6 +111,28 @@ public class CommunicationMessageApiITest {
         assertThat(captor.getValue().getType(), equalTo(MobileApp.name()));
     }
 
+    @Test
+    @SneakyThrows
+    public void testCreateTwilioMessageAndSendIt() {
+
+        Map<String, Object> request = of("content", CONTEXT_OF_SMS, "receiver",
+            createReceivers("appUserId", "111111"), "type", "Twilio",
+            "sender", of("id", SENDER_ID));
+
+        mockMvc.perform(
+            post("/api/communicationManagement/v2/communicationMessage/send").contentType("application/json")
+                .content(TestUtil.convertObjectToJsonBytes(
+                    request)))
+            .andDo(print())
+            .andExpect(status().isOk());
+
+
+        ArgumentCaptor<CommunicationMessageCreate> captor = ArgumentCaptor.forClass(CommunicationMessageCreate.class);
+        verify(twilioMessageHandler).handle(captor.capture());
+
+        assertThat(captor.getValue().getReceiver().get(0).getAppUserId(), equalTo("111111"));
+        assertThat(captor.getValue().getType(), equalTo(Twilio.name()));
+    }
 
 
     private List<ImmutableMap<String, String>> createReceivers(String propertyName, String... values) {
