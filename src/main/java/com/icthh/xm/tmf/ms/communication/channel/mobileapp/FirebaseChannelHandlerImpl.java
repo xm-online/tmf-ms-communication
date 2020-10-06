@@ -38,8 +38,9 @@ public class FirebaseChannelHandlerImpl implements FirebaseApplicationConfigurat
 
     @Override
     public FirebaseApp getApplication(String tenantKey, String applicationName) {
-        String key = buildAppName(tenantKey, applicationName);
-        return tenantApps.get(tenantKey).get(key);
+        return Optional.ofNullable(tenantApps.get(tenantKey))
+            .map(apps -> apps.get(buildAppName(tenantKey, applicationName)))
+            .orElse(null);
     }
 
     @Override
