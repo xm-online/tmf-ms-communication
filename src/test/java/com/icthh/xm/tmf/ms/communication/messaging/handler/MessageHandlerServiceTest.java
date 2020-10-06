@@ -1,28 +1,53 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
+import com.icthh.xm.tmf.ms.communication.channel.viber.providers.infobip.service.ViberService;
+import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
+import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
+import com.icthh.xm.tmf.ms.communication.service.FirebaseService;
+import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.MockBeans;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.junit4.SpringRunner;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(SpringRunner.class)
+@ContextConfiguration(classes = {
+    SmppMessagingHandler.class,
+    CustomCommunicationMessageHandler.class,
+    MobileAppMessageHandler.class,
+    ViberMessageHandler.class,
+    MessageHandlerService.class,
+})
+@MockBeans({
+    @MockBean(classes = {FirebaseService.class}),
+    @MockBean(classes = {ViberService.class}),
+    @MockBean(classes = {KafkaTemplate.class}),
+    @MockBean(classes = {SmppService.class}),
+    @MockBean(classes = {ApplicationProperties.class}),
+    @MockBean(classes = {BusinessRuleValidator.class})
+})
+@TestPropertySource(properties="application.smpp.enabled=true")
 public class MessageHandlerServiceTest {
 
 
-    @Mock
+    @Autowired
     private SmppMessagingHandler smppMessagingHandler;
-    @Mock
+    @Autowired
     private CustomCommunicationMessageHandler customCommunicationMessageHandler;
-    @Mock
+    @Autowired
     private MobileAppMessageHandler mobileAppMessageHandler;
-    @Mock
+    @Autowired
     private ViberMessageHandler viberMessageHandler;
 
-    @InjectMocks
+    @Autowired
     MessageHandlerService messageHandlerService;
 
     @Test(expected = IllegalArgumentException.class)
@@ -32,7 +57,6 @@ public class MessageHandlerServiceTest {
 
     @Test
     public void getHandlerTest() {
-        messageHandlerService.init();
         assertEquals(messageHandlerService.getHandler(MessageType.MobileApp.name()), mobileAppMessageHandler);
         assertEquals(messageHandlerService.getHandler(MessageType.SMS.name()), smppMessagingHandler);
         assertEquals(messageHandlerService.getHandler(MessageType.Viber.name()), viberMessageHandler);
