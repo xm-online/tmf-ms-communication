@@ -18,12 +18,14 @@ import com.icthh.xm.lep.api.ScopedContext;
 import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessTimeConfigService;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 
 @Service
+@RequiredArgsConstructor
 public class XmCommunicationMsLepProcessingApplicationListener extends SpringLepProcessingApplicationListener {
 
     private final BusinessTimeConfigService tenantConfigService;
@@ -32,21 +34,6 @@ public class XmCommunicationMsLepProcessingApplicationListener extends SpringLep
     private final CommonsService commonsService;
     private final PermissionCheckService permissionCheckService;
     private final KafkaTemplateService kafkaTemplateService;
-
-    public XmCommunicationMsLepProcessingApplicationListener(BusinessTimeConfigService tenantConfigService,
-                                                             RestTemplate restTemplate,
-                                                             @Qualifier("loadBalancedRestTemplate") RestTemplate loadBalancedRestTemplate,
-                                                             CommonsService commonsService,
-                                                             PermissionCheckService permissionCheckService,
-                                                             KafkaTemplateService kafkaTemplateService) {
-
-        this.tenantConfigService = tenantConfigService;
-        this.restTemplate = restTemplate;
-        this.loadBalancedRestTemplate = loadBalancedRestTemplate;
-        this.commonsService = commonsService;
-        this.permissionCheckService = permissionCheckService;
-        this.kafkaTemplateService = kafkaTemplateService;
-    }
 
     @Override
     protected void bindExecutionContext(ScopedContext executionContext) {
@@ -67,4 +54,3 @@ public class XmCommunicationMsLepProcessingApplicationListener extends SpringLep
         executionContext.setValue(BINDING_KEY_TEMPLATES, templates);
     }
 }
-
