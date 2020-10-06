@@ -31,8 +31,6 @@ public class ViberConfigGetter {
                 ViberTenantConfig viberTenantConfig = viberTenantConfigService.getViberTenantConfig();
 
                 builder.address(viberTenantConfig.getUrl());
-                builder.token(viberTenantConfig.getToken());
-                builder.scenarioKey(viberTenantConfig.getScenario());
 
                 return builder.build();
             }

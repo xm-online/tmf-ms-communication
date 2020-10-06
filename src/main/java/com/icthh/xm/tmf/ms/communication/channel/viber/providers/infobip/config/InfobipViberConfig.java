@@ -11,6 +11,4 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class InfobipViberConfig {
     private String address;
-    private String token;
-    private String scenarioKey;
 }

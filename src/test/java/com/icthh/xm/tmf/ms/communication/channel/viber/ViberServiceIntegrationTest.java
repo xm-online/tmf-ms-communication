@@ -110,9 +110,7 @@ public class ViberServiceIntegrationTest {
     @Before
     public void prepare() {
         infobipMockRules.resetAll();
-        InfobipViberConfig viberConfig = new InfobipViberConfig(
-            format("http://localhost:%s", infobipMockRules.port()),
-            "Basic 123", "test_scenario_key");
+        InfobipViberConfig viberConfig = new InfobipViberConfig("http://localhost:%s");
         given(viberConfigGetter.getForMessage(any())).willReturn(viberConfig);
         given(viberConfigGetter.getCommon()).willReturn(viberConfig);
     }
