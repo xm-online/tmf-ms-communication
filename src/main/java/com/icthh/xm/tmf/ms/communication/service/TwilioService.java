@@ -81,7 +81,7 @@ public class TwilioService  implements MessageService {
         result.setHref(createdMessage.getUri());
 
         String topicName = buildReceiveMessageTopicName(tenantKey);
-        kafkaTemplate.send(topicName, toJson(message));
+        kafkaTemplate.send(topicName, toJson(result));
 
         return result;
     }
