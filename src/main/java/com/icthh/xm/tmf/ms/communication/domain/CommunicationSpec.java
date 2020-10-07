@@ -27,6 +27,7 @@ public class CommunicationSpec implements Serializable {
         private List<Viber> viber = new LinkedList<>();
         private List<Sms> sms = new LinkedList<>();
         private List<Twilio> twilio = new LinkedList<>();
+        private List<MobileApp> mobileApp = new LinkedList<>();
         // other channels
     }
 
@@ -64,6 +65,16 @@ public class CommunicationSpec implements Serializable {
     @ToString(callSuper = true)
     public static class Sms extends Channel {
 
+        private Map<String, String> prop;
+    }
+
+    @Getter
+    @Setter
+    @ToString(callSuper = true)
+    public static class MobileApp extends Channel {
+        private String applicationName;
+        private String privateKeyEnvironmentVariableName;
+        private String databaseUrl;
         private Map<String, String> prop;
     }
 

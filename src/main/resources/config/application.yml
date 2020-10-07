@@ -229,8 +229,11 @@ application:
         alphaEncoding:
         notAlphaEncoding:
     firebase:
-        url:
-        token:
+        enabled: false
+        # proxy configuration that apply for Firebase communication only
+        proxy:
+            host:
+            port:
     retry:
         max-attempts: 3
         delay: 1000 #in milliseconds

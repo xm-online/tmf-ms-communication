@@ -1,6 +1,8 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
+import java.util.HashMap;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,17 +17,18 @@ public class MessageHandlerService {
 
     private final SmppMessagingHandler smppMessagingHandler;
     private final CustomCommunicationMessageHandler customCommunicationMessageHandler;
-    private final MobileAppMessageHandler mobileAppMessageHandler;
     private final TwilioMessageHandler twilioMessageHandler;
+    private final Optional<MobileAppMessageHandler> mobileAppMessageHandler;
 
     private Map<String, BasicMessageHandler> messageHandlerMap;
 
     @PostConstruct
     void init() {
-        messageHandlerMap = Map.of(
-            MessageType.SMS.name(), smppMessagingHandler,
-            MessageType.MobileApp.name(), mobileAppMessageHandler,
-            MessageType.Twilio.name(), twilioMessageHandler
+        messageHandlerMap = new HashMap<>();
+        messageHandlerMap.put(MessageType.SMS.name(), smppMessagingHandler);
+        messageHandlerMap.put(MessageType.Twilio.name(), twilioMessageHandler);
+        mobileAppMessageHandler.ifPresent(mobileHandler ->
+            messageHandlerMap.put(MessageType.MobileApp.name(), mobileHandler)
         );
     }
 

@@ -35,12 +35,19 @@ public class ApplicationProperties {
 
     private Messaging messaging = new Messaging();
     private BusinessRule businessRule = new BusinessRule();
+    private String exceptionTranslator;
 
     @Getter
     @Setter
     public static class Firebase {
-        private String url;
-        private String token;
+        private Boolean enabled;
+        private Proxy proxy;
+
+        @Data
+        public static class Proxy {
+            private String host;
+            private String port;
+        }
     }
 
     @Data

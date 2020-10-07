@@ -1,13 +1,14 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
+import static org.junit.Assert.assertEquals;
+
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
+import java.util.Optional;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import static org.junit.Assert.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class MessageHandlerServiceTest {
@@ -21,8 +22,14 @@ public class MessageHandlerServiceTest {
     @Mock
     private TwilioMessageHandler twilioMessageHandler;
 
-    @InjectMocks
     MessageHandlerService messageHandlerService;
+
+    @Before
+    public void setup() {
+        messageHandlerService = new MessageHandlerService(smppMessagingHandler,
+            customCommunicationMessageHandler, twilioMessageHandler,
+            Optional.of(mobileAppMessageHandler));
+    }
 
     @Test(expected = IllegalArgumentException.class)
     public void nullMessageTyeTest() {

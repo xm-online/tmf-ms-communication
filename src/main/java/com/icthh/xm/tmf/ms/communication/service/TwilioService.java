@@ -6,6 +6,7 @@ import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.CommunicationMessageMapper;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
@@ -17,6 +18,7 @@ import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.rest.api.v2010.account.MessageCreator;
 import com.twilio.rest.api.v2010.account.NewSigningKey;
 import com.twilio.type.PhoneNumber;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -29,11 +31,8 @@ import javax.xml.bind.DatatypeConverter;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.time.OffsetDateTime;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.CommunicationMessageMapper.INSTANCE;
 
 @Slf4j
 @Service
@@ -44,6 +43,7 @@ public class TwilioService  implements MessageService {
     private final ObjectMapper objectMapper;
     private final ApplicationProperties applicationProperties;
     private final KafkaTemplate<String, String> kafkaTemplate;
+    private final CommunicationMessageMapper messageMapper;
 
     private Map<String, Map<String, TwilioRestClient>> twilioClients = new ConcurrentHashMap<>();
 
@@ -74,7 +74,7 @@ public class TwilioService  implements MessageService {
 
         Message createdMessage = byPhoneNumber(message.getReceiver().get(0), senderPhoneNumber, message.getContent()).create(client);
         log.debug("twilioResponse: {}", createdMessage);
-        CommunicationMessage result = INSTANCE.messageCreateToMessage(message);
+        CommunicationMessage result = messageMapper.messageCreateToMessage(message);
         result.setSendTime(OffsetDateTime.now());
         result.setSendTimeComplete(OffsetDateTime.now());
         result.setStatus(createdMessage.getStatus().toString());

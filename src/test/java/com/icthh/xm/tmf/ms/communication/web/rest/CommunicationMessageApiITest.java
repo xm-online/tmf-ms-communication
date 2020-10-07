@@ -10,7 +10,7 @@ import com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.TwilioMessageHandler;
 import com.icthh.xm.tmf.ms.communication.web.api.CommunicationMessageApiController;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
-import com.icthh.xm.tmf.ms.communication.web.rest.errors.ExceptionTranslator;
+import com.icthh.xm.tmf.ms.communication.web.rest.errors.CustomExceptionTranslator;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.internal.util.CollectionHelper;
@@ -46,7 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @WebMvcTest(controllers = CommunicationMessageApiController.class, secure = false)
 @ContextConfiguration(
-    classes = {CommunicationMessageApiImpl.class, CommunicationMessageApiController.class, ExceptionTranslator.class,
+    classes = {CommunicationMessageApiImpl.class, CommunicationMessageApiController.class, CustomExceptionTranslator.class,
         MessageHandlerService.class, CustomCommunicationMessageHandler.class, CustomMessageResolver.class,
         CustomMessageCreateResolver.class})
 public class CommunicationMessageApiITest {

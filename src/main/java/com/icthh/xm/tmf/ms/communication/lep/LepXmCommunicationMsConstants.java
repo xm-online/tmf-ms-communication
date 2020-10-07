@@ -11,5 +11,6 @@ public final class LepXmCommunicationMsConstants {
     public static final String BINDING_SUB_KEY_PERMISSION_SERVICE = "permissionService";
     public static final String BINDING_KEY_TEMPLATES = "templates";
     public static final String BINDING_SUB_KEY_TEMPLATE_REST = "rest";
+    public static final String BINDING_SUB_KEY_TEMPLATE_LOAD_BALANCED_REST = "loadBalancedRest";
     public static final String BINDING_SUB_KEY_TEMPLATE_KAFKA  = "kafka";
 }

@@ -8,8 +8,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.CommunicationMessageMapper.INSTANCE;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -17,17 +15,19 @@ public class TwilioMessageHandler implements BasicMessageHandler {
 
     private final TwilioService twilioService;
     private final TenantContextHolder tenantContextHolder;
+    private final CommunicationMessageMapper mapper;
 
     @Override
-    public void handle(CommunicationMessage message) {
-        CommunicationMessageCreate communicationMessageCreate = INSTANCE.messageToMessageCreate(message);
-        this.handle(communicationMessageCreate);
+    public CommunicationMessage handle(CommunicationMessage message) {
+        CommunicationMessageCreate communicationMessageCreate = mapper.messageToMessageCreate(message);
+        return handle(communicationMessageCreate);
     }
 
     @Override
-    public void handle(CommunicationMessageCreate messageCreate) {
+    public CommunicationMessage handle(CommunicationMessageCreate messageCreate) {
         CommunicationMessage send = twilioService.send(tenantContextHolder.getTenantKey(), messageCreate);
         log.info("message status={} href={}", send.getStatus(), send.getHref());
+        return send;
     }
 
 }

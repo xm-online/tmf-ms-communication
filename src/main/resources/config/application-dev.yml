@@ -121,10 +121,6 @@ oauth2:
 # https://www.jhipster.tech/common-application-properties/
 # ===================================================================
 application:
-    firebase:
-        url: changeit
-        token: changeit
-
     smpp:
         enabled: false
         alphaEncoding: 0

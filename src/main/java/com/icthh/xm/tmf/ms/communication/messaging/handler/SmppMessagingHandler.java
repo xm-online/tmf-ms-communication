@@ -27,7 +27,6 @@ import java.util.Optional;
 
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.failed;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.success;
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.CommunicationMessageMapper.INSTANCE;
 import static java.util.stream.Collectors.toList;
 
 @Service
@@ -43,9 +42,10 @@ public class SmppMessagingHandler implements BasicMessageHandler {
     private final SmppService smppService;
     private final ApplicationProperties applicationProperties;
     private final BusinessRuleValidator businessRuleValidator;
+    private final CommunicationMessageMapper mapper;
 
     @Override
-    public void handle(CommunicationMessage message) {
+    public CommunicationMessage handle(CommunicationMessage message) {
         Messaging messaging = applicationProperties.getMessaging();
         List<String> phoneNumbers = message.getReceiver().stream().map(Receiver::getPhoneNumber).collect(toList());
         for (String phoneNumber : phoneNumbers) {
@@ -71,13 +71,14 @@ public class SmppMessagingHandler implements BasicMessageHandler {
                 failMessage(message, "error.system.general.internalServerError", e.toString());
             }
         }
+        return message;
     }
 
     @Override
-    public void handle(CommunicationMessageCreate messageCreate) {
-
-        CommunicationMessage communicationMessage = INSTANCE.messageCreateToMessage(messageCreate);
+    public CommunicationMessage handle(CommunicationMessageCreate messageCreate) {
+        CommunicationMessage communicationMessage = mapper.messageCreateToMessage(messageCreate);
         this.handle(communicationMessage);
+        return communicationMessage;
     }
 
     private void sendSmppMessage(CommunicationMessage message, Messaging messaging,
