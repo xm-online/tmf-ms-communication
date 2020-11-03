@@ -18,14 +18,13 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static com.icthh.xm.tmf.ms.communication.rules.ttl.TTLRule.MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP;
 import static org.apache.commons.lang3.StringUtils.unwrap;
@@ -39,7 +38,9 @@ public class KafkaHandelMessageService {
     private static final int MICROSECONDS_IN_SEC = 1_000_000;
     public static final String TENANT_NAME = "TENANT.NAME";
     public static final String XM = "XM";
-
+    private static final String SMS_NAME_CHARACTERISTIC = "SMS.PART.COUNT";
+    private static final Map<String, String> idCache = new WeakHashMap<>();
+    private static final Lock synchronizedLock = new ReentrantLock();
 
     private final int pauseBetweenSends;
     private final LepKafkaMessageHandler lepMessageHandler;
@@ -67,12 +68,12 @@ public class KafkaHandelMessageService {
     }
 
     public void handle(Message<?> message) {
-
-        long delay = nextScheduledTime.getAndAdd(pauseBetweenSends) - System.nanoTime() / 1000;
+        int pauseBetweenCurrentSend = pauseBetweenSends * getSmsParts(message);
+        long delay = nextScheduledTime.getAndAdd(pauseBetweenCurrentSend) - System.nanoTime() / 1000;
         if (delay > kafkaReadSleepTimeout) {
             try {
                 //time to sleep in microseconds
-                Thread.sleep(kafkaReadSleepTimeout/1000);
+                Thread.sleep(kafkaReadSleepTimeout / 1000);
             } catch (InterruptedException e) {
                 log.error("error processing kafka sleep timeout", e);
             }
@@ -102,6 +103,17 @@ public class KafkaHandelMessageService {
             payloadString = unwrap(payloadString, "\"");
             log.info("start processing message, json body = {}", payloadString);
             CommunicationMessage communicationMessage = mapToCommunicationMessage(payloadString);
+            try {
+                synchronizedLock.lock();
+                if (!idCache.containsKey(communicationMessage.getId())) {
+                    idCache.put(communicationMessage.getId(), "");
+                } else {
+                    log.info("Duplicate  message id: {}. Stop process", communicationMessage.getId());
+                    return;
+                }
+            } finally {
+                synchronizedLock.unlock();
+            }
             lepMessageHandler.preHandler(getTenant(communicationMessage));
             addReceivedByChannelCharacteristic(communicationMessage, message);
             messageHandlerService.getHandler(communicationMessage.getType())
@@ -151,4 +163,20 @@ public class KafkaHandelMessageService {
             .map(ch -> ch.getValue()).orElse(XM);
     }
 
+    private CommunicationMessage getMessage(Message<?> message) {
+        String payloadString = (String) message.getPayload();
+        payloadString = unwrap(payloadString, "\"");
+        return mapToCommunicationMessage(payloadString);
+    }
+
+    public int getSmsParts(Message<?> message) {
+        return Integer.parseInt(getMessage(message).getCharacteristic()
+            .stream()
+            .filter(characteristic -> characteristic.getName().equals(SMS_NAME_CHARACTERISTIC))
+            .findAny().orElseGet(() -> {
+                CommunicationRequestCharacteristic characteristic = new CommunicationRequestCharacteristic();
+                characteristic.setValue("1");
+                return characteristic;
+            }).getValue());
+    }
 }
