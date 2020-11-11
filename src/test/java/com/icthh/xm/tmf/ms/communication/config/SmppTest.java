@@ -41,7 +41,7 @@ public class SmppTest {
     private static Consumer<CreateContainerCmd> getContainerModifier() {
         return containerCmd -> containerCmd.withPortBindings(
             new PortBinding(Ports.Binding.bindPort(SMPP_PORT),
-            new ExposedPort(SMPP_PORT))
+                new ExposedPort(SMPP_PORT))
         );
     }
 
@@ -53,7 +53,7 @@ public class SmppTest {
     @SneakyThrows
     public void testSendingSms() {
         String messageId = service.send("+380636666666", "test", "1616",
-            SUCCESS_FAILURE.value());
+            SUCCESS_FAILURE.value(), "");
         assertNotNull(messageId);
     }
 
