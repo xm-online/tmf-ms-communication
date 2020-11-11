@@ -1,6 +1,8 @@
 package com.icthh.xm.tmf.ms.communication.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.MessageHandlerService;
 import com.icthh.xm.tmf.ms.communication.web.api.CommunicationMessageApiDelegate;
@@ -10,9 +12,10 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Component;
 
-@Component
+import java.util.List;
+
+@LepService(group = "service")
 @AllArgsConstructor
 public class CommunicationMessageApiImpl implements CommunicationMessageApiDelegate {
 
@@ -26,5 +29,14 @@ public class CommunicationMessageApiImpl implements CommunicationMessageApiDeleg
         CommunicationMessageCreate messageCreate) {
         CommunicationMessage message = messageHandlerService.getHandler(messageCreate.getType()).handle(messageCreate);
         return new ResponseEntity<>(message, HttpStatus.CREATED);
+    }
+
+    @Timed
+    @LogicExtensionPoint(value = "RetrieveCommunicationMessage")
+    @PreAuthorize("hasPermission({'id': #id}, 'COMMUNICATION.MESSAGE.RETRIEVE')")
+    @PrivilegeDescription("Privilege to retrieve communication messages")
+    @Override
+    public ResponseEntity<List<CommunicationMessage>> retrieveCommunicationMessage(String id) {
+        return ResponseEntity.ok(List.of());
     }
 }
