@@ -9,4 +9,4 @@ def httpServletRequest = RequestContextHolder.getRequestAttributes()?.getRequest
 def query = httpServletRequest?.getQueryString()
 def lang = query?.split('&').find{ it.startsWith("language=") }?.split('=').last()
 def messages = [new CommunicationMessage(content: lang, id: messageId)]
-return ResponseEntity.ok(messages)
+return messages
