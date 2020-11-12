@@ -1,17 +1,21 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
+
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.util.Map;
 
 import static java.util.Optional.ofNullable;
 
-@Service
+@LepService(group = "service")
 @RequiredArgsConstructor
 public class MessageHandlerService {
 
@@ -35,6 +39,11 @@ public class MessageHandlerService {
     public BasicMessageHandler getHandler(String type) {
         ofNullable(type).orElseThrow(() -> new IllegalArgumentException("Message type must exists"));
         return ofNullable(messageHandlerMap.get(type)).orElse(customCommunicationMessageHandler);
+    }
+
+    @LogicExtensionPoint(value = "RetrieveCommunicationMessage")
+    public List<CommunicationMessage> retrieveCommunicationMessage(String id) {
+        return List.of();
     }
 
 }
