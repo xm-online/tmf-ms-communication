@@ -68,6 +68,9 @@ public class KafkaHandelMessageService {
     }
 
     public void handle(Message<?> message) {
+        // ACKNOWLEDGMENT before processing (important, for avoid duplicate sms)
+        message.getHeaders().get(ACKNOWLEDGMENT, Acknowledgment.class).acknowledge();
+
         int pauseBetweenCurrentSend = pauseBetweenSends * getSmsParts(message);
         long delay = nextScheduledTime.getAndAdd(pauseBetweenCurrentSend) - System.nanoTime() / 1000;
         if (delay > kafkaReadSleepTimeout) {
@@ -93,10 +96,6 @@ public class KafkaHandelMessageService {
 
     private void handleEvent(Message<?> message) {
         final StopWatch stopWatch = StopWatch.createStarted();
-
-        // ACKNOWLEDGMENT before processing (important, for avoid duplicate sms)
-        message.getHeaders().get(ACKNOWLEDGMENT, Acknowledgment.class).acknowledge();
-
         try {
             String payloadString = (String) message.getPayload();
             log.info("start processing message, base64 body = {}, headers = {}", payloadString, getHeaders(message));
