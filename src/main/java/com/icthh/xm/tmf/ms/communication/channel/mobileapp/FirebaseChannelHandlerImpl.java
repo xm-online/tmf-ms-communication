@@ -91,9 +91,7 @@ public class FirebaseChannelHandlerImpl implements FirebaseApplicationConfigurat
 
     private FirebaseOptions buildFirebaseOptions(CommunicationSpec.MobileApp config, InputStream privateKey) throws IOException {
 
-        FirebaseOptions.Builder builder = FirebaseOptions.builder()
-            .setCredentials(GoogleCredentials.fromStream(privateKey))
-            .setDatabaseUrl(config.getDatabaseUrl());
+        FirebaseOptions.Builder builder = FirebaseOptions.builder();
 
         Optional.ofNullable(applicationProperties.getFirebase())
             .map(ApplicationProperties.Firebase::getProxy)
@@ -107,6 +105,8 @@ public class FirebaseChannelHandlerImpl implements FirebaseApplicationConfigurat
                 builder.setHttpTransport(httpTransport);
             });
 
+        builder.setCredentials(GoogleCredentials.fromStream(privateKey))
+            .setDatabaseUrl(config.getDatabaseUrl());
 
         return builder.build();
     }
