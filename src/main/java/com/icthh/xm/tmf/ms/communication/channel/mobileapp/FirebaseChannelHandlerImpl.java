@@ -1,6 +1,5 @@
 package com.icthh.xm.tmf.ms.communication.channel.mobileapp;
 
-import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
@@ -92,6 +91,7 @@ public class FirebaseChannelHandlerImpl implements FirebaseApplicationConfigurat
     private FirebaseOptions buildFirebaseOptions(CommunicationSpec.MobileApp config, InputStream privateKey) throws IOException {
 
         FirebaseOptions.Builder builder = FirebaseOptions.builder();
+        NetHttpTransport.Builder httpTransportBuilder = new NetHttpTransport.Builder();
 
         Optional.ofNullable(applicationProperties.getFirebase())
             .map(ApplicationProperties.Firebase::getProxy)
@@ -99,13 +99,13 @@ public class FirebaseChannelHandlerImpl implements FirebaseApplicationConfigurat
             .filter(p -> StringUtils.isNoneBlank(p.getPort()))
             .ifPresent(proxySettings -> {
                 log.info("Using proxy settings {}", proxySettings);
-                Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(
-                    proxySettings.getHost(), Integer.parseInt(proxySettings.getPort())));
-                HttpTransport httpTransport = new NetHttpTransport.Builder().setProxy(proxy).build();
-                builder.setHttpTransport(httpTransport);
+                httpTransportBuilder.setProxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress(
+                    proxySettings.getHost(), Integer.parseInt(proxySettings.getPort()))));
             });
 
-        builder.setCredentials(GoogleCredentials.fromStream(privateKey))
+        NetHttpTransport httpTransport = httpTransportBuilder.build();
+        builder.setHttpTransport(httpTransport)
+            .setCredentials(GoogleCredentials.fromStream(privateKey, () -> httpTransport))
             .setDatabaseUrl(config.getDatabaseUrl());
 
         return builder.build();
