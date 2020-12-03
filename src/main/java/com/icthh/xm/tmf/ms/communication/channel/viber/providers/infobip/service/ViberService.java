@@ -75,6 +75,11 @@ public class ViberService {
                     gson.toJson(MessageResponse.failed(communicationMessage, "error.system.sending.viber.gateway.internalError", String.format("Viber provider responded with %s http code", e.getRawStatusCode())))
                 );
             }
+        } catch (Exception e) {
+            kafkaTemplate.send(
+                applicationProperties.getMessaging().getSendFailedQueueName(),
+                gson.toJson(MessageResponse.failed(communicationMessage, "error.system.sending.viber.gateway.internalError", String.format("Viber provider internal error message: %s ", e.getMessage())))
+            );
         }
     }
 
