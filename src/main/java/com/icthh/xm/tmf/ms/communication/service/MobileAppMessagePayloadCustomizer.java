@@ -1,6 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Slf4j
+@LepService(group = "service")
 public class MobileAppMessagePayloadCustomizer {
 
     @LogicExtensionPoint("CustomizeMobileAppMessagePayload")
