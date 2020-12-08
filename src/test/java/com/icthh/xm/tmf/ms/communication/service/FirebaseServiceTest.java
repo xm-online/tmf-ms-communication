@@ -45,8 +45,11 @@ public class FirebaseServiceTest {
     private TenantContextHolder tenantContextHolder = mock(TenantContextHolder.class);
     private FirebaseApplicationConfigurationProvider configurationProvider =
         mock(FirebaseApplicationConfigurationProvider.class);
+    private MobileAppMessagePayloadCustomizer payloadCustomizerMock =
+        mock(MobileAppMessagePayloadCustomizer.class);
 
-    private FirebaseService firebaseService = new FirebaseService(configurationProvider, tenantContextHolder);
+    private FirebaseService firebaseService = new FirebaseService(configurationProvider,
+        tenantContextHolder, payloadCustomizerMock);
 
     @Test
     @SneakyThrows
