@@ -4,15 +4,13 @@ import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 /**
  * Allows to customize mobile application payload being sent to the mobile device
  */
-@Component
 @Slf4j
-@LepService(group = "service")
-public class MobileAppMessagePayloadCustomizer {
+@LepService(group = "service.mobileapp")
+public class MobileAppMessagePayloadCustomizationService {
 
     @LogicExtensionPoint("CustomizeMobileAppMessagePayload")
     public Map<String, String> customizePayload(Map<String, String> rawData) {

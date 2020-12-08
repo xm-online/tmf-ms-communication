@@ -48,7 +48,7 @@ public class FirebaseService {
 
     private final FirebaseApplicationConfigurationProvider firebaseApplicationConfigurationProvider;
     private final TenantContextHolder tenantContextHolder;
-    private final MobileAppMessagePayloadCustomizer payloadCustomizer;
+    private final MobileAppMessagePayloadCustomizationService payloadCustomizer;
 
     @SneakyThrows
     public CommunicationMessage sendPushNotification(CommunicationMessage message) {
