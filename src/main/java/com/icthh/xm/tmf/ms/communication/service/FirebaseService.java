@@ -51,7 +51,6 @@ public class FirebaseService {
     private final MobileAppMessagePayloadCustomizer payloadCustomizer;
 
     @SneakyThrows
-
     public CommunicationMessage sendPushNotification(CommunicationMessage message) {
         Assert.notNull(message, "Message is not specified");
 
