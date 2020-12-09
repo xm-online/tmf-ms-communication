@@ -54,11 +54,11 @@ public class FirebaseServiceTest {
     private TenantContextHolder tenantContextHolder = mock(TenantContextHolder.class);
     private FirebaseApplicationConfigurationProvider configurationProvider =
         mock(FirebaseApplicationConfigurationProvider.class);
-    private MobileAppMessagePayloadCustomizationService payloadCustomizerMock =
+    private MobileAppMessagePayloadCustomizationService payloadCustomizationServiceMock =
         mock(MobileAppMessagePayloadCustomizationService.class);
 
     private FirebaseService firebaseService = new FirebaseService(configurationProvider,
-        tenantContextHolder, payloadCustomizerMock);
+        tenantContextHolder, payloadCustomizationServiceMock);
 
     @Test
     @SneakyThrows
@@ -83,7 +83,7 @@ public class FirebaseServiceTest {
             HashMap<Object, Object> answer = new HashMap<>(invocation.getArgument(0));
             answer.put(CUSTOMIZED_KEY, CUSTOMIZED_VALUE);
             return answer;
-        }).when(payloadCustomizerMock).customizePayload(anyMap());
+        }).when(payloadCustomizationServiceMock).customizePayload(anyMap());
 
         CommunicationMessage message = new CommunicationMessage()
             .sender(new Sender()
