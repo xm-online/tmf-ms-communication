@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +48,7 @@ public class FirebaseService {
 
     private final FirebaseApplicationConfigurationProvider firebaseApplicationConfigurationProvider;
     private final TenantContextHolder tenantContextHolder;
+    private final MobileAppMessagePayloadCustomizationService payloadCustomizer;
 
     @SneakyThrows
     public CommunicationMessage sendPushNotification(CommunicationMessage message) {
@@ -94,7 +94,7 @@ public class FirebaseService {
             throw new BusinessException("error.fcm.receiver.count", "The number of receivers exceeds 500 allowed");
         }
 
-        Map<String, String> data = message.getCharacteristic().stream()
+        Map<String, String> rawData = message.getCharacteristic().stream()
             .collect(Collectors.toMap(CommunicationRequestCharacteristic::getName,
                 CommunicationRequestCharacteristic::getValue));
 
@@ -103,11 +103,11 @@ public class FirebaseService {
             .setNotification(Notification.builder()
                 .setBody(message.getContent())
                 .setTitle(message.getSubject())
-                .setImage(data.get(IMAGE))
+                .setImage(rawData.get(IMAGE))
                 .build())
-            .putAllData(data);
+            .putAllData(payloadCustomizer.customizePayload(rawData));
 
-        String badge = data.get(BADGE);
+        String badge = rawData.get(BADGE);
         if (badge != null) {
             int badgeIntValue = Integer.parseInt(badge);
 
