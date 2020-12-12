@@ -64,6 +64,8 @@ if (project.hasProperty("zipkin")) {
 idea {
     module {
         excludeDirs += files("node_modules")
+        downloadJavadoc = true
+        downloadSources = true
     }
 }
 
