@@ -40,6 +40,7 @@ import org.jsmpp.session.MessageReceiverListener;
 import org.jsmpp.session.SMPPSession;
 import org.jsmpp.session.Session;
 import org.jsmpp.util.AbsoluteTimeFormatter;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -93,7 +94,12 @@ public class SmppService {
         });
         session.addSessionStateListener((newState, oldState, source) -> {
             if (!newState.isBound()) {
-                getActualSession();
+                try{
+                    getActualSession();
+                }catch (Exception e){
+                    // we cannot recreate the session, so shutdown
+                    System.exit(-1);
+                }
             }
         });
         this.session = session;
