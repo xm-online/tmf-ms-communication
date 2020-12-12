@@ -37,6 +37,8 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
@@ -66,6 +68,9 @@ public class SmppMessagingHandlerTest {
     public static final String SUCCESS_DELIVERY = "delivery_success";
     public static final String FAILED_DELIVERY = "delivery_failed";
     public static final String MO_QUEUE = "MO-QUEUE";
+    public static final String OPTIONAL_CHARACTERISTIC_KEY = "OPTIONAL.6005";
+    public static final short OPTIONAL_KEY_SHORT = 6005;
+    public static final String OPTIONAL_VALUE = "30001";
 
     @InjectMocks
     private SmppMessagingHandler smppMessagingHandler;
@@ -144,11 +149,31 @@ public class SmppMessagingHandlerTest {
         assertThat(payload, equalTo(messageResponse));
     }
 
-    private void addDistributionId(CommunicationMessage message) {
-        message.setCharacteristic(new ArrayList<>());
-        CommunicationRequestCharacteristic distributionId = new CommunicationRequestCharacteristic().name(DISTRIBUTION_ID)
-                                                                                                     .value("TEST_D_ID");
-        message.getCharacteristic().add(distributionId);
+    public static CommunicationMessageCreate messageCreate() {
+        CommunicationMessageCreate message = new CommunicationMessageCreate();
+        Receiver receiver = new Receiver();
+        receiver.setPhoneNumber("PH");
+        receiver.setId("ID");
+        Sender sender = new Sender();
+        sender.setId("TestSender");
+        message.setSender(sender);
+        message.setContent("TestContext");
+        message.setReceiver(singletonList(receiver));
+        message.setType("SMS");
+        message.setCharacteristic(Lists.newArrayList(
+            new CommunicationRequestCharacteristic() {
+                {
+                    name(DELIVERY_REPORT);
+                    value("1");
+                }
+            },
+            new CommunicationRequestCharacteristic() {
+                {
+                    name(OPTIONAL_CHARACTERISTIC_KEY);
+                    value(OPTIONAL_VALUE);
+                }
+            }));
+        return message;
     }
 
     @Test
@@ -293,24 +318,12 @@ public class SmppMessagingHandlerTest {
         return message;
     }
 
-    public static CommunicationMessageCreate messageCreate() {
-        CommunicationMessageCreate message = new CommunicationMessageCreate();
-        Receiver receiver = new Receiver();
-        receiver.setPhoneNumber("PH");
-        receiver.setId("ID");
-        Sender sender = new Sender();
-        sender.setId("TestSender");
-        message.setSender(sender);
-        message.setContent("TestContext");
-        message.setReceiver(singletonList(receiver));
-        message.setType("SMS");
-        message.setCharacteristic(Lists.newArrayList(new CommunicationRequestCharacteristic() {
-            {
-                name(DELIVERY_REPORT);
-                value("1");
-            }
-        }));
-        return message;
+    @Test
+    public void communicationMessageCreateMappingTest() throws Exception {
+        CommunicationMessageCreate messageCreate = messageCreate();
+        smppMessagingHandler.handle(messageCreate);
+        verify(smppService).send(messageCreate.getReceiver().get(0).getPhoneNumber(), messageCreate.getContent(),
+            messageCreate.getSender().getId(), (byte) 1, Map.of(OPTIONAL_KEY_SHORT, OPTIONAL_VALUE));
     }
 
 }
