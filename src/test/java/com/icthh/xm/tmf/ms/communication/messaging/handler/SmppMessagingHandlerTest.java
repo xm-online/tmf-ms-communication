@@ -165,25 +165,11 @@ public class SmppMessagingHandlerTest {
 
     }
 
-    @SneakyThrows
-    private void failMessage(Exception e, String errorCode, String testMessage) {
-        when(smppService.send("PH", "TestContext", "TestSender", (byte) 1)).thenThrow(e);
-
-        smppMessagingHandler.handle(message());
-
-        MessageResponse messageResponse = new MessageResponse(FAILED, message());
-        messageResponse.setErrorCode(errorCode);
-        messageResponse.setErrorMessage(testMessage);
-
-        ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
-
-        verify(kafkaTemplate).send(eq(FAIL_SEND), argumentCaptor.capture());
-        MessageResponse payload = argumentCaptor.getValue();
-        payload.setId(null);
-        payload.setDistributionId(null);
-        messageResponse.setId(null);
-        messageResponse.setDistributionId(null);
-        assertThat(payload, equalTo(messageResponse));
+    private void addDistributionId(CommunicationMessage message) {
+        message.setCharacteristic(new ArrayList<>());
+        CommunicationRequestCharacteristic distributionId = new CommunicationRequestCharacteristic().name(DISTRIBUTION_ID)
+            .value("TEST_D_ID");
+        message.getCharacteristic().add(distributionId);
     }
 
     @Test
@@ -254,12 +240,26 @@ public class SmppMessagingHandlerTest {
         assertEquals(smppMessagingHandler.getDeliveryReport(message("bart").getCharacteristic()), (byte) 0);
     }
 
-    @Test
-    public void communicationMessageCreateMappingTest() throws Exception {
-        CommunicationMessageCreate messageCreate = messageCreate();
-        smppMessagingHandler.handle(messageCreate);
-        verify(smppService).send(messageCreate.getReceiver().get(0).getPhoneNumber(), messageCreate.getContent(),
-            messageCreate.getSender().getId(), (byte)1);
+    @SneakyThrows
+    private void failMessage(Exception e, String errorCode, String testMessage) {
+        when(smppService.send("PH", "TestContext", "TestSender", (byte) 1, Collections.emptyMap()))
+            .thenThrow(e);
+
+        smppMessagingHandler.handle(message());
+
+        MessageResponse messageResponse = new MessageResponse(FAILED, message());
+        messageResponse.setErrorCode(errorCode);
+        messageResponse.setErrorMessage(testMessage);
+
+        ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
+
+        verify(kafkaTemplate).send(eq(FAIL_SEND), argumentCaptor.capture());
+        MessageResponse payload = argumentCaptor.getValue();
+        payload.setId(null);
+        payload.setDistributionId(null);
+        messageResponse.setId(null);
+        messageResponse.setDistributionId(null);
+        assertThat(payload, equalTo(messageResponse));
     }
 
     public static CommunicationMessage message(String deliveryValue) {

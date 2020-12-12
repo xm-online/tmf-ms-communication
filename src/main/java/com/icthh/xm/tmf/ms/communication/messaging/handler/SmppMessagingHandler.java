@@ -1,5 +1,9 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.failed;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.success;
+import static java.util.stream.Collectors.toList;
+
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Messaging;
@@ -11,6 +15,12 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -21,14 +31,6 @@ import org.jsmpp.extra.ResponseTimeoutException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
-import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.failed;
-import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.success;
-import static java.util.stream.Collectors.toList;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -37,6 +39,7 @@ public class SmppMessagingHandler implements BasicMessageHandler {
     public static final String ERROR_PROCESS_COMMUNICATION_MESSAGE = "Error process communicationMessage ";
     public static final String ERROR_BUSINESS_RULE_VALIDATION = "Error business rule validation";
     public static final String DELIVERY_REPORT = "DELIVERY.REPORT";
+    public static final String OPTIONAL_PARAMETER_PREFIX = "OPTIONAL.";
 
     private final KafkaTemplate<String, Object> channelResolver;
     private final SmppService smppService;
@@ -89,10 +92,22 @@ public class SmppMessagingHandler implements BasicMessageHandler {
             return;
         }
         String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId(),
-            getDeliveryReport(message.getCharacteristic()));
+            getDeliveryReport(message.getCharacteristic()), buildOptionalParameters(message));
         String queueName = messaging.getSentQueueName();
         sendMessage(success(messageId, message), queueName);
         log.info("Message success sent to {}", queueName);
+    }
+
+    private Map<Short, String> buildOptionalParameters(CommunicationMessage message) {
+        return Optional.ofNullable(message.getCharacteristic())
+            .map(characteristics -> characteristics.stream()
+                .filter(Objects::nonNull)
+                .filter(c -> Objects.nonNull(c.getName()))
+                .filter(ch -> ch.getName().startsWith(OPTIONAL_PARAMETER_PREFIX))
+                .collect(Collectors.toMap(
+                    ch -> Short.parseShort(ch.getName().substring(OPTIONAL_PARAMETER_PREFIX.length())),
+                    CommunicationRequestCharacteristic::getValue)))
+            .orElse(Collections.emptyMap());
     }
 
     private void failMessage(CommunicationMessage communicationMessage, String code, String message) {
