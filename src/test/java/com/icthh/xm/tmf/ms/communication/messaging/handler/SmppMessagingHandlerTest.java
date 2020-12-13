@@ -13,6 +13,9 @@ import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyByte;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -71,6 +74,7 @@ public class SmppMessagingHandlerTest {
     public static final String OPTIONAL_CHARACTERISTIC_KEY = "OPTIONAL.6005";
     public static final short OPTIONAL_KEY_SHORT = 6005;
     public static final String OPTIONAL_VALUE = "30001";
+    public static final String MESSAGE_ID = "message-id";
 
     @InjectMocks
     private SmppMessagingHandler smppMessagingHandler;
@@ -116,7 +120,11 @@ public class SmppMessagingHandlerTest {
     }
 
     @Test
+    @SneakyThrows
     public void receiveMessageSuccessTest() {
+        when(smppService.send(anyString(), anyString(), anyString(), anyByte(), anyMap()))
+            .thenReturn(MESSAGE_ID);
+
         smppMessagingHandler.handle(message());
 
         MessageResponse messageResponse = new MessageResponse(SUCCESS, message());
@@ -128,6 +136,13 @@ public class SmppMessagingHandlerTest {
         payload.setDistributionId(null);
         messageResponse.setId(null);
         messageResponse.setDistributionId(null);
+        messageResponse.setMessageId(MESSAGE_ID);
+        messageResponse.getResponseTo().getCharacteristic().add(new CommunicationRequestCharacteristic() {
+            {
+                name("MESSAGE.ID");
+                value(MESSAGE_ID);
+            }
+        });
         assertThat(payload, equalTo(messageResponse));
     }
 

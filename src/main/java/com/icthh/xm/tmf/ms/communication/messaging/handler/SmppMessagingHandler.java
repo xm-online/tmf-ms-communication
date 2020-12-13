@@ -40,6 +40,7 @@ public class SmppMessagingHandler implements BasicMessageHandler {
     public static final String ERROR_BUSINESS_RULE_VALIDATION = "Error business rule validation";
     public static final String DELIVERY_REPORT = "DELIVERY.REPORT";
     public static final String OPTIONAL_PARAMETER_PREFIX = "OPTIONAL.";
+    public static final String MESSAGE_ID = "MESSAGE.ID";
 
     private final KafkaTemplate<String, Object> channelResolver;
     private final SmppService smppService;
@@ -53,7 +54,8 @@ public class SmppMessagingHandler implements BasicMessageHandler {
         List<String> phoneNumbers = message.getReceiver().stream().map(Receiver::getPhoneNumber).collect(toList());
         for (String phoneNumber : phoneNumbers) {
             try {
-                sendSmppMessage(message, messaging, phoneNumber);
+                String messageId = sendSmppMessage(message, messaging, phoneNumber);
+                message.getCharacteristic().add(buildMessageIdCharacteristic(messageId));
             } catch (NegativeResponseException e) {
                 log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
                 failMessage(message, "error.system.sending.smpp." + e.getCommandStatus(), e.getMessage());
@@ -77,6 +79,13 @@ public class SmppMessagingHandler implements BasicMessageHandler {
         return message;
     }
 
+    private CommunicationRequestCharacteristic buildMessageIdCharacteristic(String messageId) {
+        CommunicationRequestCharacteristic characteristic = new CommunicationRequestCharacteristic();
+        characteristic.setName(MESSAGE_ID);
+        characteristic.setValue(messageId);
+        return characteristic;
+    }
+
     @Override
     public CommunicationMessage handle(CommunicationMessageCreate messageCreate) {
         CommunicationMessage communicationMessage = mapper.messageCreateToMessage(messageCreate);
@@ -84,18 +93,19 @@ public class SmppMessagingHandler implements BasicMessageHandler {
         return communicationMessage;
     }
 
-    private void sendSmppMessage(CommunicationMessage message, Messaging messaging,
-                                 String phoneNumber) throws Exception {
+    private String sendSmppMessage(CommunicationMessage message, Messaging messaging,
+                                   String phoneNumber) throws Exception {
         RuleResponse ruleResponse = businessRuleValidator.validate(message);
         if (!ruleResponse.isSuccess()) {
             failMessage(message, ruleResponse.getResponseCode(), ERROR_BUSINESS_RULE_VALIDATION);
-            return;
+            return phoneNumber;
         }
         String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId(),
             getDeliveryReport(message.getCharacteristic()), buildOptionalParameters(message));
         String queueName = messaging.getSentQueueName();
         sendMessage(success(messageId, message), queueName);
-        log.info("Message success sent to {}", queueName);
+        log.info("Message success sent to {}, messageId {}", queueName, messageId);
+        return messageId;
     }
 
     private Map<Short, String> buildOptionalParameters(CommunicationMessage message) {
