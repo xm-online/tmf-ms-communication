@@ -98,6 +98,7 @@ public class SmppService {
                     getActualSession();
                 }catch (Exception e){
                     // we cannot recreate the session, so shutdown
+                    log.error("Cannot recreate connection to the smscenter, shutdown", e);
                     System.exit(-1);
                 }
             }
