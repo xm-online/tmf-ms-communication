@@ -41,6 +41,7 @@ public class SmppMessagingHandler implements BasicMessageHandler {
     public static final String DELIVERY_REPORT = "DELIVERY.REPORT";
     public static final String OPTIONAL_PARAMETER_PREFIX = "OPTIONAL.";
     public static final String MESSAGE_ID = "MESSAGE.ID";
+    public static final String VALIDITY_PERIOD = "VALIDITY.PERIOD";
 
     private final KafkaTemplate<String, Object> channelResolver;
     private final SmppService smppService;
@@ -101,11 +102,21 @@ public class SmppMessagingHandler implements BasicMessageHandler {
             return phoneNumber;
         }
         String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId(),
-            getDeliveryReport(message.getCharacteristic()), buildOptionalParameters(message));
+            getDeliveryReport(message.getCharacteristic()), buildOptionalParameters(message),
+            getValidityPeriod(message.getCharacteristic()));
         String queueName = messaging.getSentQueueName();
         sendMessage(success(messageId, message), queueName);
         log.info("Message success sent to {}, messageId {}", queueName, messageId);
         return messageId;
+    }
+
+    private String getValidityPeriod(List<CommunicationRequestCharacteristic> characteristic) {
+        return Optional.ofNullable(characteristic)
+            .flatMap(c -> c.stream()
+                .filter(ch -> VALIDITY_PERIOD.equals(ch.getName()))
+                .findFirst()
+                .map(CommunicationRequestCharacteristic::getValue))
+            .orElse(null);
     }
 
     private Map<Short, String> buildOptionalParameters(CommunicationMessage message) {

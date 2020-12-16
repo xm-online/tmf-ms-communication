@@ -93,7 +93,7 @@ public class SmppService {
     }
 
     public String send(String destAddrs, String message, String senderId, byte deliveryReport, Map<Short,
-        String> optionalParameters) throws PDUException, IOException,
+        String> optionalParameters, String validityPeriod) throws PDUException, IOException,
         InvalidResponseException,
         NegativeResponseException,
         ResponseTimeoutException {
@@ -123,7 +123,7 @@ public class SmppService {
             (byte) smpp.getProtocolId(),
             (byte) smpp.getPriorityFlag(),
             timeFormatter.format(new Date()),
-            smpp.getValidityPeriod(),
+            validityPeriod != null ? validityPeriod : smpp.getValidityPeriod(),
             new RegisteredDelivery(deliveryReport),
             (byte) smpp.getReplaceIfPresentFlag(), dataCoding,
             (byte) smpp.getSmDefaultMsgId(),
