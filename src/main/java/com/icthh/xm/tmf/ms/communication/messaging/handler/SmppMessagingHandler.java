@@ -41,6 +41,7 @@ public class SmppMessagingHandler implements BasicMessageHandler {
     public static final String DELIVERY_REPORT = "DELIVERY.REPORT";
     public static final String OPTIONAL_PARAMETER_PREFIX = "OPTIONAL.";
     public static final String MESSAGE_ID = "MESSAGE.ID";
+    public static final String ERROR_CODE = "ERROR.CODE";
     public static final String VALIDITY_PERIOD = "VALIDITY.PERIOD";
 
     private final KafkaTemplate<String, Object> channelResolver;
@@ -51,15 +52,16 @@ public class SmppMessagingHandler implements BasicMessageHandler {
 
     @Override
     public CommunicationMessage handle(CommunicationMessage message) {
-        Messaging messaging = applicationProperties.getMessaging();
+            Messaging messaging = applicationProperties.getMessaging();
         List<String> phoneNumbers = message.getReceiver().stream().map(Receiver::getPhoneNumber).collect(toList());
         for (String phoneNumber : phoneNumbers) {
             try {
                 String messageId = sendSmppMessage(message, messaging, phoneNumber);
-                message.getCharacteristic().add(buildMessageIdCharacteristic(messageId));
+                message.getCharacteristic().add(buildCharacteristic(MESSAGE_ID, messageId));
             } catch (NegativeResponseException e) {
                 log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
                 failMessage(message, "error.system.sending.smpp." + e.getCommandStatus(), e.getMessage());
+                message.getCharacteristic().add(buildCharacteristic(ERROR_CODE, String.valueOf(e.getCommandStatus())));
             } catch (InvalidResponseException e) {
                 log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
                 failMessage(message, "error.system.sending.invalidResponse", e.getMessage());
@@ -80,10 +82,10 @@ public class SmppMessagingHandler implements BasicMessageHandler {
         return message;
     }
 
-    private CommunicationRequestCharacteristic buildMessageIdCharacteristic(String messageId) {
+    private CommunicationRequestCharacteristic buildCharacteristic(String key, String value) {
         CommunicationRequestCharacteristic characteristic = new CommunicationRequestCharacteristic();
-        characteristic.setName(MESSAGE_ID);
-        characteristic.setValue(messageId);
+        characteristic.setName(key);
+        characteristic.setValue(value);
         return characteristic;
     }
 
