@@ -6,6 +6,7 @@ import static org.jsmpp.bean.Alphabet.ALPHA_DEFAULT;
 import static org.jsmpp.bean.Alphabet.ALPHA_UCS2;
 import static org.jsmpp.bean.OptionalParameter.Tag.MESSAGE_PAYLOAD;
 
+import com.google.common.primitives.Ints;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Smpp;
@@ -92,17 +93,29 @@ public class SmppService {
         }
     }
 
+    /**
+     * Send a message
+     *
+     * @param destAddrs          destination number
+     * @param message            text message
+     * @param senderId           sender number or alpha-name
+     * @param optionalParameters optional parameters, key - parameter tag, value - parameter value
+     * @param validityPeriod     a number of seconds a message is valid.
+     *                           If is not delivered in this period will get EXPIRED delivery state
+     * @return message id
+     */
     public String send(String destAddrs, String message, String senderId, byte deliveryReport, Map<Short,
-        String> optionalParameters, String validityPeriod) throws PDUException, IOException,
+        String> optionalParameters, Integer validityPeriod) throws PDUException, IOException,
         InvalidResponseException,
         NegativeResponseException,
         ResponseTimeoutException {
 
         Smpp smpp = appProps.getSmpp();
 
-        DataCoding dataCoding = getDataConding(message);
-        log.info("Start send message from: {} to: {} with encoding [{}] and content.size: {}", senderId, destAddrs,
-            dataCoding, message.length());
+        DataCoding dataCoding = getDataCoding(message);
+        log.info("Start send message from: {} to: {} with encoding [{}] and content.size: {}, " +
+                "optional parameters: {}, validity period: {}", senderId, destAddrs,
+            dataCoding, message.length(), optionalParameters, validityPeriod);
 
         List<OctetString> optional = optionalParameters.entrySet().stream()
             .map(e -> new OctetString(e.getKey(), e.getValue()))
@@ -111,6 +124,7 @@ public class SmppService {
 
         SMPPSession session = getActualSession();
 
+        Date scheduleDeliveryTime = new Date();
         String messageId = session.submitShortMessage(
             smpp.getServiceType(),
             smpp.getSourceAddrTon(),
@@ -122,8 +136,9 @@ public class SmppService {
             new ESMClass(),
             (byte) smpp.getProtocolId(),
             (byte) smpp.getPriorityFlag(),
-            timeFormatter.format(new Date()),
-            validityPeriod != null ? validityPeriod : smpp.getValidityPeriod(),
+            timeFormatter.format(scheduleDeliveryTime),
+            validityPeriodOrDefault(validityPeriod, scheduleDeliveryTime,
+                Ints.tryParse(smpp.getValidityPeriod())),
             new RegisteredDelivery(deliveryReport),
             (byte) smpp.getReplaceIfPresentFlag(), dataCoding,
             (byte) smpp.getSmDefaultMsgId(),
@@ -135,10 +150,23 @@ public class SmppService {
 
     }
 
-    private DataCoding getDataConding(String message) {
-        DataCoding alphaConding = createEncoding(ALPHA_DEFAULT, appProps.getSmpp().getAlphaEncoding());
-        DataCoding cyrillicConding = createEncoding(ALPHA_UCS2, appProps.getSmpp().getNotAlphaEncoding());
-        return isAlpha(message) ? alphaConding : cyrillicConding;
+    private String validityPeriodOrDefault(Integer requestedValidityPeriod,
+                                           Date scheduleDeliveryTime, Integer defaultValidityPeriod) {
+        Integer period = requestedValidityPeriod != null
+            ? requestedValidityPeriod
+            : defaultValidityPeriod;
+
+        if (period != null) {
+            return timeFormatter.format(new Date(scheduleDeliveryTime.getTime() + period * 1000));
+        } else {
+            return null;
+        }
+    }
+
+    private DataCoding getDataCoding(String message) {
+        return isAlpha(message)
+            ? createEncoding(ALPHA_DEFAULT, appProps.getSmpp().getAlphaEncoding())
+            : createEncoding(ALPHA_UCS2, appProps.getSmpp().getNotAlphaEncoding());
     }
 
     private DataCoding createEncoding(Alphabet defaultEncoding, Byte encoding) {

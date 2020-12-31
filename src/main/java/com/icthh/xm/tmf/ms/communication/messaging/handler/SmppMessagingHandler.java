@@ -4,6 +4,7 @@ import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.failed;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.success;
 import static java.util.stream.Collectors.toList;
 
+import com.google.common.primitives.Ints;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Messaging;
@@ -112,12 +113,13 @@ public class SmppMessagingHandler implements BasicMessageHandler {
         return messageId;
     }
 
-    private String getValidityPeriod(List<CommunicationRequestCharacteristic> characteristic) {
+    private Integer getValidityPeriod(List<CommunicationRequestCharacteristic> characteristic) {
         return Optional.ofNullable(characteristic)
             .flatMap(c -> c.stream()
                 .filter(ch -> VALIDITY_PERIOD.equals(ch.getName()))
                 .findFirst()
                 .map(CommunicationRequestCharacteristic::getValue))
+                .map(Ints::tryParse)
             .orElse(null);
     }
 
