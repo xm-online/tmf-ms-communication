@@ -6,7 +6,6 @@ import static org.jsmpp.bean.Alphabet.ALPHA_DEFAULT;
 import static org.jsmpp.bean.Alphabet.ALPHA_UCS2;
 import static org.jsmpp.bean.OptionalParameter.Tag.MESSAGE_PAYLOAD;
 
-import com.google.common.primitives.Ints;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Smpp;
@@ -138,7 +137,7 @@ public class SmppService {
             (byte) smpp.getPriorityFlag(),
             timeFormatter.format(scheduleDeliveryTime),
             validityPeriodOrDefault(validityPeriod, scheduleDeliveryTime,
-                Ints.tryParse(smpp.getValidityPeriod())),
+                tryParse(smpp.getValidityPeriod())),
             new RegisteredDelivery(deliveryReport),
             (byte) smpp.getReplaceIfPresentFlag(), dataCoding,
             (byte) smpp.getSmDefaultMsgId(),
@@ -148,6 +147,14 @@ public class SmppService {
         log.info("Message submitted, message_id is {}", messageId);
         return messageId;
 
+    }
+
+    private Integer tryParse(String text) {
+        try {
+            return Integer.parseInt(text);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     private String validityPeriodOrDefault(Integer requestedValidityPeriod,
