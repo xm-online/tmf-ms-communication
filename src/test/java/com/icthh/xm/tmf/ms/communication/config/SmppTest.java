@@ -49,7 +49,7 @@ public class SmppTest {
     @SneakyThrows
     public void testSendingSms() {
         String messageId = service.send("+380636666666", "test", "1616",
-            SUCCESS_FAILURE.value(), Collections.emptyMap(), null);
+            SUCCESS_FAILURE.value(), Collections.emptyMap(), null, null);
         assertNotNull(messageId);
     }
 

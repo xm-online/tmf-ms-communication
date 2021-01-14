@@ -101,10 +101,11 @@ public class SmppService {
      * @param optionalParameters optional parameters, key - parameter tag, value - parameter value
      * @param validityPeriod     a number of seconds a message is valid.
      *                           If is not delivered in this period will get EXPIRED delivery state
+     * @param protocolId
      * @return message id
      */
     public String send(String destAddrs, String message, String senderId, byte deliveryReport, Map<Short,
-        String> optionalParameters, Integer validityPeriod) throws PDUException, IOException,
+        String> optionalParameters, Integer validityPeriod, Integer protocolId) throws PDUException, IOException,
         InvalidResponseException,
         NegativeResponseException,
         ResponseTimeoutException {
@@ -133,7 +134,7 @@ public class SmppService {
             smpp.getDestAddrNpi(),
             destAddrs,
             new ESMClass(),
-            (byte) smpp.getProtocolId(),
+            (byte) (protocolId != null ? protocolId : smpp.getProtocolId()),
             (byte) smpp.getPriorityFlag(),
             timeFormatter.format(scheduleDeliveryTime),
             validityPeriodOrDefault(validityPeriod, scheduleDeliveryTime,

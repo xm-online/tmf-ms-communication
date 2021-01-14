@@ -122,7 +122,8 @@ public class SmppMessagingHandlerTest {
     @Test
     @SneakyThrows
     public void receiveMessageSuccessTest() {
-        when(smppService.send(anyString(), anyString(), anyString(), anyByte(), anyMap(), null))
+        when(smppService.send(anyString(), anyString(), anyString(), anyByte(),
+            anyMap(), null, null))
             .thenReturn(MESSAGE_ID);
 
         smppMessagingHandler.handle(message());
@@ -282,7 +283,8 @@ public class SmppMessagingHandlerTest {
 
     @SneakyThrows
     private void failMessage(Exception e, String errorCode, String testMessage) {
-        when(smppService.send("PH", "TestContext", "TestSender", (byte) 1, Collections.emptyMap(), null))
+        when(smppService.send("PH", "TestContext", "TestSender",
+            (byte) 1, Collections.emptyMap(), null, null))
             .thenThrow(e);
 
         smppMessagingHandler.handle(message());
@@ -338,7 +340,7 @@ public class SmppMessagingHandlerTest {
         CommunicationMessageCreate messageCreate = messageCreate();
         smppMessagingHandler.handle(messageCreate);
         verify(smppService).send(messageCreate.getReceiver().get(0).getPhoneNumber(), messageCreate.getContent(),
-            messageCreate.getSender().getId(), (byte) 1, Map.of(OPTIONAL_KEY_SHORT, OPTIONAL_VALUE), null);
+            messageCreate.getSender().getId(), (byte) 1, Map.of(OPTIONAL_KEY_SHORT, OPTIONAL_VALUE), null, null);
     }
 
 }

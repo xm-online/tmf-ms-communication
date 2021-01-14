@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +45,7 @@ public class SmppMessagingHandler implements BasicMessageHandler {
     public static final String MESSAGE_ID = "MESSAGE.ID";
     public static final String ERROR_CODE = "ERROR.CODE";
     public static final String VALIDITY_PERIOD = "VALIDITY.PERIOD";
+    public static final String PROTOCOL_ID = "PROTOCOL.ID";
 
     private final KafkaTemplate<String, Object> channelResolver;
     private final SmppService smppService;
@@ -106,21 +108,13 @@ public class SmppMessagingHandler implements BasicMessageHandler {
         }
         String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId(),
             getDeliveryReport(message.getCharacteristic()), buildOptionalParameters(message),
-            getValidityPeriod(message.getCharacteristic()));
+            getFromCharacteristics(message.getCharacteristic(), VALIDITY_PERIOD, Ints::tryParse),
+            getFromCharacteristics(message.getCharacteristic(), PROTOCOL_ID, Ints::tryParse)
+        );
         String queueName = messaging.getSentQueueName();
         sendMessage(success(messageId, message), queueName);
         log.info("Message success sent to {}, messageId {}", queueName, messageId);
         return messageId;
-    }
-
-    private Integer getValidityPeriod(List<CommunicationRequestCharacteristic> characteristic) {
-        return Optional.ofNullable(characteristic)
-            .flatMap(c -> c.stream()
-                .filter(ch -> VALIDITY_PERIOD.equals(ch.getName()))
-                .findFirst()
-                .map(CommunicationRequestCharacteristic::getValue))
-                .map(Ints::tryParse)
-            .orElse(null);
     }
 
     private Map<Short, String> buildOptionalParameters(CommunicationMessage message) {
@@ -144,6 +138,17 @@ public class SmppMessagingHandler implements BasicMessageHandler {
 
     private void sendMessage(MessageResponse messageResponse, String topic) {
         channelResolver.send(topic, messageResponse);
+    }
+
+    private Integer getFromCharacteristics(List<CommunicationRequestCharacteristic> characteristic,
+                                           String key, Function<String, Integer> parseFunction) {
+        return Optional.ofNullable(characteristic)
+            .flatMap(c -> c.stream()
+                .filter(ch -> key.equals(ch.getName()))
+                .findFirst()
+                .map(CommunicationRequestCharacteristic::getValue))
+            .map(parseFunction)
+            .orElse(null);
     }
 
     byte getDeliveryReport(List<CommunicationRequestCharacteristic> characteristics) {
