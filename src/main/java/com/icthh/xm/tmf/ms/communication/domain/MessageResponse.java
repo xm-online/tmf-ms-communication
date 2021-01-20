@@ -1,15 +1,12 @@
 package com.icthh.xm.tmf.ms.communication.domain;
 
-import static com.google.common.base.Predicates.not;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
 import static java.util.Collections.emptyList;
 
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
-import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import lombok.Data;

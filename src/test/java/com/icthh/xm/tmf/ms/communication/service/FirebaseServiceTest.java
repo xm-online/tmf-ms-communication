@@ -151,11 +151,7 @@ public class FirebaseServiceTest {
                         .appUserId("app-user-id")
                     )
                 )
-                .characteristic(List.of(
-                    new CommunicationRequestCharacteristic()
-                        .name("custom-name")
-                        .value("custom-value")
-                )));
+                .characteristic(null));
             fail();
         } catch (BusinessException e) {
             //then:

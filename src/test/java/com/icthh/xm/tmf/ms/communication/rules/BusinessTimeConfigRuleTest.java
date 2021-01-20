@@ -1,5 +1,29 @@
 package com.icthh.xm.tmf.ms.communication.rules;
 
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ERROR_BUSINESS_RULE_VALIDATION;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ERROR_CODE;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandlerTest.FAIL_SEND;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandlerTest.SUCCESS_SENT;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandlerTest.createApplicationProperties;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandlerTest.message;
+import static java.nio.charset.Charset.defaultCharset;
+import static java.time.LocalDate.parse;
+import static java.time.LocalTime.MAX;
+import static java.time.LocalTime.MIN;
+import static java.time.LocalTime.of;
+import static java.util.Collections.singletonList;
+import static java.util.Objects.requireNonNull;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
 import com.icthh.xm.commons.config.client.config.XmConfigProperties;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
@@ -12,6 +36,10 @@ import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessTimeRule;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -25,25 +53,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.util.List;
-
-import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
-import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ERROR_BUSINESS_RULE_VALIDATION;
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandlerTest.*;
-import static java.nio.charset.Charset.defaultCharset;
-import static java.time.LocalDate.parse;
-import static java.time.LocalTime.*;
-import static java.util.Collections.singletonList;
-import static java.util.Objects.requireNonNull;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 @Slf4j
 @RunWith(SpringRunner.class)
@@ -196,6 +205,9 @@ public class BusinessTimeConfigRuleTest {
         payload.setDistributionId(null);
         messageResponse.setId(null);
         messageResponse.setDistributionId(null);
+        messageResponse.getResponseTo().getCharacteristic().add(new CommunicationRequestCharacteristic()
+            .name(ERROR_CODE)
+            .value("error.business.sending.notBusinessTime"));
         assertThat(payload, equalTo(messageResponse));
     }
 

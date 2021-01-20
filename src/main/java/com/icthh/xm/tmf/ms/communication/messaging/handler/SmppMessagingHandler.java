@@ -60,11 +60,16 @@ public class SmppMessagingHandler implements BasicMessageHandler {
         for (String phoneNumber : phoneNumbers) {
             try {
                 String messageId = sendSmppMessage(message, messaging, phoneNumber);
-                message.getCharacteristic().add(buildCharacteristic(MESSAGE_ID, messageId));
+                addCharacteristic(message, MESSAGE_ID, messageId);
+            } catch (RuleValidationException e) {
+                String responseCode = e.getRuleResponse().getResponseCode();
+                log.error(ERROR_BUSINESS_RULE_VALIDATION + ", responseCode: " + responseCode);
+                failMessage(message, responseCode, ERROR_BUSINESS_RULE_VALIDATION);
+                addCharacteristic(message, ERROR_CODE, String.valueOf(responseCode));
             } catch (NegativeResponseException e) {
                 log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
                 failMessage(message, "error.system.sending.smpp." + e.getCommandStatus(), e.getMessage());
-                message.getCharacteristic().add(buildCharacteristic(ERROR_CODE, String.valueOf(e.getCommandStatus())));
+                addCharacteristic(message, ERROR_CODE, String.valueOf(e.getCommandStatus()));
             } catch (InvalidResponseException e) {
                 log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
                 failMessage(message, "error.system.sending.invalidResponse", e.getMessage());
@@ -85,6 +90,10 @@ public class SmppMessagingHandler implements BasicMessageHandler {
         return message;
     }
 
+    private boolean addCharacteristic(CommunicationMessage message, String errorCode, String s) {
+        return message.getCharacteristic().add(buildCharacteristic(errorCode, s));
+    }
+
     private CommunicationRequestCharacteristic buildCharacteristic(String key, String value) {
         CommunicationRequestCharacteristic characteristic = new CommunicationRequestCharacteristic();
         characteristic.setName(key);
@@ -103,9 +112,9 @@ public class SmppMessagingHandler implements BasicMessageHandler {
                                    String phoneNumber) throws Exception {
         RuleResponse ruleResponse = businessRuleValidator.validate(message);
         if (!ruleResponse.isSuccess()) {
-            failMessage(message, ruleResponse.getResponseCode(), ERROR_BUSINESS_RULE_VALIDATION);
-            return phoneNumber;
+            throw new RuleValidationException(ruleResponse);
         }
+
         String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId(),
             getDeliveryReport(message.getCharacteristic()), buildOptionalParameters(message),
             getFromCharacteristics(message.getCharacteristic(), VALIDITY_PERIOD, Ints::tryParse),

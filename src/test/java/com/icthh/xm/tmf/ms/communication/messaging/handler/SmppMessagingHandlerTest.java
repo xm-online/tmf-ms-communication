@@ -5,6 +5,8 @@ import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.DISTRIBUT
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
 import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.DELIVERY_REPORT;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ERROR_CODE;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.MESSAGE_ID;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.UTF_16;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -40,6 +42,7 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -74,7 +77,7 @@ public class SmppMessagingHandlerTest {
     public static final String OPTIONAL_CHARACTERISTIC_KEY = "OPTIONAL.6005";
     public static final short OPTIONAL_KEY_SHORT = 6005;
     public static final String OPTIONAL_VALUE = "30001";
-    public static final String MESSAGE_ID = "message-id";
+    public static final String MESSAGE_ID_VALUE = "message-id";
 
     @InjectMocks
     private SmppMessagingHandler smppMessagingHandler;
@@ -123,8 +126,8 @@ public class SmppMessagingHandlerTest {
     @SneakyThrows
     public void receiveMessageSuccessTest() {
         when(smppService.send(anyString(), anyString(), anyString(), anyByte(),
-            anyMap(), null, null))
-            .thenReturn(MESSAGE_ID);
+            anyMap(), any(), any()))
+            .thenReturn(MESSAGE_ID_VALUE);
 
         smppMessagingHandler.handle(message());
 
@@ -137,29 +140,34 @@ public class SmppMessagingHandlerTest {
         payload.setDistributionId(null);
         messageResponse.setId(null);
         messageResponse.setDistributionId(null);
-        messageResponse.setMessageId(MESSAGE_ID);
-        messageResponse.getResponseTo().getCharacteristic().add(new CommunicationRequestCharacteristic() {
-            {
-                name("MESSAGE.ID");
-                value(MESSAGE_ID);
-            }
-        });
+        messageResponse.setMessageId(MESSAGE_ID_VALUE);
+        messageResponse.getResponseTo().getCharacteristic().add(new CommunicationRequestCharacteristic()
+            .name(MESSAGE_ID)
+            .value(MESSAGE_ID_VALUE));
         assertThat(payload, equalTo(messageResponse));
     }
 
     @Test
+    @SneakyThrows
     public void receiveMessageSuccessWithDistributionIdTest() {
+        when(smppService.send("PH", "TestContext", "TestSender",
+            (byte) 0, Collections.emptyMap(), null, null))
+            .thenReturn(MESSAGE_ID_VALUE);
         CommunicationMessage message = message();
         addDistributionId(message);
         smppMessagingHandler.handle(message);
 
         CommunicationMessage assertMessage = message();
         addDistributionId(assertMessage);
+        assertMessage.getCharacteristic().add(new CommunicationRequestCharacteristic()
+            .name(MESSAGE_ID)
+            .value(MESSAGE_ID_VALUE));
         MessageResponse messageResponse = new MessageResponse(SUCCESS, assertMessage);
+        messageResponse.setMessageId(MESSAGE_ID_VALUE);
 
         ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
         verify(kafkaTemplate).send(eq(SUCCESS_SENT), argumentCaptor.capture());
-        MessageResponse payload = (MessageResponse) argumentCaptor.getValue();
+        MessageResponse payload = argumentCaptor.getValue();
         assertThat(payload.getId(), equalTo("TEST_D_ID-SMS-ID"));
         assertThat(payload.getDistributionId(), equalTo("TEST_D_ID"));
         assertThat(payload, equalTo(messageResponse));
@@ -202,15 +210,18 @@ public class SmppMessagingHandlerTest {
         reset(smppService, kafkaTemplate);
         failMessage(new PDUException("TestMessage"), "error.system.sending.pdu", "TestMessage");
         reset(smppService, kafkaTemplate);
-        failMessage(new NegativeResponseException(20), "error.system.sending.smpp.20", "Negative response 00000014 (Message Queue Full) found");
-
+        failMessage(new NegativeResponseException(20), "error.system.sending.smpp.20", "Negative response 00000014 (Message Queue Full) found",
+            new CommunicationRequestCharacteristic()
+                .name(ERROR_CODE)
+                .value("20")
+        );
     }
 
     private void addDistributionId(CommunicationMessage message) {
         message.setCharacteristic(new ArrayList<>());
-        CommunicationRequestCharacteristic distributionId = new CommunicationRequestCharacteristic().name(DISTRIBUTION_ID)
-            .value("TEST_D_ID");
-        message.getCharacteristic().add(distributionId);
+        message.getCharacteristic().add(new CommunicationRequestCharacteristic()
+            .name(DISTRIBUTION_ID)
+            .value("TEST_D_ID"));
     }
 
     @Test
@@ -282,7 +293,8 @@ public class SmppMessagingHandlerTest {
     }
 
     @SneakyThrows
-    private void failMessage(Exception e, String errorCode, String testMessage) {
+    private void failMessage(Exception e, String errorCode, String testMessage,
+                             CommunicationRequestCharacteristic...additionalCharacteristics) {
         when(smppService.send("PH", "TestContext", "TestSender",
             (byte) 1, Collections.emptyMap(), null, null))
             .thenThrow(e);
@@ -301,6 +313,11 @@ public class SmppMessagingHandlerTest {
         payload.setDistributionId(null);
         messageResponse.setId(null);
         messageResponse.setDistributionId(null);
+
+        if (additionalCharacteristics != null) {
+            messageResponse.getResponseTo().getCharacteristic().addAll(Arrays.asList(additionalCharacteristics));
+        }
+
         assertThat(payload, equalTo(messageResponse));
     }
 

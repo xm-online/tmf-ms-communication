@@ -134,7 +134,7 @@ public class SmppService {
             smpp.getDestAddrNpi(),
             destAddrs,
             new ESMClass(),
-            (byte) (protocolId != null ? protocolId : smpp.getProtocolId()),
+            (protocolId != null ? protocolId.byteValue() : (byte) smpp.getProtocolId()),
             (byte) smpp.getPriorityFlag(),
             timeFormatter.format(scheduleDeliveryTime),
             validityPeriodOrDefault(validityPeriod, scheduleDeliveryTime,
