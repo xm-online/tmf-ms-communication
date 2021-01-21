@@ -44,6 +44,7 @@ import io.netty.util.concurrent.ImmediateEventExecutor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import lombok.SneakyThrows;
@@ -77,7 +78,13 @@ public class SmppMessagingHandlerTest {
     public static final String OPTIONAL_CHARACTERISTIC_KEY = "OPTIONAL.6005";
     public static final short OPTIONAL_KEY_SHORT = 6005;
     public static final String OPTIONAL_VALUE = "30001";
-    public static final String MESSAGE_ID_VALUE = "message-id";
+    public static final String MESSAGE_ID_VALUE = "test-message-id";
+    public static final String DISTRIBUTION_ID_KEY = "DISTRIBUTION.ID";
+    public static final String DISTRIBUTION_ID_VALUE = "test-distribution-id";
+    public static final String PROTOCOL_ID_VALUE = "64";
+    public static final String PROTOCOL_ID_KEY = "PROTOCOL.ID";
+    public static final String VALIDITY_PERIOD_KEY = "VALIDITY.PERIOD";
+    public static final String VALIDITY_PERIOD_VALUE = "300";
 
     @InjectMocks
     private SmppMessagingHandler smppMessagingHandler;
@@ -122,54 +129,74 @@ public class SmppMessagingHandlerTest {
         return applicationProperties;
     }
 
-    @Test
-    @SneakyThrows
-    public void receiveMessageSuccessTest() {
-        when(smppService.send(anyString(), anyString(), anyString(), anyByte(),
-            anyMap(), any(), any()))
-            .thenReturn(MESSAGE_ID_VALUE);
-
-        smppMessagingHandler.handle(message());
-
-        MessageResponse messageResponse = new MessageResponse(SUCCESS, message());
-
-        ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
-        verify(kafkaTemplate).send(eq(SUCCESS_SENT), argumentCaptor.capture());
-        MessageResponse payload = argumentCaptor.getValue();
-        payload.setId(null);
-        payload.setDistributionId(null);
-        messageResponse.setId(null);
-        messageResponse.setDistributionId(null);
-        messageResponse.setMessageId(MESSAGE_ID_VALUE);
-        messageResponse.getResponseTo().getCharacteristic().add(new CommunicationRequestCharacteristic()
-            .name(MESSAGE_ID)
-            .value(MESSAGE_ID_VALUE));
-        assertThat(payload, equalTo(messageResponse));
+    public static CommunicationMessage message() {
+        CommunicationMessage message = new CommunicationMessage();
+        Receiver receiver = new Receiver();
+        receiver.setPhoneNumber("PH");
+        receiver.setId("ID");
+        Sender sender = new Sender();
+        sender.setId("TestSender");
+        message.setId(MESSAGE_ID_VALUE);
+        message.setSender(sender);
+        message.setContent("TestContext");
+        message.setReceiver(singletonList(receiver));
+        message.setType("SMS");
+        message.setCharacteristic(Lists.newArrayList(new CommunicationRequestCharacteristic() {
+            {
+                name(DELIVERY_REPORT);
+                value("1");
+            }
+        }));
+        return message;
     }
 
     @Test
     @SneakyThrows
-    public void receiveMessageSuccessWithDistributionIdTest() {
-        when(smppService.send("PH", "TestContext", "TestSender",
-            (byte) 0, Collections.emptyMap(), null, null))
+    public void receiveMessageSuccessTest() {
+        //given
+        when(smppService.send(anyString(), anyString(), anyString(), anyByte(),
+            anyMap(), eq(300), eq(Integer.valueOf(PROTOCOL_ID_VALUE))))
             .thenReturn(MESSAGE_ID_VALUE);
-        CommunicationMessage message = message();
-        addDistributionId(message);
-        smppMessagingHandler.handle(message);
 
-        CommunicationMessage assertMessage = message();
-        addDistributionId(assertMessage);
-        assertMessage.getCharacteristic().add(new CommunicationRequestCharacteristic()
-            .name(MESSAGE_ID)
-            .value(MESSAGE_ID_VALUE));
-        MessageResponse messageResponse = new MessageResponse(SUCCESS, assertMessage);
+        CommunicationMessage messageRequest = message();
+        messageRequest.getCharacteristic().addAll(List.of(
+            new CommunicationRequestCharacteristic()
+                .name(DISTRIBUTION_ID_KEY)
+                .value(DISTRIBUTION_ID_VALUE),
+            new CommunicationRequestCharacteristic()
+                .name(PROTOCOL_ID_KEY)
+                .value(PROTOCOL_ID_VALUE),
+            new CommunicationRequestCharacteristic()
+                .name(VALIDITY_PERIOD_KEY)
+                .value(VALIDITY_PERIOD_VALUE)
+        ));
+
+        MessageResponse messageResponse = new MessageResponse(SUCCESS, message());
+        messageResponse.setDistributionId(DISTRIBUTION_ID_VALUE);
         messageResponse.setMessageId(MESSAGE_ID_VALUE);
+        messageResponse.getResponseTo().getCharacteristic().addAll(List.of(
+            new CommunicationRequestCharacteristic()
+                .name(DISTRIBUTION_ID_KEY)
+                .value(DISTRIBUTION_ID_VALUE),
+            new CommunicationRequestCharacteristic()
+                .name(PROTOCOL_ID_KEY)
+                .value(PROTOCOL_ID_VALUE),
+            new CommunicationRequestCharacteristic()
+                .name(VALIDITY_PERIOD_KEY)
+                .value(VALIDITY_PERIOD_VALUE),
+            new CommunicationRequestCharacteristic()
+                .name(MESSAGE_ID)
+                .value(MESSAGE_ID_VALUE))
+        );
 
+        //when
+        smppMessagingHandler.handle(messageRequest);
+
+        //then
         ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
         verify(kafkaTemplate).send(eq(SUCCESS_SENT), argumentCaptor.capture());
         MessageResponse payload = argumentCaptor.getValue();
-        assertThat(payload.getId(), equalTo("TEST_D_ID-SMS-ID"));
-        assertThat(payload.getDistributionId(), equalTo("TEST_D_ID"));
+
         assertThat(payload, equalTo(messageResponse));
     }
 
@@ -331,25 +358,30 @@ public class SmppMessagingHandlerTest {
         }};
     }
 
-    public static CommunicationMessage message() {
-        CommunicationMessage message = new CommunicationMessage();
-        Receiver receiver = new Receiver();
-        receiver.setPhoneNumber("PH");
-        receiver.setId("ID");
-        Sender sender = new Sender();
-        sender.setId("TestSender");
-        message.setId("TEST_D_ID-SMS-ID");
-        message.setSender(sender);
-        message.setContent("TestContext");
-        message.setReceiver(singletonList(receiver));
-        message.setType("SMS");
-        message.setCharacteristic(Lists.newArrayList(new CommunicationRequestCharacteristic() {
-            {
-                name(DELIVERY_REPORT);
-                value("1");
-            }
-        }));
-        return message;
+    @Test
+    @SneakyThrows
+    public void receiveMessageSuccessWithDistributionIdTest() {
+        when(smppService.send("PH", "TestContext", "TestSender",
+            (byte) 0, Collections.emptyMap(), null, null))
+            .thenReturn(MESSAGE_ID_VALUE);
+        CommunicationMessage message = message();
+        addDistributionId(message);
+        smppMessagingHandler.handle(message);
+
+        CommunicationMessage assertMessage = message();
+        addDistributionId(assertMessage);
+        assertMessage.getCharacteristic().add(new CommunicationRequestCharacteristic()
+            .name(MESSAGE_ID)
+            .value(MESSAGE_ID_VALUE));
+        MessageResponse messageResponse = new MessageResponse(SUCCESS, assertMessage);
+        messageResponse.setMessageId(MESSAGE_ID_VALUE);
+
+        ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
+        verify(kafkaTemplate).send(eq(SUCCESS_SENT), argumentCaptor.capture());
+        MessageResponse payload = argumentCaptor.getValue();
+        assertThat(payload.getId(), equalTo(MESSAGE_ID_VALUE));
+        assertThat(payload.getDistributionId(), equalTo("TEST_D_ID"));
+        assertThat(payload, equalTo(messageResponse));
     }
 
     @Test

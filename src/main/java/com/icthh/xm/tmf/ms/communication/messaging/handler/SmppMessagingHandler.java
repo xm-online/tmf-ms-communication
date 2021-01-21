@@ -53,6 +53,19 @@ public class SmppMessagingHandler implements BasicMessageHandler {
     private final BusinessRuleValidator businessRuleValidator;
     private final CommunicationMessageMapper mapper;
 
+    /**
+     * Handles an SMPP message request.
+     * Supports the following characteristics:
+     * <li>Validity period. A number of seconds a message is valid, uses {@link #VALIDITY_PERIOD} key</li>
+     * <li>Protocol id. SMPP protocol id value, uses {@link #PROTOCOL_ID} key.</li>
+     * <li>Optional parameters. Uses {@link #OPTIONAL_PARAMETER_PREFIX} key prefix + optional tag value,
+     * e.g. <i>OPTIONAL.6005</i></li>
+     * <li>Delivery report. Delivery report configuration (byte), uses {@link #DELIVERY_REPORT} key.</li>
+     *
+     * @param message message request
+     * @return {@code message} with {@link #MESSAGE_ID} characteristics that
+     * indicates message unique identifier or {@link #ERROR_CODE} in case of error.
+     */
     @Override
     public CommunicationMessage handle(CommunicationMessage message) {
             Messaging messaging = applicationProperties.getMessaging();

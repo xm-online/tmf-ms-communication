@@ -101,8 +101,9 @@ public class SmppService {
      * @param optionalParameters optional parameters, key - parameter tag, value - parameter value
      * @param validityPeriod     a number of seconds a message is valid.
      *                           If is not delivered in this period will get EXPIRED delivery state
-     * @param protocolId
-     * @return message id
+     *                           (uses the default if null).
+     * @param protocolId         smpp protocol id (uses the default if null)
+     * @return message id - unique identifier of the message. Used in delivery reports.
      */
     public String send(String destAddrs, String message, String senderId, byte deliveryReport, Map<Short,
         String> optionalParameters, Integer validityPeriod, Integer protocolId) throws PDUException, IOException,
@@ -114,8 +115,8 @@ public class SmppService {
 
         DataCoding dataCoding = getDataCoding(message);
         log.info("Start send message from: {} to: {} with encoding [{}] and content.size: {}, " +
-                "optional parameters: {}, validity period: {}", senderId, destAddrs,
-            dataCoding, message.length(), optionalParameters, validityPeriod);
+                "optional parameters: {}, validity period: {}, protocol id: {}", senderId, destAddrs,
+            dataCoding, message.length(), optionalParameters, validityPeriod, protocolId);
 
         List<OctetString> optional = optionalParameters.entrySet().stream()
             .map(e -> new OctetString(e.getKey(), e.getValue()))
@@ -147,7 +148,6 @@ public class SmppService {
         );
         log.info("Message submitted, message_id is {}", messageId);
         return messageId;
-
     }
 
     private Integer tryParse(String text) {
