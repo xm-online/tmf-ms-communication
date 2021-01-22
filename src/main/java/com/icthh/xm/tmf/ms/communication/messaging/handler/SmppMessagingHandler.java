@@ -103,15 +103,10 @@ public class SmppMessagingHandler implements BasicMessageHandler {
         return message;
     }
 
-    private boolean addCharacteristic(CommunicationMessage message, String errorCode, String s) {
-        return message.getCharacteristic().add(buildCharacteristic(errorCode, s));
-    }
-
-    private CommunicationRequestCharacteristic buildCharacteristic(String key, String value) {
-        CommunicationRequestCharacteristic characteristic = new CommunicationRequestCharacteristic();
-        characteristic.setName(key);
-        characteristic.setValue(value);
-        return characteristic;
+    private void addCharacteristic(CommunicationMessage message, String name, String value) {
+        message.getCharacteristic().add(new CommunicationRequestCharacteristic()
+            .name(name)
+            .value(value));
     }
 
     @Override
