@@ -202,6 +202,7 @@ dependencies {
     implementation "org.openapitools:jackson-databind-nullable:${jackson_databind_nullable_version}"
     implementation "org.apache.commons:commons-lang3"
     implementation "commons-io:commons-io"
+    implementation 'commons-validator:commons-validator:1.7'
     implementation "javax.transaction:javax.transaction-api"
     implementation "org.springframework.boot:spring-boot-loader-tools"
     implementation "org.springframework.boot:spring-boot-starter-mail"

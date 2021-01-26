@@ -21,6 +21,7 @@ import javax.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.validator.routines.IntegerValidator;
 import org.jsmpp.InvalidResponseException;
 import org.jsmpp.PDUException;
 import org.jsmpp.bean.Alphabet;
@@ -139,7 +140,7 @@ public class SmppService {
             (byte) smpp.getPriorityFlag(),
             timeFormatter.format(scheduleDeliveryTime),
             validityPeriodOrDefault(validityPeriod, scheduleDeliveryTime,
-                tryParse(smpp.getValidityPeriod())),
+                IntegerValidator.getInstance().validate(smpp.getValidityPeriod())),
             new RegisteredDelivery(deliveryReport),
             (byte) smpp.getReplaceIfPresentFlag(), dataCoding,
             (byte) smpp.getSmDefaultMsgId(),
@@ -148,14 +149,6 @@ public class SmppService {
         );
         log.info("Message submitted, message_id is {}", messageId);
         return messageId;
-    }
-
-    private Integer tryParse(String text) {
-        try {
-            return Integer.parseInt(text);
-        } catch (NumberFormatException e) {
-            return null;
-        }
     }
 
     private String validityPeriodOrDefault(Integer requestedValidityPeriod,

@@ -4,9 +4,9 @@ import static com.icthh.xm.tmf.ms.communication.domain.DeliveryReport.deliveryRe
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.DISTRIBUTION_ID;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.DELIVERY_REPORT;
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ERROR_CODE;
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.MESSAGE_ID;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ParameterNames.DELIVERY_REPORT;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ParameterNames.ERROR_CODE;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ParameterNames.MESSAGE_ID;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.UTF_16;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -141,12 +141,9 @@ public class SmppMessagingHandlerTest {
         message.setContent("TestContext");
         message.setReceiver(singletonList(receiver));
         message.setType("SMS");
-        message.setCharacteristic(Lists.newArrayList(new CommunicationRequestCharacteristic() {
-            {
-                name(DELIVERY_REPORT);
-                value("1");
-            }
-        }));
+        message.setCharacteristic(Lists.newArrayList(new CommunicationRequestCharacteristic()
+            .name(DELIVERY_REPORT)
+            .value("1")));
         return message;
     }
 
@@ -231,11 +228,20 @@ public class SmppMessagingHandlerTest {
     @SneakyThrows
     public void receiveMessageFailTest() {
         failMessage(new RuntimeException("TestMessage"),
-            "error.system.general.internalServerError", "java.lang.RuntimeException: TestMessage");
+            "error.system.general.internalServerError", "java.lang.RuntimeException: TestMessage",
+            new CommunicationRequestCharacteristic()
+                .name(ERROR_CODE)
+                .value("error.system.general.internalServerError"));
         reset(smppService, kafkaTemplate);
-        failMessage(new BusinessException("TestCode", "TestMessage"), "TestCode", "TestMessage");
+        failMessage(new BusinessException("TestCode", "TestMessage"), "TestCode", "TestMessage",
+            new CommunicationRequestCharacteristic()
+                .name(ERROR_CODE)
+                .value("TestCode"));
         reset(smppService, kafkaTemplate);
-        failMessage(new PDUException("TestMessage"), "error.system.sending.pdu", "TestMessage");
+        failMessage(new PDUException("TestMessage"), "error.system.sending.pdu", "TestMessage",
+            new CommunicationRequestCharacteristic()
+                .name(ERROR_CODE)
+                .value("error.system.sending.pdu"));
         reset(smppService, kafkaTemplate);
         failMessage(new NegativeResponseException(20), "error.system.sending.smpp.20", "Negative response 00000014 (Message Queue Full) found",
             new CommunicationRequestCharacteristic()

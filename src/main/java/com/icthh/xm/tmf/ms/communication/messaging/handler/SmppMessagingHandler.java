@@ -40,12 +40,6 @@ public class SmppMessagingHandler implements BasicMessageHandler {
 
     public static final String ERROR_PROCESS_COMMUNICATION_MESSAGE = "Error process communicationMessage ";
     public static final String ERROR_BUSINESS_RULE_VALIDATION = "Error business rule validation";
-    public static final String DELIVERY_REPORT = "DELIVERY.REPORT";
-    public static final String OPTIONAL_PARAMETER_PREFIX = "OPTIONAL.";
-    public static final String MESSAGE_ID = "MESSAGE.ID";
-    public static final String ERROR_CODE = "ERROR.CODE";
-    public static final String VALIDITY_PERIOD = "VALIDITY.PERIOD";
-    public static final String PROTOCOL_ID = "PROTOCOL.ID";
 
     private final KafkaTemplate<String, Object> channelResolver;
     private final SmppService smppService;
@@ -56,48 +50,53 @@ public class SmppMessagingHandler implements BasicMessageHandler {
     /**
      * Handles an SMPP message request.
      * Supports the following characteristics:
-     * <li>Validity period. A number of seconds a message is valid, uses {@link #VALIDITY_PERIOD} key</li>
-     * <li>Protocol id. SMPP protocol id value, uses {@link #PROTOCOL_ID} key.</li>
-     * <li>Optional parameters. Uses {@link #OPTIONAL_PARAMETER_PREFIX} key prefix + optional tag value,
+     * <li>Validity period. A number of seconds a message is valid, uses {@link ParameterNames#VALIDITY_PERIOD} key</li>
+     * <li>Protocol id. SMPP protocol id value, uses {@link ParameterNames#PROTOCOL_ID} key.</li>
+     * <li>Optional parameters. Uses {@link ParameterNames#OPTIONAL_PARAMETER_PREFIX} key prefix + optional tag value,
      * e.g. <i>OPTIONAL.6005</i></li>
-     * <li>Delivery report. Delivery report configuration (byte), uses {@link #DELIVERY_REPORT} key.</li>
+     * <li>Delivery report. Delivery report configuration (byte), uses {@link ParameterNames#DELIVERY_REPORT} key.</li>
      *
      * @param message message request
-     * @return {@code message} with {@link #MESSAGE_ID} characteristics that
-     * indicates message unique identifier or {@link #ERROR_CODE} in case of error.
+     * @return {@code message} with {@link ParameterNames#MESSAGE_ID} characteristics that
+     * indicates message unique identifier or {@link ParameterNames#ERROR_CODE} in case of error.
      */
     @Override
     public CommunicationMessage handle(CommunicationMessage message) {
-            Messaging messaging = applicationProperties.getMessaging();
+        Messaging messaging = applicationProperties.getMessaging();
         List<String> phoneNumbers = message.getReceiver().stream().map(Receiver::getPhoneNumber).collect(toList());
         for (String phoneNumber : phoneNumbers) {
             try {
                 String messageId = sendSmppMessage(message, messaging, phoneNumber);
-                addCharacteristic(message, MESSAGE_ID, messageId);
+                addCharacteristic(message, ParameterNames.MESSAGE_ID, messageId);
             } catch (RuleValidationException e) {
                 String responseCode = e.getRuleResponse().getResponseCode();
-                log.error(ERROR_BUSINESS_RULE_VALIDATION + ", responseCode: " + responseCode);
+                log.error("Error business rule validation, responseCode: {}", responseCode);
                 failMessage(message, responseCode, ERROR_BUSINESS_RULE_VALIDATION);
-                addCharacteristic(message, ERROR_CODE, String.valueOf(responseCode));
+                addCharacteristic(message, ParameterNames.ERROR_CODE, String.valueOf(responseCode));
             } catch (NegativeResponseException e) {
                 log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
                 failMessage(message, "error.system.sending.smpp." + e.getCommandStatus(), e.getMessage());
-                addCharacteristic(message, ERROR_CODE, String.valueOf(e.getCommandStatus()));
+                addCharacteristic(message, ParameterNames.ERROR_CODE, String.valueOf(e.getCommandStatus()));
             } catch (InvalidResponseException e) {
                 log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
-                failMessage(message, "error.system.sending.invalidResponse", e.getMessage());
+                failMessage(message, ErrorCodes.ERROR_SYSTEM_SENDING_INVALID_RESPONSE, e.getMessage());
+                addCharacteristic(message, ParameterNames.ERROR_CODE, ErrorCodes.ERROR_SYSTEM_SENDING_INVALID_RESPONSE);
             } catch (ResponseTimeoutException e) {
                 log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
-                failMessage(message, "error.system.sending.responseTimeout", e.getMessage());
+                failMessage(message, ErrorCodes.ERROR_SYSTEM_SENDING_RESPONSE_TIMEOUT, e.getMessage());
+                addCharacteristic(message, ParameterNames.ERROR_CODE, ErrorCodes.ERROR_SYSTEM_SENDING_RESPONSE_TIMEOUT);
             } catch (PDUException e) {
                 log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
-                failMessage(message, "error.system.sending.pdu", e.getMessage());
+                failMessage(message, ErrorCodes.ERROR_SYSTEM_SENDING_PDU, e.getMessage());
+                addCharacteristic(message, ParameterNames.ERROR_CODE, ErrorCodes.ERROR_SYSTEM_SENDING_PDU);
             } catch (BusinessException e) {
                 log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
                 failMessage(message, e.getCode(), e.getMessage());
+                addCharacteristic(message, ParameterNames.ERROR_CODE, e.getCode());
             } catch (Exception e) {
                 log.error(ERROR_PROCESS_COMMUNICATION_MESSAGE, e);
-                failMessage(message, "error.system.general.internalServerError", e.toString());
+                failMessage(message, ErrorCodes.ERROR_SYSTEM_GENERAL_INTERNAL_SERVER_ERROR, e.toString());
+                addCharacteristic(message, ParameterNames.ERROR_CODE, ErrorCodes.ERROR_SYSTEM_GENERAL_INTERNAL_SERVER_ERROR);
             }
         }
         return message;
@@ -125,8 +124,8 @@ public class SmppMessagingHandler implements BasicMessageHandler {
 
         String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId(),
             getDeliveryReport(message.getCharacteristic()), buildOptionalParameters(message),
-            getFromCharacteristics(message.getCharacteristic(), VALIDITY_PERIOD, Ints::tryParse),
-            getFromCharacteristics(message.getCharacteristic(), PROTOCOL_ID, Ints::tryParse)
+            getFromCharacteristics(message.getCharacteristic(), ParameterNames.VALIDITY_PERIOD, Ints::tryParse),
+            getFromCharacteristics(message.getCharacteristic(), ParameterNames.PROTOCOL_ID, Ints::tryParse)
         );
         String queueName = messaging.getSentQueueName();
         sendMessage(success(messageId, message), queueName);
@@ -136,14 +135,18 @@ public class SmppMessagingHandler implements BasicMessageHandler {
 
     private Map<Short, String> buildOptionalParameters(CommunicationMessage message) {
         return Optional.ofNullable(message.getCharacteristic())
-            .map(characteristics -> characteristics.stream()
-                .filter(Objects::nonNull)
-                .filter(c -> Objects.nonNull(c.getName()))
-                .filter(ch -> ch.getName().startsWith(OPTIONAL_PARAMETER_PREFIX))
-                .collect(Collectors.toMap(
-                    ch -> Short.parseShort(ch.getName().substring(OPTIONAL_PARAMETER_PREFIX.length())),
-                    CommunicationRequestCharacteristic::getValue)))
+            .map(this::collectOptionalParameters)
             .orElse(Collections.emptyMap());
+    }
+
+    private Map<Short, String> collectOptionalParameters(List<CommunicationRequestCharacteristic> characteristics) {
+        return characteristics.stream()
+            .filter(Objects::nonNull)
+            .filter(c -> Objects.nonNull(c.getName()))
+            .filter(ch -> ch.getName().startsWith(ParameterNames.OPTIONAL_PARAMETER_PREFIX))
+            .collect(Collectors.toMap(
+                ch -> Short.parseShort(ch.getName().substring(ParameterNames.OPTIONAL_PARAMETER_PREFIX.length())),
+                CommunicationRequestCharacteristic::getValue));
     }
 
     private void failMessage(CommunicationMessage communicationMessage, String code, String message) {
@@ -160,21 +163,40 @@ public class SmppMessagingHandler implements BasicMessageHandler {
     private Integer getFromCharacteristics(List<CommunicationRequestCharacteristic> characteristic,
                                            String key, Function<String, Integer> parseFunction) {
         return Optional.ofNullable(characteristic)
-            .flatMap(c -> c.stream()
-                .filter(ch -> key.equals(ch.getName()))
-                .findFirst()
-                .map(CommunicationRequestCharacteristic::getValue))
+            .flatMap(c -> findValue(key, c))
             .map(parseFunction)
             .orElse(null);
+    }
+
+    private Optional<String> findValue(String key, List<CommunicationRequestCharacteristic> c) {
+        return c.stream()
+            .filter(ch -> key.equals(ch.getName()))
+            .findFirst()
+            .map(CommunicationRequestCharacteristic::getValue);
     }
 
     byte getDeliveryReport(List<CommunicationRequestCharacteristic> characteristics) {
         return Optional.ofNullable(characteristics).orElse(Collections.emptyList())
             .stream()
-            .filter(c -> DELIVERY_REPORT.equals(c.getName()))
+            .filter(c -> ParameterNames.DELIVERY_REPORT.equals(c.getName()))
             .findFirst()
             .map(c -> NumberUtils.toByte(c.getValue(), (byte) 0))
             .orElse((byte) 0);
     }
 
+    static final class ErrorCodes {
+        public static final String ERROR_SYSTEM_SENDING_INVALID_RESPONSE = "error.system.sending.invalidResponse";
+        public static final String ERROR_SYSTEM_SENDING_RESPONSE_TIMEOUT = "error.system.sending.responseTimeout";
+        public static final String ERROR_SYSTEM_SENDING_PDU = "error.system.sending.pdu";
+        public static final String ERROR_SYSTEM_GENERAL_INTERNAL_SERVER_ERROR = "error.system.general.internalServerError";
+    }
+
+    public static final class ParameterNames {
+        public static final String DELIVERY_REPORT = "DELIVERY.REPORT";
+        public static final String OPTIONAL_PARAMETER_PREFIX = "OPTIONAL.";
+        public static final String MESSAGE_ID = "MESSAGE.ID";
+        public static final String ERROR_CODE = "ERROR.CODE";
+        public static final String VALIDITY_PERIOD = "VALIDITY.PERIOD";
+        public static final String PROTOCOL_ID = "PROTOCOL.ID";
+    }
 }
