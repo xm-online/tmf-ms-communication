@@ -2,6 +2,7 @@ package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.failed;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.success;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ParameterNames.OPTIONAL_PARAMETER_PREFIX;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.primitives.Ints;
@@ -16,15 +17,17 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.jsmpp.InvalidResponseException;
 import org.jsmpp.PDUException;
@@ -135,18 +138,19 @@ public class SmppMessagingHandler implements BasicMessageHandler {
 
     private Map<Short, String> buildOptionalParameters(CommunicationMessage message) {
         return Optional.ofNullable(message.getCharacteristic())
-            .map(this::collectOptionalParameters)
-            .orElse(Collections.emptyMap());
+            .stream()
+            .flatMap(Collection::stream)
+            .filter(isOptionalParameter())
+            .collect(Collectors.toMap(SmppMessagingHandler::parseParamAsShort,
+                CommunicationRequestCharacteristic::getValue));
     }
 
-    private Map<Short, String> collectOptionalParameters(List<CommunicationRequestCharacteristic> characteristics) {
-        return characteristics.stream()
-            .filter(Objects::nonNull)
-            .filter(c -> Objects.nonNull(c.getName()))
-            .filter(ch -> ch.getName().startsWith(ParameterNames.OPTIONAL_PARAMETER_PREFIX))
-            .collect(Collectors.toMap(
-                ch -> Short.parseShort(ch.getName().substring(ParameterNames.OPTIONAL_PARAMETER_PREFIX.length())),
-                CommunicationRequestCharacteristic::getValue));
+    private Predicate<CommunicationRequestCharacteristic> isOptionalParameter(){
+        return c -> c != null && StringUtils.startsWith(c.getName(), OPTIONAL_PARAMETER_PREFIX);
+    }
+
+    private static Short parseParamAsShort(CommunicationRequestCharacteristic ch) {
+        return Short.parseShort(ch.getName().substring(OPTIONAL_PARAMETER_PREFIX.length()));
     }
 
     private void failMessage(CommunicationMessage communicationMessage, String code, String message) {
@@ -163,16 +167,13 @@ public class SmppMessagingHandler implements BasicMessageHandler {
     private Integer getFromCharacteristics(List<CommunicationRequestCharacteristic> characteristic,
                                            String key, Function<String, Integer> parseFunction) {
         return Optional.ofNullable(characteristic)
-            .flatMap(c -> findValue(key, c))
-            .map(parseFunction)
-            .orElse(null);
-    }
-
-    private Optional<String> findValue(String key, List<CommunicationRequestCharacteristic> c) {
-        return c.stream()
+            .stream()
+            .flatMap(Collection::stream)
             .filter(ch -> key.equals(ch.getName()))
             .findFirst()
-            .map(CommunicationRequestCharacteristic::getValue);
+            .map(CommunicationRequestCharacteristic::getValue)
+            .map(parseFunction)
+            .orElse(null);
     }
 
     byte getDeliveryReport(List<CommunicationRequestCharacteristic> characteristics) {
