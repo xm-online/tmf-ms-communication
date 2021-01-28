@@ -1,14 +1,18 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
+import static junit.framework.TestCase.assertNotNull;
+import static org.jsmpp.bean.SMSCDeliveryReceipt.SUCCESS_FAILURE;
+
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.icthh.xm.tmf.ms.communication.CommunicationApp;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
+import java.util.Collections;
+import java.util.function.Consumer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.jsmpp.bean.SMSCDeliveryReceipt;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,14 +21,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.testcontainers.containers.GenericContainer;
-
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Consumer;
-
-import static junit.framework.TestCase.assertNotNull;
-import static org.jsmpp.bean.SMSCDeliveryReceipt.SUCCESS_FAILURE;
-import static org.junit.Assert.assertEquals;
 
 @Slf4j
 @ContextConfiguration()
@@ -53,7 +49,7 @@ public class SmppTest {
     @SneakyThrows
     public void testSendingSms() {
         String messageId = service.send("+380636666666", "test", "1616",
-            SUCCESS_FAILURE.value());
+            SUCCESS_FAILURE.value(), Collections.emptyMap(), 300, 64);
         assertNotNull(messageId);
     }
 

@@ -20,9 +20,11 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -94,7 +96,8 @@ public class FirebaseService {
             throw new BusinessException("error.fcm.receiver.count", "The number of receivers exceeds 500 allowed");
         }
 
-        Map<String, String> rawData = message.getCharacteristic().stream()
+        Map<String, String> rawData = Optional.ofNullable(message.getCharacteristic())
+            .orElse(Collections.emptyList()).stream()
             .collect(Collectors.toMap(CommunicationRequestCharacteristic::getName,
                 CommunicationRequestCharacteristic::getValue));
 
