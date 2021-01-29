@@ -197,6 +197,39 @@ public class SmppMessagingHandlerTest {
         assertThat(payload, equalTo(messageResponse));
     }
 
+    @Test
+    @SneakyThrows
+    public void shouldProcessRequestWithoutCharacteristics() {
+        //given
+        when(smppService.send(anyString(), anyString(), anyString(), anyByte(),
+            anyMap(), any(), any()))
+            .thenReturn(MESSAGE_ID_VALUE);
+
+        CommunicationMessage messageRequest = message();
+
+        messageRequest.setCharacteristic(null);
+
+        MessageResponse messageResponse = new MessageResponse(SUCCESS, message());
+        messageResponse.setDistributionId(null);
+        messageResponse.setMessageId(MESSAGE_ID_VALUE);
+        messageResponse.getResponseTo().setCharacteristic(List.of(
+            new CommunicationRequestCharacteristic()
+                .name(MESSAGE_ID)
+                .value(MESSAGE_ID_VALUE))
+        );
+
+        //when
+        smppMessagingHandler.handle(messageRequest);
+
+        //then
+        ArgumentCaptor<MessageResponse> argumentCaptor = ArgumentCaptor.forClass(MessageResponse.class);
+        verify(kafkaTemplate).send(eq(SUCCESS_SENT), argumentCaptor.capture());
+        MessageResponse payload = argumentCaptor.getValue();
+        payload.setDistributionId(null);
+
+        assertThat(payload, equalTo(messageResponse));
+    }
+
     public static CommunicationMessageCreate messageCreate() {
         CommunicationMessageCreate message = new CommunicationMessageCreate();
         Receiver receiver = new Receiver();
