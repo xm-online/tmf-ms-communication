@@ -15,11 +15,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+
 
 import java.util.List;
 import java.util.Map;
@@ -69,13 +71,20 @@ public class ViberService {
                     .map(infobipSendResponseMessage -> new MessageStatusInfo(communicationMessage.getId(), communicationMessage, infobipSendResponseMessage.getStatus()))
                     .collect(Collectors.toList()));
         } catch (HttpStatusCodeException e) {
-            if (e.getRawStatusCode() != 200) {
+            log.error("Unable to send message {}: {}", communicationMessage.getId(), e.getMessage());
+            if (HttpStatus.BAD_REQUEST.equals(e.getStatusCode())) {
+                kafkaTemplate.send(
+                    applicationProperties.getMessaging().getSendFailedQueueName(),
+                    gson.toJson(MessageResponse.failed(communicationMessage, "error.system.sending.viber.badRequest", e.getResponseBodyAsString()))
+                );
+            } else {
                 kafkaTemplate.send(
                     applicationProperties.getMessaging().getSendFailedQueueName(),
                     gson.toJson(MessageResponse.failed(communicationMessage, "error.system.sending.viber.gateway.internalError", String.format("Viber provider responded with %s http code", e.getRawStatusCode())))
                 );
             }
         } catch (Exception e) {
+            log.error("Unable to send message", e);
             kafkaTemplate.send(
                 applicationProperties.getMessaging().getSendFailedQueueName(),
                 gson.toJson(MessageResponse.failed(communicationMessage, "error.system.sending.viber.gateway.internalError", String.format("Viber provider internal error message: %s ", e.getMessage())))
