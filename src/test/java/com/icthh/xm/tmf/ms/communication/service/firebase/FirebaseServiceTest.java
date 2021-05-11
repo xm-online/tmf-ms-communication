@@ -1,4 +1,4 @@
-package com.icthh.xm.tmf.ms.communication.service;
+package com.icthh.xm.tmf.ms.communication.service.firebase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -20,12 +20,16 @@ import com.google.firebase.messaging.SendResponse;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.channel.mobileapp.FirebaseApplicationConfigurationProvider;
+import com.icthh.xm.tmf.ms.communication.service.MobileAppMessagePayloadCustomizationService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +54,11 @@ public class FirebaseServiceTest {
     public static final String CUSTOM_VALUE = "custom-value";
     public static final String CUSTOMIZED_KEY = "customized-key";
     public static final String CUSTOMIZED_VALUE = "customized-value";
+    public static final String VALIDITY_PERIOD_NAME = "VALIDITY.PERIOD";
+    public static final String VALIDITY_SECONDS = "300";
+    public static final String BADGE_NAME = "BADGE";
+    public static final String BADGE_VALUE = "1";
+
 
     private TenantContextHolder tenantContextHolder = mock(TenantContextHolder.class);
     private FirebaseApplicationConfigurationProvider configurationProvider =
@@ -58,7 +67,9 @@ public class FirebaseServiceTest {
         mock(MobileAppMessagePayloadCustomizationService.class);
 
     private FirebaseService firebaseService = new FirebaseService(configurationProvider,
-        tenantContextHolder, payloadCustomizationServiceMock);
+        tenantContextHolder, payloadCustomizationServiceMock, List.of(
+        new ValidityPeriodConfigurator(), new BadgeConfigurator(), new ImageConfigurator()
+    ));
 
     @Test
     @SneakyThrows
@@ -100,8 +111,16 @@ public class FirebaseServiceTest {
             .characteristic(List.of(
                 new CommunicationRequestCharacteristic()
                     .name(CUSTOM_NAME)
-                    .value(CUSTOM_VALUE)
+                    .value(CUSTOM_VALUE),
+                new CommunicationRequestCharacteristic()
+                    .name(VALIDITY_PERIOD_NAME)
+                    .value(VALIDITY_SECONDS),
+                new CommunicationRequestCharacteristic()
+                    .name(BADGE_NAME)
+                    .value(BADGE_VALUE)
             ));
+
+        Instant beforeTest = Instant.now();
 
         //when:
         CommunicationMessage result = firebaseService.sendPushNotification(message);
@@ -126,12 +145,33 @@ public class FirebaseServiceTest {
         MulticastMessage multicastMessage = multicastCaptor.getValue();
 
         assertEquals(extractField("tokens", multicastMessage), List.of(APP_USER_ID));
-        assertEquals(Map.of(CUSTOMIZED_KEY, CUSTOMIZED_VALUE, CUSTOM_NAME, CUSTOM_VALUE),
+        assertEquals(Map.of(CUSTOMIZED_KEY, CUSTOMIZED_VALUE,
+            CUSTOM_NAME, CUSTOM_VALUE,
+            VALIDITY_PERIOD_NAME, VALIDITY_SECONDS,
+            BADGE_NAME, BADGE_VALUE),
             extractField("data", multicastMessage));
 
         Notification notifications = (Notification) extractField("notification", multicastMessage);
         assertEquals(TEST_SUBJECT, extractField("title", notifications));
         assertEquals(TEST_CONTENT, extractField("body", notifications));
+
+        Object androidConfig = extractField("androidConfig", multicastMessage);
+        Object apnsConfig = extractField("apnsConfig", multicastMessage);
+
+        //check validity period
+        assertEquals(VALIDITY_SECONDS + "s", extractField("ttl", androidConfig));
+
+        Map<String, String> apnHeaders = (Map<String, String>) extractField("headers", apnsConfig);
+        Object expiration = apnHeaders.get("apns-expiration");
+        assertNotNull(expiration);
+        assertEquals(0, Duration.between(Instant.ofEpochMilli(Long.parseLong((String) expiration) * 1000),
+            beforeTest.plus(300, ChronoUnit.SECONDS)).toSeconds());
+
+        //check badge
+        assertEquals(Integer.valueOf(BADGE_VALUE),
+            Optional.ofNullable(((Map<String, Object>) extractField("payload", apnsConfig)).get("aps"))
+                .map(e -> ((Map<String, Object>) e).get("badge"))
+                .orElseThrow());
     }
 
     @Test

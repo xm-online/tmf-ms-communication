@@ -4,9 +4,9 @@ import static com.icthh.xm.tmf.ms.communication.domain.DeliveryReport.deliveryRe
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.DISTRIBUTION_ID;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ParameterNames.DELIVERY_REPORT;
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ParameterNames.ERROR_CODE;
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ParameterNames.MESSAGE_ID;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.ParameterNames.DELIVERY_REPORT;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.ParameterNames.ERROR_CODE;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.ParameterNames.MESSAGE_ID;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.UTF_16;
 import static java.nio.charset.StandardCharsets.UTF_8;

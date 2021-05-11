@@ -2,8 +2,8 @@ package com.icthh.xm.tmf.ms.communication.rules;
 
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.ParameterNames.ERROR_CODE;
 import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ERROR_BUSINESS_RULE_VALIDATION;
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ParameterNames.ERROR_CODE;
 import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandlerTest.FAIL_SEND;
 import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandlerTest.SUCCESS_SENT;
 import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandlerTest.createApplicationProperties;

@@ -3,7 +3,7 @@ package com.icthh.xm.tmf.ms.communication.messaging.handler;
 import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandlerTest.message;
 import static org.mockito.Mockito.verify;
 
-import com.icthh.xm.tmf.ms.communication.service.FirebaseService;
+import com.icthh.xm.tmf.ms.communication.service.firebase.FirebaseService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import org.junit.Test;
 import org.junit.runner.RunWith;

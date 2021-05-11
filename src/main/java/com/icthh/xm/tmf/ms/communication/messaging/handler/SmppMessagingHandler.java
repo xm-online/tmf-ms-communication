@@ -2,7 +2,7 @@ package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.failed;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.success;
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler.ParameterNames.OPTIONAL_PARAMETER_PREFIX;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.ParameterNames.OPTIONAL_PARAMETER_PREFIX;
 import static java.util.stream.Collectors.toList;
 
 import com.google.common.primitives.Ints;
@@ -192,12 +192,4 @@ public class SmppMessagingHandler implements BasicMessageHandler {
         public static final String ERROR_SYSTEM_GENERAL_INTERNAL_SERVER_ERROR = "error.system.general.internalServerError";
     }
 
-    public static final class ParameterNames {
-        public static final String DELIVERY_REPORT = "DELIVERY.REPORT";
-        public static final String OPTIONAL_PARAMETER_PREFIX = "OPTIONAL.";
-        public static final String MESSAGE_ID = "MESSAGE.ID";
-        public static final String ERROR_CODE = "ERROR.CODE";
-        public static final String VALIDITY_PERIOD = "VALIDITY.PERIOD";
-        public static final String PROTOCOL_ID = "PROTOCOL.ID";
-    }
 }

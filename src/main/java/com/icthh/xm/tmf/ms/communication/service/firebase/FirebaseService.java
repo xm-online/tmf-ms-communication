@@ -1,21 +1,15 @@
-package com.icthh.xm.tmf.ms.communication.service;
+package com.icthh.xm.tmf.ms.communication.service.firebase;
 
 import static java.util.stream.Collectors.toList;
 
-import com.google.firebase.messaging.AndroidConfig;
-import com.google.firebase.messaging.AndroidNotification;
-import com.google.firebase.messaging.ApnsConfig;
-import com.google.firebase.messaging.Aps;
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.MulticastMessage;
-import com.google.firebase.messaging.Notification;
 import com.google.firebase.messaging.SendResponse;
-import com.google.firebase.messaging.WebpushConfig;
-import com.google.firebase.messaging.WebpushNotification;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.channel.mobileapp.FirebaseApplicationConfigurationProvider;
+import com.icthh.xm.tmf.ms.communication.service.MobileAppMessagePayloadCustomizationService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
@@ -42,15 +36,10 @@ import org.springframework.util.CollectionUtils;
 @ConditionalOnBean(FirebaseApplicationConfigurationProvider.class)
 public class FirebaseService {
 
-    /**
-     * Characteristic names
-     */
-    public static final String BADGE = "badge";
-    public static final String IMAGE = "image";
-
     private final FirebaseApplicationConfigurationProvider firebaseApplicationConfigurationProvider;
     private final TenantContextHolder tenantContextHolder;
     private final MobileAppMessagePayloadCustomizationService payloadCustomizer;
+    private final List<MessageConfigurator> messageConfigurators;
 
     @SneakyThrows
     public CommunicationMessage sendPushNotification(CommunicationMessage message) {
@@ -85,6 +74,37 @@ public class FirebaseService {
             throw new BusinessException("error.fcm.receiver.empty", "Receiver list is empty");
         }
 
+        List<String> userRegistrationTokens = getTokens(message);
+
+        Map<String, String> rawData = Optional.ofNullable(message.getCharacteristic())
+            .orElse(Collections.emptyList()).stream()
+            .collect(Collectors.toMap(CommunicationRequestCharacteristic::getName,
+                CommunicationRequestCharacteristic::getValue));
+
+        BuilderWrapper builder = new BuilderWrapper();
+
+        builder.getNotificationBuilder()
+            .setBody(message.getContent())
+            .setTitle(message.getSubject());
+
+        messageConfigurators.forEach(cr -> cr.apply(builder, message, rawData));
+
+        return builder.getFirebaseMessageBuilder()
+            .setApnsConfig(builder.getApnsBuilder()
+                .setAps(builder.getApsBuilder().build()).build())
+            .setWebpushConfig(builder.getWebPushBuilder()
+                .setNotification(builder.getWebpushNotificationBuilder().build())
+                .build())
+            .setAndroidConfig(builder.getAndroidConfigBuilder()
+                .setNotification(builder.getAndroidNotificationBuilder().build())
+                .build())
+            .setNotification(builder.getNotificationBuilder().build())
+            .addAllTokens(userRegistrationTokens)
+            .putAllData(payloadCustomizer.customizePayload(rawData))
+            .build();
+    }
+
+    private List<String> getTokens(CommunicationMessage message) {
         List<String> userRegistrationTokens = message.getReceiver().stream()
             .map(Receiver::getAppUserId)
             .filter(StringUtils::isNoneBlank)
@@ -95,49 +115,7 @@ public class FirebaseService {
         } else if (userRegistrationTokens.size() > 500) {
             throw new BusinessException("error.fcm.receiver.count", "The number of receivers exceeds 500 allowed");
         }
-
-        Map<String, String> rawData = Optional.ofNullable(message.getCharacteristic())
-            .orElse(Collections.emptyList()).stream()
-            .collect(Collectors.toMap(CommunicationRequestCharacteristic::getName,
-                CommunicationRequestCharacteristic::getValue));
-
-        MulticastMessage.Builder firebaseMessageBuilder = MulticastMessage.builder()
-            .addAllTokens(userRegistrationTokens)
-            .setNotification(Notification.builder()
-                .setBody(message.getContent())
-                .setTitle(message.getSubject())
-                .setImage(rawData.get(IMAGE))
-                .build())
-            .putAllData(payloadCustomizer.customizePayload(rawData));
-
-        String badge = rawData.get(BADGE);
-        if (badge != null) {
-            int badgeIntValue = Integer.parseInt(badge);
-
-            log.debug("Badge parameter is provided, adding to the request {}", badgeIntValue);
-
-            firebaseMessageBuilder.setApnsConfig
-                (ApnsConfig.builder()
-                    .setAps(Aps.builder()
-                        .setBadge(badgeIntValue)
-                        .build())
-                    .build())
-                .setWebpushConfig(WebpushConfig.builder()
-                    .setNotification(WebpushNotification.builder()
-                        .setBadge(badge)
-                        .build())
-                    .build())
-                .setAndroidConfig(
-                    AndroidConfig.builder()
-                        .setNotification(
-                            AndroidNotification.builder()
-                                .setNotificationCount(badgeIntValue)
-                                .build())
-                        .build()
-                );
-        }
-
-        return firebaseMessageBuilder.build();
+        return userRegistrationTokens;
     }
 
     private FirebaseMessaging getFirebaseMessaging(CommunicationMessage message) {
@@ -147,7 +125,6 @@ public class FirebaseService {
     }
 
     private CommunicationMessage buildCommunicationResponse(BatchResponse batchResponse, CommunicationMessage message) {
-
         List<SendResponse> responses = batchResponse.getResponses();
         List<CommunicationRequestCharacteristic> characteristics = new ArrayList<>(responses.size());
         characteristics.add(new CommunicationRequestCharacteristic().name("successCount").value(String.valueOf(batchResponse.getSuccessCount())));
