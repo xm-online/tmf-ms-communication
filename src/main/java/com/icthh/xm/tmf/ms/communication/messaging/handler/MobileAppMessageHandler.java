@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-@LepService
+@LepService(group = "service.message")
 @Slf4j
 @ConditionalOnBean(FirebaseApplicationConfigurationProvider.class)
 public class MobileAppMessageHandler implements BasicMessageHandler {
