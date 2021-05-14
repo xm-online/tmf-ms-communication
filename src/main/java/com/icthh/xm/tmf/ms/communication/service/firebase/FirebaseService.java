@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toList;
 
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.SendResponse;
 import com.icthh.xm.commons.exceptions.BusinessException;
@@ -12,7 +13,11 @@ import com.icthh.xm.tmf.ms.communication.channel.mobileapp.FirebaseApplicationCo
 import com.icthh.xm.tmf.ms.communication.service.MobileAppMessagePayloadCustomizationService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
+import com.icthh.xm.tmf.ms.communication.web.api.model.Detail;
+import com.icthh.xm.tmf.ms.communication.web.api.model.ErrorDetail;
+import com.icthh.xm.tmf.ms.communication.web.api.model.ExtendedCommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
+import com.icthh.xm.tmf.ms.communication.web.api.model.Result;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,7 +50,8 @@ public class FirebaseService {
     public CommunicationMessage sendPushNotification(CommunicationMessage message) {
         Assert.notNull(message, "Message is not specified");
 
-        MulticastMessage firebaseMessage = mapToFirebaseRequest(message);
+        List<Receiver> receivers = getReceiversAndValidate(message);
+        MulticastMessage firebaseMessage = mapToFirebaseRequest(message, receivers);
 
         log.debug("Sending messages");
 
@@ -65,17 +71,11 @@ public class FirebaseService {
             );
         }
 
-        return buildCommunicationResponse(response, message);
+        return buildCommunicationResponse(response, message, receivers);
     }
 
     @SneakyThrows
-    private MulticastMessage mapToFirebaseRequest(CommunicationMessage message) {
-        if (CollectionUtils.isEmpty(message.getReceiver())) {
-            throw new BusinessException("error.fcm.receiver.empty", "Receiver list is empty");
-        }
-
-        List<String> userRegistrationTokens = getTokens(message);
-
+    private MulticastMessage mapToFirebaseRequest(CommunicationMessage message, List<Receiver> receivers) {
         Map<String, String> rawData = Optional.ofNullable(message.getCharacteristic())
             .orElse(Collections.emptyList()).stream()
             .collect(Collectors.toMap(CommunicationRequestCharacteristic::getName,
@@ -99,23 +99,29 @@ public class FirebaseService {
                 .setNotification(builder.getAndroidNotificationBuilder().build())
                 .build())
             .setNotification(builder.getNotificationBuilder().build())
-            .addAllTokens(userRegistrationTokens)
+            .addAllTokens(receivers.stream()
+                .map(Receiver::getAppUserId)
+                .collect(toList()))
             .putAllData(payloadCustomizer.customizePayload(rawData))
             .build();
     }
 
-    private List<String> getTokens(CommunicationMessage message) {
-        List<String> userRegistrationTokens = message.getReceiver().stream()
-            .map(Receiver::getAppUserId)
-            .filter(StringUtils::isNoneBlank)
+    private List<Receiver> getReceiversAndValidate(CommunicationMessage message) {
+        if (CollectionUtils.isEmpty(message.getReceiver())) {
+            throw new BusinessException("error.fcm.receiver.empty", "Receiver list is empty");
+        }
+
+        List<Receiver> receivers = message.getReceiver().stream()
+            .filter(Objects::nonNull)
+            .filter(r -> StringUtils.isNoneBlank(r.getAppUserId()))
             .collect(toList());
 
-        if (userRegistrationTokens.isEmpty()) {
+        if (receivers.isEmpty()) {
             throw new BusinessException("error.fcm.receiver.invalid", "Receiver list - no appUserId specified");
-        } else if (userRegistrationTokens.size() > 500) {
+        } else if (receivers.size() > 500) {
             throw new BusinessException("error.fcm.receiver.count", "The number of receivers exceeds 500 allowed");
         }
-        return userRegistrationTokens;
+        return receivers;
     }
 
     private FirebaseMessaging getFirebaseMessaging(CommunicationMessage message) {
@@ -124,29 +130,38 @@ public class FirebaseService {
             .orElseThrow(() -> new BusinessException("error.fcm.sender.id.invalid", "Sender id is not valid"));
     }
 
-    private CommunicationMessage buildCommunicationResponse(BatchResponse batchResponse, CommunicationMessage message) {
-        List<SendResponse> responses = batchResponse.getResponses();
-        List<CommunicationRequestCharacteristic> characteristics = new ArrayList<>(responses.size());
-        characteristics.add(new CommunicationRequestCharacteristic().name("successCount").value(String.valueOf(batchResponse.getSuccessCount())));
-        characteristics.add(new CommunicationRequestCharacteristic().name("failureCount").value(String.valueOf(batchResponse.getFailureCount())));
+    private CommunicationMessage buildCommunicationResponse(BatchResponse batchResponse, CommunicationMessage msg,
+                                                            List<Receiver> receivers) {
+        ExtendedCommunicationMessage message = ExtendedCommunicationMessageFactory.newMessage(msg);
 
-        for (SendResponse response : responses) {
-            String rName, rValue;
+        List<Detail> details = new ArrayList<>();
+        List<SendResponse> responses = batchResponse.getResponses();
+        for (int i = 0; i < responses.size(); i++) {
+            SendResponse response = responses.get(i);
+
+            Detail detail = new Detail()
+                .receiver(receivers.get(i));
+
             if (response.isSuccessful()) {
-                rName = "messageId";
-                rValue = response.getMessageId();
+                detail.status(Detail.Status.SUCCESS)
+                    .messageId(response.getMessageId());
             } else {
-                rName = "error";
-                rValue = response.getException().getMessage();
+                FirebaseMessagingException exception = response.getException();
+
+                detail.status(Detail.Status.ERROR)
+                    .error(new ErrorDetail()
+                        .code(String.valueOf(exception.getMessagingErrorCode()))
+                        .description(exception.getMessage()));
             }
-            characteristics.add(new CommunicationRequestCharacteristic().name(rName).value(rValue));
+            details.add(detail);
         }
 
-        characteristics.addAll(message.getCharacteristic());
+        message.result(new Result()
+            .successCount(batchResponse.getSuccessCount())
+            .failureCount(batchResponse.getFailureCount())
+            .details(details));
 
-        return message
-            .id(UUID.randomUUID().toString())
-            .characteristic(characteristics);
+        return message.id(UUID.randomUUID().toString());
     }
 
 }

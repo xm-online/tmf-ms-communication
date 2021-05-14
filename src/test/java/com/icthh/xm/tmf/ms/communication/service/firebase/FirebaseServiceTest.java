@@ -12,8 +12,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import com.google.firebase.ErrorCode;
+import com.google.firebase.FirebaseException;
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.Notification;
 import com.google.firebase.messaging.SendResponse;
@@ -23,7 +27,11 @@ import com.icthh.xm.tmf.ms.communication.channel.mobileapp.FirebaseApplicationCo
 import com.icthh.xm.tmf.ms.communication.service.MobileAppMessagePayloadCustomizationService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
+import com.icthh.xm.tmf.ms.communication.web.api.model.Detail;
+import com.icthh.xm.tmf.ms.communication.web.api.model.ErrorDetail;
+import com.icthh.xm.tmf.ms.communication.web.api.model.ExtendedCommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
+import com.icthh.xm.tmf.ms.communication.web.api.model.Result;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -37,6 +45,7 @@ import java.util.Optional;
 import lombok.Builder;
 import lombok.Data;
 import lombok.SneakyThrows;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.data.util.ReflectionUtils;
@@ -48,8 +57,10 @@ public class FirebaseServiceTest {
     public static final String FCM_MESSAGE_ID = "fcm-message-id";
     public static final String TEST_CONTENT = "test-content";
     public static final String TEST_SUBJECT = "test-subject";
-    public static final String RECEIVER_ID = "receiver-id";
-    public static final String APP_USER_ID = "app-user-id";
+    public static final String RECEIVER_ID_1 = "receiver-id-1";
+    public static final String RECEIVER_ID_2 = "receiver-id-2";
+    public static final String APP_USER_ID_1 = "app-user-id-1";
+    public static final String APP_USER_ID_2 = "app-user-id-2";
     public static final String CUSTOM_NAME = "custom-name";
     public static final String CUSTOM_VALUE = "custom-value";
     public static final String CUSTOMIZED_KEY = "customized-key";
@@ -58,7 +69,6 @@ public class FirebaseServiceTest {
     public static final String VALIDITY_SECONDS = "300";
     public static final String BADGE_NAME = "BADGE";
     public static final String BADGE_VALUE = "1";
-
 
     private TenantContextHolder tenantContextHolder = mock(TenantContextHolder.class);
     private FirebaseApplicationConfigurationProvider configurationProvider =
@@ -85,7 +95,9 @@ public class FirebaseServiceTest {
 
         when(messagingMock.sendMulticast(any(MulticastMessage.class)))
             .thenReturn(TestBatchResponse.builder()
-                .responses(List.of(newSendResponse(FCM_MESSAGE_ID)))
+                .responses(List.of(
+                    newSendResponse(FCM_MESSAGE_ID),
+                    newFailedSendResponse()))
                 .successCount(1)
                 .failureCount(0)
                 .build());
@@ -104,8 +116,11 @@ public class FirebaseServiceTest {
             .subject(TEST_SUBJECT)
             .receiver(List.of(
                 new Receiver()
-                    .id(RECEIVER_ID)
-                    .appUserId(APP_USER_ID)
+                    .id(RECEIVER_ID_1)
+                    .appUserId(APP_USER_ID_1),
+                new Receiver()
+                    .id(RECEIVER_ID_2)
+                    .appUserId(APP_USER_ID_2)
                 )
             )
             .characteristic(List.of(
@@ -123,28 +138,19 @@ public class FirebaseServiceTest {
         Instant beforeTest = Instant.now();
 
         //when:
-        CommunicationMessage result = firebaseService.sendPushNotification(message);
+        ExtendedCommunicationMessage messageResult = (ExtendedCommunicationMessage) firebaseService.sendPushNotification(message);
 
         //then:
-        assertNotNull(result);
-        List<CommunicationRequestCharacteristic> characteristic = result.getCharacteristic();
-        assertEquals(new CommunicationRequestCharacteristic()
-                .name("successCount").value("1"),
-            characteristic.get(0));
-        assertEquals(new CommunicationRequestCharacteristic()
-                .name("failureCount").value("0"),
-            characteristic.get(1));
-        assertEquals(new CommunicationRequestCharacteristic()
-                .name("messageId").value(FCM_MESSAGE_ID),
-            characteristic.get(2));
+        assertNotNull(messageResult);
 
+        //verify FCM message:
         ArgumentCaptor<MulticastMessage> multicastCaptor = ArgumentCaptor.forClass(MulticastMessage.class);
         verify(messagingMock).sendMulticast(multicastCaptor.capture());
         verifyNoMoreInteractions(messagingMock);
 
         MulticastMessage multicastMessage = multicastCaptor.getValue();
 
-        assertEquals(extractField("tokens", multicastMessage), List.of(APP_USER_ID));
+        assertEquals(extractField("tokens", multicastMessage), List.of(APP_USER_ID_1, APP_USER_ID_2));
         assertEquals(Map.of(CUSTOMIZED_KEY, CUSTOMIZED_VALUE,
             CUSTOM_NAME, CUSTOM_VALUE,
             VALIDITY_PERIOD_NAME, VALIDITY_SECONDS,
@@ -172,6 +178,27 @@ public class FirebaseServiceTest {
             Optional.ofNullable(((Map<String, Object>) extractField("payload", apnsConfig)).get("aps"))
                 .map(e -> ((Map<String, Object>) e).get("badge"))
                 .orElseThrow());
+
+
+        //verify the response:
+        Result result = messageResult.result();
+        assertNotNull(result);
+        Assertions.assertEquals(1, (int) result.successCount());
+        assertEquals(0, (int) result.failureCount());
+        List<Detail> details = result.details();
+        assertEquals(details, List.of(
+            new Detail()
+                .status(Detail.Status.SUCCESS)
+                .messageId(FCM_MESSAGE_ID)
+                .receiver(new Receiver().id(RECEIVER_ID_1).appUserId(APP_USER_ID_1)),
+            new Detail()
+                .status(Detail.Status.ERROR)
+                .error(new ErrorDetail()
+                    .code("UNREGISTERED")
+                    .description("msg"))
+                .receiver(new Receiver().id(RECEIVER_ID_2).appUserId(APP_USER_ID_2))
+
+        ));
     }
 
     @Test
@@ -238,6 +265,20 @@ public class FirebaseServiceTest {
         Method method = SendResponse.class.getDeclaredMethod("fromMessageId", String.class);
         method.setAccessible(true);
         return (SendResponse) method.invoke(SendResponse.class, messageId);
+    }
+
+    @SneakyThrows
+    private SendResponse newFailedSendResponse() {
+        Method method = SendResponse.class.getDeclaredMethod("fromException", FirebaseMessagingException.class);
+        method.setAccessible(true);
+
+        Method ex = FirebaseMessagingException.class.getDeclaredMethod(
+            "withMessagingErrorCode", FirebaseException.class, MessagingErrorCode.class);
+        ex.setAccessible(true);
+
+        FirebaseMessagingException exInst = (FirebaseMessagingException)
+            ex.invoke(FirebaseMessagingException.class, new FirebaseException(ErrorCode.INVALID_ARGUMENT, "msg", null), MessagingErrorCode.UNREGISTERED);
+        return (SendResponse) method.invoke(SendResponse.class, exInst);
     }
 
     @SneakyThrows
