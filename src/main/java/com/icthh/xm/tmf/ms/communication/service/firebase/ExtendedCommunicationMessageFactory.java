@@ -9,7 +9,7 @@ public class ExtendedCommunicationMessageFactory {
         ExtendedCommunicationMessage message = new ExtendedCommunicationMessage();
         message.atType("ExtendedCommunicationMessage");
         message.atBaseType("CommunicationMessage");
-        message.atSchemaLocation("https://github.com/xm-online/tmf-ms-communication/blob/master/src/main/resources/swagger/api-extention.yml");
+        message.atSchemaLocation("https://github.com/xm-online/tmf-ms-communication/blob/master/src/main/resources/swagger/api-extension.yml");
         return message;
     }
 

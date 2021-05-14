@@ -10,15 +10,6 @@ definitions:
                 result:
                     $ref: '#/definitions/Result'
                     description: Arequest results
-                '@type':
-                    type: string
-                    description: (optional) The class type of a REST resource.
-                '@schemaLocation':
-                    type: string
-                    description: (optional) A link to the schema describing a REST resource.
-                '@baseType':
-                    type: string
-                    description: The class type of the actual resource (for type extension).
     Result:
         required:
             - successCount
