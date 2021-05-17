@@ -2,6 +2,7 @@ package com.icthh.xm.tmf.ms.communication.service.firebase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -170,8 +171,8 @@ public class FirebaseServiceTest {
         Map<String, String> apnHeaders = (Map<String, String>) extractField("headers", apnsConfig);
         Object expiration = apnHeaders.get("apns-expiration");
         assertNotNull(expiration);
-        assertEquals(0, Duration.between(Instant.ofEpochMilli(Long.parseLong((String) expiration) * 1000),
-            beforeTest.plus(300, ChronoUnit.SECONDS)).toSeconds());
+        assertTrue(Math.abs(Duration.between(Instant.ofEpochMilli(Long.parseLong((String) expiration) * 1000),
+            beforeTest.plus(300, ChronoUnit.SECONDS)).toSeconds()) <= 1);
 
         //check badge
         assertEquals(Integer.valueOf(BADGE_VALUE),
