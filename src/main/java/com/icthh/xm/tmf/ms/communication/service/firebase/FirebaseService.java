@@ -41,6 +41,11 @@ import org.springframework.util.CollectionUtils;
 @ConditionalOnBean(FirebaseApplicationConfigurationProvider.class)
 public class FirebaseService {
 
+    /**
+     * The maximum number of receivers allowed for a batch operation.
+     */
+    public static final int RECEIVERS_MAX_SIZE = 500;
+
     private final FirebaseApplicationConfigurationProvider firebaseApplicationConfigurationProvider;
     private final TenantContextHolder tenantContextHolder;
     private final MobileAppMessagePayloadCustomizationService payloadCustomizer;
@@ -118,7 +123,7 @@ public class FirebaseService {
 
         if (receivers.isEmpty()) {
             throw new BusinessException(ErrorCodes.RECEIVER_INVALID, "Receiver list - no appUserId specified");
-        } else if (receivers.size() > 500) {
+        } else if (receivers.size() > RECEIVERS_MAX_SIZE) {
             throw new BusinessException(ErrorCodes.RECEIVER_COUNT, "The number of receivers exceeds 500 allowed");
         }
         return receivers;
