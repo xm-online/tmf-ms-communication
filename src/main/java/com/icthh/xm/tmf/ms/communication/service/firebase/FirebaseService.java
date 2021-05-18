@@ -77,7 +77,7 @@ public class FirebaseService {
     @SneakyThrows
     private MulticastMessage mapToFirebaseRequest(CommunicationMessage message, List<Receiver> receivers) {
         Map<String, String> rawData = Optional.ofNullable(message.getCharacteristic())
-            .orElse(Collections.emptyList()).stream()
+            .orElseGet(Collections::emptyList).stream()
             .collect(Collectors.toMap(CommunicationRequestCharacteristic::getName,
                 CommunicationRequestCharacteristic::getValue));
 
@@ -108,7 +108,7 @@ public class FirebaseService {
 
     private List<Receiver> getReceiversAndValidate(CommunicationMessage message) {
         if (CollectionUtils.isEmpty(message.getReceiver())) {
-            throw new BusinessException("error.fcm.receiver.empty", "Receiver list is empty");
+            throw new BusinessException(ErrorCodes.RECEIVER_EMPTY, "Receiver list is empty");
         }
 
         List<Receiver> receivers = message.getReceiver().stream()
@@ -117,9 +117,9 @@ public class FirebaseService {
             .collect(toList());
 
         if (receivers.isEmpty()) {
-            throw new BusinessException("error.fcm.receiver.invalid", "Receiver list - no appUserId specified");
+            throw new BusinessException(ErrorCodes.RECEIVER_INVALID, "Receiver list - no appUserId specified");
         } else if (receivers.size() > 500) {
-            throw new BusinessException("error.fcm.receiver.count", "The number of receivers exceeds 500 allowed");
+            throw new BusinessException(ErrorCodes.RECEIVER_COUNT, "The number of receivers exceeds 500 allowed");
         }
         return receivers;
     }
@@ -127,7 +127,7 @@ public class FirebaseService {
     private FirebaseMessaging getFirebaseMessaging(CommunicationMessage message) {
         return firebaseApplicationConfigurationProvider.getFirebaseMessaging(
             tenantContextHolder.getTenantKey(), message.getSender().getId())
-            .orElseThrow(() -> new BusinessException("error.fcm.sender.id.invalid", "Sender id is not valid"));
+            .orElseThrow(() -> new BusinessException(ErrorCodes.SENDER_ID_INVALID, "Sender id is not valid"));
     }
 
     private CommunicationMessage buildCommunicationResponse(BatchResponse batchResponse, CommunicationMessage msg,
@@ -162,6 +162,13 @@ public class FirebaseService {
             .details(details));
 
         return message.id(UUID.randomUUID().toString());
+    }
+
+    static final class ErrorCodes {
+        public static final String RECEIVER_EMPTY = "error.fcm.receiver.empty";
+        public static final String RECEIVER_INVALID = "error.fcm.receiver.invalid";
+        public static final String RECEIVER_COUNT = "error.fcm.receiver.count";
+        public static final String SENDER_ID_INVALID = "error.fcm.sender.id.invalid";
     }
 
 }

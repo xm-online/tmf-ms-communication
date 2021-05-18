@@ -8,20 +8,19 @@ import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.Notification;
 import com.google.firebase.messaging.WebpushConfig;
 import com.google.firebase.messaging.WebpushNotification;
-import lombok.Data;
+import lombok.Value;
 
 /**
  * Wrapper around Firebase {@link MulticastMessage} builders.
  */
-@Data
+@Value
 class BuilderWrapper {
-    private MulticastMessage.Builder firebaseMessageBuilder = MulticastMessage.builder();
-    private ApnsConfig.Builder apnsBuilder = ApnsConfig.builder();
-    private Aps.Builder apsBuilder = Aps.builder();
-    private AndroidConfig.Builder androidConfigBuilder = AndroidConfig.builder();
-    private WebpushConfig.Builder webPushBuilder = WebpushConfig.builder();
-    private Notification.Builder notificationBuilder = Notification.builder();
-    private AndroidNotification.Builder androidNotificationBuilder = AndroidNotification.builder();
-    private WebpushNotification.Builder webpushNotificationBuilder = WebpushNotification.builder();
-
+    MulticastMessage.Builder firebaseMessageBuilder = MulticastMessage.builder();
+    ApnsConfig.Builder apnsBuilder = ApnsConfig.builder();
+    Aps.Builder apsBuilder = Aps.builder();
+    AndroidConfig.Builder androidConfigBuilder = AndroidConfig.builder();
+    WebpushConfig.Builder webPushBuilder = WebpushConfig.builder();
+    Notification.Builder notificationBuilder = Notification.builder();
+    AndroidNotification.Builder androidNotificationBuilder = AndroidNotification.builder();
+    WebpushNotification.Builder webpushNotificationBuilder = WebpushNotification.builder();
 }
