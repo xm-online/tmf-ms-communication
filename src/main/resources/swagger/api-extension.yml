@@ -1,0 +1,44 @@
+swagger: '2.0'
+definitions:
+    ExtendedCommunicationMessage:
+        allOf:
+            -   $ref: '#/definitions/CommunicationMessage'
+            -   type: object
+            required:
+                - result
+            properties:
+                result:
+                    $ref: '#/definitions/Result'
+                    description: Arequest results
+    Result:
+        required:
+            - successCount
+            - failureCount
+        properties:
+            successCount:
+                type: integer
+            failureCount:
+                type: integer
+            details:
+                $ref: '#/definitions/Details'
+    Details:
+        required:
+            - status
+            - receiver
+        properties:
+            status:
+                type: string
+            receiver:
+                $ref: '#/definitions/Receiver'
+            messageId:
+                type: string
+            error:
+                $ref: '#/definitions/ErrorDescription'
+    ErrorDescription:
+        required:
+            - code
+        properties:
+            code:
+                type: string
+            description:
+                type: string
