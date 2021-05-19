@@ -42,4 +42,27 @@ public final class ParameterNames {
      */
     public static final String ERROR_CODE = "ERROR.CODE";
 
+    /**
+     * Response result type, see {@link ResultType}
+     */
+    public static final String RESULT_TYPE = "RESULT.TYPE";
+
+    public enum ResultType {
+
+        /**
+         * Includes success and error counts only.
+         */
+        SUMMARY,
+
+        /**
+         * Includes success and error counts, detailed description of error cases.
+         */
+        ERROR,
+
+        /**
+         * Includes success and error counts, detailed description
+         * of success and errors cases.
+         */
+        FULL
+    }
 }

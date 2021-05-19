@@ -2,6 +2,7 @@ package com.icthh.xm.tmf.ms.communication.service.firebase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,6 +27,9 @@ import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.channel.mobileapp.FirebaseApplicationConfigurationProvider;
 import com.icthh.xm.tmf.ms.communication.service.MobileAppMessagePayloadCustomizationService;
+import com.icthh.xm.tmf.ms.communication.service.firebase.response.ErrorOnlyResponseBuildingStrategy;
+import com.icthh.xm.tmf.ms.communication.service.firebase.response.FullResponseBuildingStrategy;
+import com.icthh.xm.tmf.ms.communication.service.firebase.response.SummaryResponseBuildingStrategy;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Detail;
@@ -70,6 +74,9 @@ public class FirebaseServiceTest {
     public static final String VALIDITY_SECONDS = "300";
     public static final String BADGE_NAME = "BADGE";
     public static final String BADGE_VALUE = "1";
+    public static final String RESULT_TYPE = "RESULT.TYPE";
+    public static final String FULL = "FULL";
+    public static final String ERROR = "ERROR";
 
     private TenantContextHolder tenantContextHolder = mock(TenantContextHolder.class);
     private FirebaseApplicationConfigurationProvider configurationProvider =
@@ -79,62 +86,32 @@ public class FirebaseServiceTest {
 
     private FirebaseService firebaseService = new FirebaseService(configurationProvider,
         tenantContextHolder, payloadCustomizationServiceMock, List.of(
-        new ValidityPeriodConfigurator(), new BadgeConfigurator(), new ImageConfigurator()
-    ));
+        new ValidityPeriodConfigurator(), new BadgeConfigurator(), new ImageConfigurator()),
+        List.of(new SummaryResponseBuildingStrategy(), new ErrorOnlyResponseBuildingStrategy(),
+            new FullResponseBuildingStrategy()));
+    //given:
+    private FirebaseMessaging messagingMock = mock(FirebaseMessaging.class);
 
     @Test
     @SneakyThrows
     public void happyPath() {
         //given:
-        FirebaseMessaging messagingMock = mock(FirebaseMessaging.class);
+        prepareMocks();
 
-        when(configurationProvider.getFirebaseMessaging(TENANT_KEY, SENDER_ID))
-            .thenReturn(Optional.of(messagingMock));
-
-        when(tenantContextHolder.getTenantKey())
-            .thenReturn(TENANT_KEY);
-
-        when(messagingMock.sendMulticast(any(MulticastMessage.class)))
-            .thenReturn(TestBatchResponse.builder()
-                .responses(List.of(
-                    newSendResponse(FCM_MESSAGE_ID),
-                    newFailedSendResponse()))
-                .successCount(1)
-                .failureCount(0)
-                .build());
-
-        doAnswer(invocation -> {
-            HashMap<Object, Object> answer = new HashMap<>(invocation.getArgument(0));
-            answer.put(CUSTOMIZED_KEY, CUSTOMIZED_VALUE);
-            return answer;
-        }).when(payloadCustomizationServiceMock).customizePayload(anyMap());
-
-        CommunicationMessage message = new CommunicationMessage()
-            .sender(new Sender()
-                .id(SENDER_ID))
-            .type("type")
-            .content(TEST_CONTENT)
-            .subject(TEST_SUBJECT)
-            .receiver(List.of(
-                new Receiver()
-                    .id(RECEIVER_ID_1)
-                    .appUserId(APP_USER_ID_1),
-                new Receiver()
-                    .id(RECEIVER_ID_2)
-                    .appUserId(APP_USER_ID_2)
-                )
-            )
-            .characteristic(List.of(
-                new CommunicationRequestCharacteristic()
-                    .name(CUSTOM_NAME)
-                    .value(CUSTOM_VALUE),
-                new CommunicationRequestCharacteristic()
-                    .name(VALIDITY_PERIOD_NAME)
-                    .value(VALIDITY_SECONDS),
-                new CommunicationRequestCharacteristic()
-                    .name(BADGE_NAME)
-                    .value(BADGE_VALUE)
-            ));
+        CommunicationMessage message = newMessage(List.of(
+            new CommunicationRequestCharacteristic()
+                .name(CUSTOM_NAME)
+                .value(CUSTOM_VALUE),
+            new CommunicationRequestCharacteristic()
+                .name(VALIDITY_PERIOD_NAME)
+                .value(VALIDITY_SECONDS),
+            new CommunicationRequestCharacteristic()
+                .name(BADGE_NAME)
+                .value(BADGE_VALUE),
+            new CommunicationRequestCharacteristic()
+                .name(RESULT_TYPE)
+                .value(FULL)
+        ));
 
         Instant beforeTest = Instant.now();
 
@@ -152,7 +129,9 @@ public class FirebaseServiceTest {
         MulticastMessage multicastMessage = multicastCaptor.getValue();
 
         assertEquals(extractField("tokens", multicastMessage), List.of(APP_USER_ID_1, APP_USER_ID_2));
-        assertEquals(Map.of(CUSTOMIZED_KEY, CUSTOMIZED_VALUE,
+        assertEquals(Map.of(
+            RESULT_TYPE, FULL,
+            CUSTOMIZED_KEY, CUSTOMIZED_VALUE,
             CUSTOM_NAME, CUSTOM_VALUE,
             VALIDITY_PERIOD_NAME, VALIDITY_SECONDS,
             BADGE_NAME, BADGE_VALUE),
@@ -187,7 +166,7 @@ public class FirebaseServiceTest {
         Assertions.assertEquals(1, (int) result.successCount());
         assertEquals(0, (int) result.failureCount());
         List<Detail> details = result.details();
-        assertEquals(details, List.of(
+        assertEquals(List.of(
             new Detail()
                 .status(Detail.Status.SUCCESS)
                 .messageId(FCM_MESSAGE_ID)
@@ -197,9 +176,87 @@ public class FirebaseServiceTest {
                 .error(new ErrorDetail()
                     .code("UNREGISTERED")
                     .description("msg"))
-                .receiver(new Receiver().id(RECEIVER_ID_2).appUserId(APP_USER_ID_2))
+                .receiver(new Receiver().id(RECEIVER_ID_2).appUserId(APP_USER_ID_2))),
+            details);
+    }
 
+    @Test
+    @SneakyThrows
+    public void shouldUseDefaultResponseStrategy() {
+        //given:
+        prepareMocks();
+
+        CommunicationMessage message = newMessage(null);
+
+        //when:
+        ExtendedCommunicationMessage messageResult = (ExtendedCommunicationMessage) firebaseService.sendPushNotification(message);
+
+        //then:
+        assertNotNull(messageResult);
+
+        //verify the response:
+        Result result = messageResult.result();
+        assertNotNull(result);
+        Assertions.assertEquals(1, (int) result.successCount());
+        assertEquals(0, (int) result.failureCount());
+        assertNull(result.details());
+    }
+
+    @Test
+    @SneakyThrows
+    public void shouldUseErrorResponseStrategy() {
+        //given:
+        prepareMocks();
+
+        CommunicationMessage message = newMessage(List.of(
+            new CommunicationRequestCharacteristic()
+                .name(RESULT_TYPE)
+                .value(ERROR)
         ));
+
+        //when:
+        ExtendedCommunicationMessage messageResult = (ExtendedCommunicationMessage) firebaseService.sendPushNotification(message);
+
+        //then:
+        assertNotNull(messageResult);
+
+        //verify the response:
+        Result result = messageResult.result();
+        assertNotNull(result);
+        Assertions.assertEquals(1, (int) result.successCount());
+        assertEquals(0, (int) result.failureCount());
+        assertEquals(List.of(
+            new Detail()
+                .status(Detail.Status.ERROR)
+                .error(new ErrorDetail()
+                    .code("UNREGISTERED")
+                    .description("msg"))
+                .receiver(new Receiver().id(RECEIVER_ID_2).appUserId(APP_USER_ID_2))),
+            result.details());
+    }
+
+    @SneakyThrows
+    private void prepareMocks() {
+        when(configurationProvider.getFirebaseMessaging(TENANT_KEY, SENDER_ID))
+            .thenReturn(Optional.of(messagingMock));
+
+        when(tenantContextHolder.getTenantKey())
+            .thenReturn(TENANT_KEY);
+
+        when(messagingMock.sendMulticast(any(MulticastMessage.class)))
+            .thenReturn(TestBatchResponse.builder()
+                .responses(List.of(
+                    newSendResponse(FCM_MESSAGE_ID),
+                    newFailedSendResponse()))
+                .successCount(1)
+                .failureCount(0)
+                .build());
+
+        doAnswer(invocation -> {
+            HashMap<Object, Object> answer = new HashMap<>(invocation.getArgument(0));
+            answer.put(CUSTOMIZED_KEY, CUSTOMIZED_VALUE);
+            return answer;
+        }).when(payloadCustomizationServiceMock).customizePayload(anyMap());
     }
 
     @Test
@@ -261,6 +318,26 @@ public class FirebaseServiceTest {
         }
     }
 
+    private CommunicationMessage newMessage(List<CommunicationRequestCharacteristic> characteristics) {
+        return new CommunicationMessage()
+            .sender(new Sender()
+                .id(SENDER_ID))
+            .type("type")
+            .content(TEST_CONTENT)
+            .subject(TEST_SUBJECT)
+            .receiver(List.of(
+                new Receiver()
+                    .id(RECEIVER_ID_1)
+                    .appUserId(APP_USER_ID_1),
+                new Receiver()
+                    .id(RECEIVER_ID_2)
+                    .appUserId(APP_USER_ID_2)
+                )
+            )
+            .characteristic(characteristics);
+    }
+
+
     @SneakyThrows
     private SendResponse newSendResponse(String messageId) {
         Method method = SendResponse.class.getDeclaredMethod("fromMessageId", String.class);
@@ -292,8 +369,6 @@ public class FirebaseServiceTest {
     @Data
     @Builder
     private static class TestBatchResponse implements BatchResponse {
-
-
         private List<SendResponse> responses;
         private int successCount;
         private int failureCount;

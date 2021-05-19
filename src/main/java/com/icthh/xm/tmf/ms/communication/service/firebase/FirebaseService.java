@@ -4,29 +4,24 @@ import static java.util.stream.Collectors.toList;
 
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.SendResponse;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.channel.mobileapp.FirebaseApplicationConfigurationProvider;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.ParameterNames;
 import com.icthh.xm.tmf.ms.communication.service.MobileAppMessagePayloadCustomizationService;
+import com.icthh.xm.tmf.ms.communication.service.firebase.response.ResponseBuildingStrategy;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
-import com.icthh.xm.tmf.ms.communication.web.api.model.Detail;
-import com.icthh.xm.tmf.ms.communication.web.api.model.ErrorDetail;
-import com.icthh.xm.tmf.ms.communication.web.api.model.ExtendedCommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
-import com.icthh.xm.tmf.ms.communication.web.api.model.Result;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -37,7 +32,6 @@ import org.springframework.util.CollectionUtils;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @ConditionalOnBean(FirebaseApplicationConfigurationProvider.class)
 public class FirebaseService {
 
@@ -45,11 +39,32 @@ public class FirebaseService {
      * The maximum number of receivers allowed for a batch operation.
      */
     public static final int RECEIVERS_MAX_SIZE = 500;
+    public static final String DEFAULT_RESPONSE_STRATEGY = "SUMMARY";
 
     private final FirebaseApplicationConfigurationProvider firebaseApplicationConfigurationProvider;
     private final TenantContextHolder tenantContextHolder;
     private final MobileAppMessagePayloadCustomizationService payloadCustomizer;
     private final List<MessageConfigurator> messageConfigurators;
+    private final ResponseBuildingStrategy defaultResponseBuildingStrategy;
+    private final Map<String, ResponseBuildingStrategy> responseBuildingStrategies;
+
+    public FirebaseService(FirebaseApplicationConfigurationProvider firebaseApplicationConfigurationProvider,
+                           TenantContextHolder tenantContextHolder,
+                           MobileAppMessagePayloadCustomizationService payloadCustomizer,
+                           List<MessageConfigurator> messageConfigurators,
+                           List<ResponseBuildingStrategy> responseBuildingStrategies) {
+        this.firebaseApplicationConfigurationProvider = firebaseApplicationConfigurationProvider;
+        this.tenantContextHolder = tenantContextHolder;
+        this.payloadCustomizer = payloadCustomizer;
+        this.messageConfigurators = messageConfigurators;
+        this.defaultResponseBuildingStrategy = responseBuildingStrategies.stream()
+            .filter(s -> DEFAULT_RESPONSE_STRATEGY.equals(s.getName()))
+            .findAny()
+            .orElseThrow(() -> new IllegalStateException(
+                String.format("A default response strategy %s is not found", DEFAULT_RESPONSE_STRATEGY)));
+        this.responseBuildingStrategies = responseBuildingStrategies.stream()
+            .collect(Collectors.toMap(ResponseBuildingStrategy::getName, Function.identity()));
+    }
 
     @SneakyThrows
     public CommunicationMessage sendPushNotification(CommunicationMessage message) {
@@ -76,15 +91,14 @@ public class FirebaseService {
             );
         }
 
-        return buildCommunicationResponse(response, message, receivers);
+        return responseBuildingStrategies.getOrDefault(
+            collectCharacteristics(message).get(ParameterNames.RESULT_TYPE), defaultResponseBuildingStrategy)
+            .buildCommunicationResponse(response, message, receivers);
     }
 
     @SneakyThrows
     private MulticastMessage mapToFirebaseRequest(CommunicationMessage message, List<Receiver> receivers) {
-        Map<String, String> rawData = Optional.ofNullable(message.getCharacteristic())
-            .orElseGet(Collections::emptyList).stream()
-            .collect(Collectors.toMap(CommunicationRequestCharacteristic::getName,
-                CommunicationRequestCharacteristic::getValue));
+        Map<String, String> rawData = collectCharacteristics(message);
 
         BuilderWrapper builder = new BuilderWrapper();
 
@@ -111,6 +125,13 @@ public class FirebaseService {
             .build();
     }
 
+    private Map<String, String> collectCharacteristics(CommunicationMessage message) {
+        return Optional.ofNullable(message.getCharacteristic())
+            .orElseGet(Collections::emptyList).stream()
+            .collect(Collectors.toMap(CommunicationRequestCharacteristic::getName,
+                CommunicationRequestCharacteristic::getValue));
+    }
+
     private List<Receiver> getReceiversAndValidate(CommunicationMessage message) {
         if (CollectionUtils.isEmpty(message.getReceiver())) {
             throw new BusinessException(ErrorCodes.RECEIVER_EMPTY, "Receiver list is empty");
@@ -133,40 +154,6 @@ public class FirebaseService {
         return firebaseApplicationConfigurationProvider.getFirebaseMessaging(
             tenantContextHolder.getTenantKey(), message.getSender().getId())
             .orElseThrow(() -> new BusinessException(ErrorCodes.SENDER_ID_INVALID, "Sender id is not valid"));
-    }
-
-    private CommunicationMessage buildCommunicationResponse(BatchResponse batchResponse, CommunicationMessage msg,
-                                                            List<Receiver> receivers) {
-        ExtendedCommunicationMessage message = ExtendedCommunicationMessageFactory.newMessage(msg);
-
-        List<Detail> details = new ArrayList<>();
-        List<SendResponse> responses = batchResponse.getResponses();
-        for (int i = 0; i < responses.size(); i++) {
-            SendResponse response = responses.get(i);
-
-            Detail detail = new Detail()
-                .receiver(receivers.get(i));
-
-            if (response.isSuccessful()) {
-                detail.status(Detail.Status.SUCCESS)
-                    .messageId(response.getMessageId());
-            } else {
-                FirebaseMessagingException exception = response.getException();
-
-                detail.status(Detail.Status.ERROR)
-                    .error(new ErrorDetail()
-                        .code(String.valueOf(exception.getMessagingErrorCode()))
-                        .description(exception.getMessage()));
-            }
-            details.add(detail);
-        }
-
-        message.result(new Result()
-            .successCount(batchResponse.getSuccessCount())
-            .failureCount(batchResponse.getFailureCount())
-            .details(details));
-
-        return message.id(UUID.randomUUID().toString());
     }
 
     static final class ErrorCodes {
