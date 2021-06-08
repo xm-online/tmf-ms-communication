@@ -1,16 +1,15 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
+import brave.Tracer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.tmf.ms.communication.lep.LepKafkaMessageHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingAdapter;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaDeliveryReportListener;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaMoDeliveryReportListener;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.MessageHandlerService;
-
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.CompositeHealthIndicator;
@@ -67,26 +66,28 @@ public class MessagingConfiguration {
 
     @Bean
     public SendToKafkaDeliveryReportListener deliveryReportListener(MessagingAdapter messagingAdapter,
-                                                                    ApplicationProperties applicationProperties) {
+                                                                    ApplicationProperties applicationProperties,
+                                                                    Tracer tracer) {
         int deliveryProcessorThreadCount = applicationProperties.getMessaging().getDeliveryProcessorThreadCount();
         int deliveryMessageQueueMaxSize = applicationProperties.getMessaging().getDeliveryMessageQueueMaxSize();
         return new SendToKafkaDeliveryReportListener(messagingAdapter,
             new ThreadPoolExecutor(deliveryProcessorThreadCount,
                 deliveryMessageQueueMaxSize, 0L,
                 TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>()));
+                new LinkedBlockingQueue<>()), tracer);
     }
 
     @Bean
     public SendToKafkaMoDeliveryReportListener deliveryMoReportListener(MessagingAdapter messagingAdapter,
-                                                                        ApplicationProperties applicationProperties) {
+                                                                        ApplicationProperties applicationProperties,
+                                                                        Tracer tracer) {
         int deliveryProcessorThreadCount = applicationProperties.getMessaging().getDeliveryProcessorThreadCount();
         int deliveryMessageQueueMaxSize = applicationProperties.getMessaging().getDeliveryMessageQueueMaxSize();
         return new SendToKafkaMoDeliveryReportListener(messagingAdapter,
             new ThreadPoolExecutor(deliveryProcessorThreadCount,
                 deliveryMessageQueueMaxSize, 0L,
                 TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>()));
+                new LinkedBlockingQueue<>()), tracer);
     }
 
 }

@@ -23,6 +23,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import brave.Tracer;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.BusinessRule;
@@ -94,6 +95,9 @@ public class SmppMessagingHandlerTest {
     private SmppService smppService;
     @Mock
     private BusinessRuleValidator businessRuleValidator;
+    @Mock
+    private Tracer tracer;
+
     @Spy
     private ApplicationProperties applicationProperties = createApplicationProperties();
     @Spy
@@ -106,8 +110,8 @@ public class SmppMessagingHandlerTest {
     public void setUp() {
         ExecutorService executorService = ImmediateEventExecutor.INSTANCE;
         MessagingAdapter messagingAdapter = new MessagingAdapter(kafkaTemplate, applicationProperties);
-        sendToKafkaDeliveryReportListener = new SendToKafkaDeliveryReportListener(messagingAdapter, executorService);
-        sendToKafkaMoDeliveryReportListener = new SendToKafkaMoDeliveryReportListener(messagingAdapter, executorService);
+        sendToKafkaDeliveryReportListener = new SendToKafkaDeliveryReportListener(messagingAdapter, executorService, tracer);
+        sendToKafkaMoDeliveryReportListener = new SendToKafkaMoDeliveryReportListener(messagingAdapter, executorService, tracer);
         RuleResponse response = new RuleResponse();
         response.setSuccess(true);
         when(businessRuleValidator.validate(any())).thenReturn(response);

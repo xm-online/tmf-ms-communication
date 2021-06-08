@@ -12,6 +12,8 @@ import static org.jsmpp.util.DeliveryReceiptState.REJECTD;
 import static org.jsmpp.util.DeliveryReceiptState.UNDELIV;
 import static org.jsmpp.util.DeliveryReceiptState.UNKNOWN;
 
+import brave.Span;
+import brave.Tracer;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.tmf.ms.communication.service.DeliveryReportListener;
 import java.math.BigInteger;
@@ -29,26 +31,33 @@ import org.jsmpp.bean.MessageState;
 import org.jsmpp.bean.OptionalParameter;
 import org.jsmpp.util.DeliveryReceiptState;
 import org.jsmpp.util.InvalidDeliveryReceiptException;
-import org.springframework.cloud.sleuth.annotation.NewSpan;
 
 @Slf4j
 @RequiredArgsConstructor
 public abstract class AbstractDeliveryReportListener implements DeliveryReportListener {
     public static final int DECIMAL_SYSTEM = 10;
     public static final int HEX_SYSTEM = 16;
+
     private final ExecutorService executorService;
+    private final Tracer tracer;
 
     @Override
-    @NewSpan
     public void onAcceptDeliverSm(DeliverSm deliverSm) {
         String rid = MdcUtils.getRid();
         executorService.submit(() -> {
-            try {
-                MdcUtils.putRid(rid);
-                processDeliveryReport(deliverSm);
-            } catch (Throwable t) {
-                log.error("Error process delivery report ", t);
+            Span span = tracer.nextSpan();
+            try (Tracer.SpanInScope ws = tracer.withSpanInScope(span.start())) {
+                try {
+                    MdcUtils.putRid(rid);
+
+                    log.info("onAcceptDeliverSm() Send MO REMOVE ME");
+
+                    processDeliveryReport(deliverSm);
+                } catch (Throwable t) { //internal catch to properly log trace id with a stack trace
+                    log.error("Error process delivery report ", t);
+                }
             } finally {
+                span.finish();
                 MdcUtils.removeRid();
             }
         });

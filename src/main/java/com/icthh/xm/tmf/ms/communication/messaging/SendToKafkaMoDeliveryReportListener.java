@@ -7,6 +7,7 @@ import static java.nio.charset.StandardCharsets.UTF_16;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jsmpp.bean.Alphabet.ALPHA_UCS2;
 
+import brave.Tracer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.MapType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
@@ -26,8 +27,9 @@ public class SendToKafkaMoDeliveryReportListener extends AbstractDeliveryReportL
 
     private final MessagingAdapter messagingAdapter;
 
-    public SendToKafkaMoDeliveryReportListener(MessagingAdapter messagingAdapter, ExecutorService executorService) {
-        super(executorService);
+    public SendToKafkaMoDeliveryReportListener(MessagingAdapter messagingAdapter,
+                                               ExecutorService executorService, Tracer tracer) {
+        super(executorService, tracer);
         this.messagingAdapter = messagingAdapter;
     }
 
