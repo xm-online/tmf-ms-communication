@@ -58,6 +58,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mapstruct.factory.Mappers;
+import org.mockito.Answers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -95,7 +96,7 @@ public class SmppMessagingHandlerTest {
     private SmppService smppService;
     @Mock
     private BusinessRuleValidator businessRuleValidator;
-    @Mock
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     private Tracer tracer;
 
     @Spy
