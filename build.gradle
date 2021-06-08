@@ -185,6 +185,8 @@ repositories {
 }
 
 dependencies {
+    implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
+
     // import JHipster dependencies BOM
     implementation platform("io.github.jhipster:jhipster-dependencies:${jhipster_dependencies_version}" )
 

@@ -1,24 +1,5 @@
 package com.icthh.xm.tmf.ms.communication.messaging;
 
-import com.icthh.xm.commons.logging.util.MdcUtils;
-import com.icthh.xm.tmf.ms.communication.service.DeliveryReportListener;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.jsmpp.bean.DeliverSm;
-import org.jsmpp.bean.DeliveryReceipt;
-import org.jsmpp.bean.MessageState;
-import org.jsmpp.bean.OptionalParameter;
-import org.jsmpp.util.DeliveryReceiptState;
-import org.jsmpp.util.InvalidDeliveryReceiptException;
-
-import java.math.BigInteger;
-import java.nio.charset.Charset;
-import java.util.EnumMap;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.function.Function;
-
 import static java.util.Optional.ofNullable;
 import static org.jsmpp.bean.OptionalParameter.Tag.MESSAGE_STATE;
 import static org.jsmpp.bean.OptionalParameter.Tag.RECEIPTED_MESSAGE_ID;
@@ -31,6 +12,25 @@ import static org.jsmpp.util.DeliveryReceiptState.REJECTD;
 import static org.jsmpp.util.DeliveryReceiptState.UNDELIV;
 import static org.jsmpp.util.DeliveryReceiptState.UNKNOWN;
 
+import com.icthh.xm.commons.logging.util.MdcUtils;
+import com.icthh.xm.tmf.ms.communication.service.DeliveryReportListener;
+import java.math.BigInteger;
+import java.nio.charset.Charset;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.jsmpp.bean.DeliverSm;
+import org.jsmpp.bean.DeliveryReceipt;
+import org.jsmpp.bean.MessageState;
+import org.jsmpp.bean.OptionalParameter;
+import org.jsmpp.util.DeliveryReceiptState;
+import org.jsmpp.util.InvalidDeliveryReceiptException;
+import org.springframework.cloud.sleuth.annotation.NewSpan;
+
 @Slf4j
 @RequiredArgsConstructor
 public abstract class AbstractDeliveryReportListener implements DeliveryReportListener {
@@ -39,6 +39,7 @@ public abstract class AbstractDeliveryReportListener implements DeliveryReportLi
     private final ExecutorService executorService;
 
     @Override
+    @NewSpan
     public void onAcceptDeliverSm(DeliverSm deliverSm) {
         String rid = MdcUtils.getRid();
         executorService.submit(() -> {
