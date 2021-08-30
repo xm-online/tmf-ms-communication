@@ -10,6 +10,7 @@ import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Messaging;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
+import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
 import com.icthh.xm.tmf.ms.communication.rules.RuleResponse;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
@@ -116,6 +117,11 @@ public class SmppMessagingHandler implements BasicMessageHandler {
         CommunicationMessage communicationMessage = mapper.messageCreateToMessage(messageCreate);
         this.handle(communicationMessage);
         return communicationMessage;
+    }
+
+    @Override
+    public MessageType getType() {
+        return MessageType.SMS;
     }
 
     private String sendSmppMessage(CommunicationMessage message, Messaging messaging,

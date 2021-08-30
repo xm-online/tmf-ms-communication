@@ -16,7 +16,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.text.StrSubstitutor;
-import org.eclipse.jgit.util.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,12 +27,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,10 +46,11 @@ import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@ContextConfiguration(
-    classes = {CommunicationApp.class,
-        SecurityBeanOverrideConfiguration.class,
-        LepConfiguration.class,})
+@ContextConfiguration(classes = {
+    CommunicationApp.class,
+    SecurityBeanOverrideConfiguration.class,
+    LepConfiguration.class
+})
 @Category(CustomCommunicationMessageHandlerTest.class)
 @Slf4j
 public class CustomCommunicationMessageHandlerTest {
@@ -64,6 +63,8 @@ public class CustomCommunicationMessageHandlerTest {
     private XmLepScriptConfigServerResourceLoader leps;
     @Autowired
     CustomCommunicationMessageHandler communicationMessageHandler;
+    @MockBean
+    private JavaMailSender javaMailSender;
     @Autowired
     BusinessTimeConfigService businessTimeConfigService;
     @Mock

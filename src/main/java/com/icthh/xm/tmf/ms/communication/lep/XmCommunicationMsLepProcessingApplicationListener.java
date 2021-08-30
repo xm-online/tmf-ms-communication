@@ -4,6 +4,7 @@ import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstant
 import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstants.BINDING_KEY_SERVICES;
 import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstants.BINDING_KEY_TEMPLATES;
 import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstants.BINDING_SUB_KEY_PERMISSION_SERVICE;
+import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstants.BINDING_SUB_KEY_SERVICE_MAIL_SERVICE;
 import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstants.BINDING_SUB_KEY_SERVICE_TENANT_CONFIG_SERICE;
 import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstants.BINDING_SUB_KEY_TEMPLATE_KAFKA;
 import static com.icthh.xm.tmf.ms.communication.lep.LepXmCommunicationMsConstants.BINDING_SUB_KEY_TEMPLATE_LOAD_BALANCED_REST;
@@ -16,10 +17,10 @@ import com.icthh.xm.commons.permission.service.PermissionCheckService;
 import com.icthh.xm.commons.topic.service.KafkaTemplateService;
 import com.icthh.xm.lep.api.ScopedContext;
 import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessTimeConfigService;
+import com.icthh.xm.tmf.ms.communication.service.mail.MailService;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -34,6 +35,7 @@ public class XmCommunicationMsLepProcessingApplicationListener extends SpringLep
     private final CommonsService commonsService;
     private final PermissionCheckService permissionCheckService;
     private final KafkaTemplateService kafkaTemplateService;
+    private final MailService mailService;
 
     @Override
     protected void bindExecutionContext(ScopedContext executionContext) {
@@ -41,6 +43,7 @@ public class XmCommunicationMsLepProcessingApplicationListener extends SpringLep
         Map<String, Object> services = new HashMap<>();
         services.put(BINDING_SUB_KEY_SERVICE_TENANT_CONFIG_SERICE, tenantConfigService);
         services.put(BINDING_SUB_KEY_PERMISSION_SERVICE, permissionCheckService);
+        services.put(BINDING_SUB_KEY_SERVICE_MAIL_SERVICE, mailService);
         executionContext.setValue(BINDING_KEY_SERVICES, services);
 
         executionContext.setValue(BINDING_KEY_COMMONS, new CommonsExecutor(commonsService));

@@ -32,7 +32,7 @@ public class ApplicationProperties {
     private List<String> tenantIgnoredPathList = Collections.emptyList();
     private boolean streamBindingEnabled;
     private String channelSpecificationPathPattern;
-
+    private String emailPathPattern;
     private Messaging messaging = new Messaging();
     private BusinessRule businessRule = new BusinessRule();
     private String exceptionTranslator;
