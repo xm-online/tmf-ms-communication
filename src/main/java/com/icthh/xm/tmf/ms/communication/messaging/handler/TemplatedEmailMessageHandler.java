@@ -28,7 +28,7 @@ import org.springframework.stereotype.Service;
 public class TemplatedEmailMessageHandler implements BasicMessageHandler {
 
     private static final String TEMPLATE_NAME = "templateName";
-    private static final String LANGUAGE = "langKey";
+    private static final String LANGUAGE = "language";
 
     private final MailService mailService;
     private final CommunicationMessageMapper mapper;
