@@ -19,7 +19,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class TenantEmailTemplateService implements RefreshableConfiguration {
 
-    private static final String FILE_NAME = "fileName";
+    private static final String TEMPLATE_NAME = "templateName";
     private static final String LANG_KEY = "langKey";
     private static final String TENANT_NAME = "tenantName";
 
@@ -55,7 +55,7 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
         }
         String tenantKeyValue = matcher.group(TENANT_NAME);
         String langKey = matcher.group(LANG_KEY);
-        String templateName = matcher.group(FILE_NAME);
+        String templateName = matcher.group(TEMPLATE_NAME);
 
         String templateKey = EmailTemplateUtil.emailTemplateKey(TenantKey.valueOf(tenantKeyValue),
             templateName, langKey);

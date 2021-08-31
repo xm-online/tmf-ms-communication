@@ -23,6 +23,7 @@ public class MessageHandlerService {
     @PostConstruct
     void init() {
         messageHandlerList.forEach(handler -> {
+            log.info("init: processing handler for type: {}", handler.getType());
             messageHandlerMap.put(handler.getType(), handler);
         });
     }
