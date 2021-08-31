@@ -19,6 +19,7 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService;
+import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService.CommunicationTenantConfig.MailSetting;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -344,7 +345,7 @@ public class MailService {
     private MailParams resolve(String subject, String from, String templateName, Locale locale) {
         MailParams mailParams = new MailParams(subject, from);
 
-        List<CommunicationTenantConfigService.CommunicationTenantConfig.MailSetting> settings = tenantConfigService.getCommunicationTenantConfig().getMailSettings();
+        List<MailSetting> settings = tenantConfigService.getCommunicationTenantConfig().getMailSettings();
         LocaleContext localeContext = getLocaleContext();
         setLocale(locale);
 
