@@ -65,7 +65,7 @@ public class CommunicationTenantConfigService extends TenantConfigService {
 
     /**
      * Configuration class for enable/disable tenant level feature in tmf-ms-communication.
-     * Keep resources/specs/tenant-config-json.schema.json actual.
+     * Keep resources/specs/tenant-config-json-schema.json actual.
      */
     @Data
     public static class CommunicationTenantConfig {

@@ -1,0 +1,30 @@
+{
+    "type" : "object",
+    "id" : "urn:jsonschema:com:icthh:xm:tmf:ms:communication:config:CommunicationTenantConfigService:CommunicationTenantConfig",
+    "properties" : {
+        "mailSettings" : {
+            "type" : "array",
+            "items" : {
+                "type" : "object",
+                "id" : "urn:jsonschema:com:icthh:xm:tmf:ms:communication:config:CommunicationTenantConfigService:CommunicationTenantConfig:MailSetting",
+                "properties" : {
+                    "templateName" : {
+                        "type" : "string"
+                    },
+                    "subject" : {
+                        "type" : "object",
+                        "additionalProperties" : {
+                            "type" : "string"
+                        }
+                    },
+                    "from" : {
+                        "type" : "object",
+                        "additionalProperties" : {
+                            "type" : "string"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
