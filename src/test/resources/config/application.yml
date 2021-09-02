@@ -16,6 +16,8 @@
 spring:
     application:
         name: communication
+    mail:
+        host: localhost
     main:
         allow-bean-definition-overriding: true
     messages:
@@ -93,6 +95,7 @@ xm-config:
 application:
     kafka-system-topic: system_topic
     kafka-system-queue: system_queue
+    email-path-pattern: \/config\/tenants\/(?<tenantName>[A-Z]*)\/communication\/emails\/(?<templateName>[a-zA-Z0-9-\/]*)\/(?<langKey>[a-z]*)\.ftl
     tenant-ignored-path-list: /swagger-resources/configuration/ui, /management/health, /oauth/token_key, /h2-console
     lep:
         tenant-script-storage: XM_MS_CONFIG

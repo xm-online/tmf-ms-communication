@@ -3,15 +3,13 @@ package com.icthh.xm.tmf.ms.communication.lep;
 import com.icthh.xm.commons.lep.commons.CommonsExecutor;
 import com.icthh.xm.lep.api.ScopedContext;
 import com.icthh.xm.lep.core.DefaultScopedContext;
-import com.icthh.xm.tmf.ms.communication.CommunicationApp;
-import com.icthh.xm.tmf.ms.communication.config.SecurityBeanOverrideConfiguration;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.HashMap;
@@ -26,6 +24,9 @@ public class XmCommunicationMsLepProcessingApplicationListenerTest {
 
     @MockBean
     SmppService smppService;
+
+    @MockBean
+    private JavaMailSender javaMailSender;
 
     @Autowired
     private XmCommunicationMsLepProcessingApplicationListener listener;
@@ -43,9 +44,10 @@ public class XmCommunicationMsLepProcessingApplicationListenerTest {
         assertNotNull(context.getValue(BINDING_KEY_TEMPLATES, Map.class));
 
         Map<String, Object> services = (HashMap<String, Object>)context.getValue(BINDING_KEY_SERVICES, HashMap.class);
-        assertEquals(2, services.values().size());
+        assertEquals(3, services.values().size());
         assertNotNull(services.get(BINDING_SUB_KEY_SERVICE_TENANT_CONFIG_SERICE));
         assertNotNull(services.get(BINDING_SUB_KEY_PERMISSION_SERVICE));
+        assertNotNull(services.get(BINDING_SUB_KEY_SERVICE_MAIL_SERVICE));
 
         Map<String, Object> templates = (HashMap<String, Object>)context.getValue(BINDING_KEY_TEMPLATES, HashMap.class);
         assertEquals(3, templates.values().size());

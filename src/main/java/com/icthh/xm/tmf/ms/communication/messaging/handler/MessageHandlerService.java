@@ -1,44 +1,46 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
+import static java.util.Optional.ofNullable;
+
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
-import lombok.RequiredArgsConstructor;
-
+import java.util.EnumMap;
+import java.util.List;
 import javax.annotation.PostConstruct;
-import java.util.Map;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-import static java.util.Optional.ofNullable;
-
+@Slf4j
 @LepService(group = "service")
 @RequiredArgsConstructor
 public class MessageHandlerService {
 
-    private final SmppMessagingHandler smppMessagingHandler;
-    private final CustomCommunicationMessageHandler customCommunicationMessageHandler;
-    private final TwilioMessageHandler twilioMessageHandler;
-    private final Optional<MobileAppMessageHandler> mobileAppMessageHandler;
-
-    private Map<String, BasicMessageHandler> messageHandlerMap;
+    private final List<BasicMessageHandler> messageHandlerList;
+    private final EnumMap<MessageType, BasicMessageHandler> messageHandlerMap = new EnumMap<>(MessageType.class);
 
     @PostConstruct
     void init() {
-        messageHandlerMap = new HashMap<>();
-        messageHandlerMap.put(MessageType.SMS.name(), smppMessagingHandler);
-        messageHandlerMap.put(MessageType.Twilio.name(), twilioMessageHandler);
-        mobileAppMessageHandler.ifPresent(mobileHandler ->
-            messageHandlerMap.put(MessageType.MobileApp.name(), mobileHandler)
-        );
+        messageHandlerList.forEach(handler -> {
+            log.info("init: processing handler for type: {}", handler.getType());
+            messageHandlerMap.put(handler.getType(), handler);
+        });
     }
 
-    public BasicMessageHandler getHandler(String type) {
-        ofNullable(type).orElseThrow(() -> new IllegalArgumentException("Message type must exists"));
-        return ofNullable(messageHandlerMap.get(type)).orElse(customCommunicationMessageHandler);
+    public BasicMessageHandler getHandler(String typeString) {
+        MessageType type = ofNullable(typeString)
+            .map(MessageType::valueOf)
+            .orElseThrow(() -> new IllegalArgumentException("Message type must exist"));
+
+        BasicMessageHandler messageHandler = messageHandlerMap.get(type);
+        if (messageHandler == null) {
+            log.warn("getHandler: no handler defined for type: {}, going to return default handler", typeString);
+            messageHandler = ofNullable(messageHandlerMap.get(MessageType.Custom))
+                .orElseThrow(() -> new IllegalArgumentException("Could not resolve handler for type: " + typeString));
+        }
+
+        return messageHandler;
     }
 
     @LogicExtensionPoint(value = "RetrieveCommunicationMessage")

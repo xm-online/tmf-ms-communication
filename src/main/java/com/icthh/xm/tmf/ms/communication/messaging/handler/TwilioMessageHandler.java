@@ -1,6 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.service.TwilioService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
@@ -30,4 +31,8 @@ public class TwilioMessageHandler implements BasicMessageHandler {
         return send;
     }
 
+    @Override
+    public MessageType getType() {
+        return MessageType.Twilio;
+    }
 }

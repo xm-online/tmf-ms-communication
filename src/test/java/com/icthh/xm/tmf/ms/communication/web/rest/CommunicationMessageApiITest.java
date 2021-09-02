@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageCreateResolver;
 import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageResolver;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.CustomCommunicationMessageHandler;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.EmailMessageHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.MessageHandlerService;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.MobileAppMessageHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandler;
@@ -30,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.google.common.collect.ImmutableMap.of;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageType.Email;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageType.MobileApp;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageType.Twilio;
 import static java.util.stream.Collectors.toList;
@@ -44,11 +46,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Slf4j
 @RunWith(SpringRunner.class)
-@WebMvcTest(controllers = CommunicationMessageApiController.class, secure = false)
-@ContextConfiguration(
-    classes = {CommunicationMessageApiImpl.class, CommunicationMessageApiController.class, CustomExceptionTranslator.class,
-        MessageHandlerService.class, CustomCommunicationMessageHandler.class, CustomMessageResolver.class,
-        CustomMessageCreateResolver.class})
+@WebMvcTest(controllers = CommunicationMessageApiController.class)
+@ContextConfiguration(classes = {
+    CommunicationMessageApiImpl.class,
+    CommunicationMessageApiController.class,
+    CustomExceptionTranslator.class,
+    MessageHandlerService.class,
+    CustomCommunicationMessageHandler.class,
+    CustomMessageResolver.class,
+    CustomMessageCreateResolver.class
+})
 public class CommunicationMessageApiITest {
 
     public static final String CONTEXT_OF_SMS = "Context of sms";
@@ -63,38 +70,45 @@ public class CommunicationMessageApiITest {
     TwilioMessageHandler twilioMessageHandler;
 
     @MockBean
+    EmailMessageHandler emailMessageHandler;
+
+    @MockBean
     private MobileAppMessageHandler mobileAppMessageHandler;
 
     @Test
     @SneakyThrows
     public void testCreatesANewCommunicationMessageAndSendIt() {
-
-        Map<String, Object> request = of("content", CONTEXT_OF_SMS, "receiver",
-                                         createReceivers("phoneNumber","380900510000", "380900510001", "380900510002"), "type", "SMS",
-                                         "sender", of("id", SENDER_ID));
+        Map<String, Object> request = of(
+            "content", CONTEXT_OF_SMS,
+            "receiver", createReceivers("phoneNumber", "380900510000", "380900510001", "380900510002"),
+            "type", "SMS",
+            "sender", of("id", SENDER_ID)
+        );
 
         mockMvc.perform(
             post("/api/communicationManagement/v2/communicationMessage/send").contentType("application/json")
-                                                                             .content(TestUtil.convertObjectToJsonBytes(
-                                                                                 request)))
-               .andDo(print())
-               .andExpect(status().isOk());
+                .content(TestUtil.convertObjectToJsonBytes(
+                    request)))
+            .andDo(print())
+            .andExpect(status().isOk());
 
         ArgumentCaptor<CommunicationMessageCreate> captor = ArgumentCaptor.forClass(CommunicationMessageCreate.class);
         Set<String> phones = CollectionHelper.asSet("380900510000", "380900510001", "380900510002");
         verify(smppMessagingHandler).handle(captor.capture());
         assertEquals(captor.getValue().getSender().getId(), SENDER_ID);
         assertEquals(captor.getValue().getType(), "SMS");
-        assertTrue(captor.getValue().getReceiver().stream().allMatch(r-> phones.contains(r.getPhoneNumber())));
+        assertTrue(captor.getValue().getReceiver().stream().allMatch(r -> phones.contains(r.getPhoneNumber())));
     }
 
     @Test
     @SneakyThrows
     public void testCreatesANewPushMessageAndSendIt() {
-
-        Map<String, Object> request = of("content", CONTEXT_OF_SMS, "receiver",
-            createReceivers("appUserId", "111111"), "type", "MobileApp",
-            "sender", of("id", SENDER_ID));
+        Map<String, Object> request = of(
+            "content", CONTEXT_OF_SMS,
+            "receiver", createReceivers("appUserId", "111111"),
+            "type", "MobileApp",
+            "sender", of("id", SENDER_ID)
+        );
 
         mockMvc.perform(
             post("/api/communicationManagement/v2/communicationMessage/send").contentType("application/json")
@@ -113,10 +127,34 @@ public class CommunicationMessageApiITest {
 
     @Test
     @SneakyThrows
+    public void testCreatesANewEmailMessageAndSendIt() {
+        Map<String, Object> request = of(
+            "content", CONTEXT_OF_SMS,
+            "receiver", createReceivers("appUserId", "111111"),
+            "type", "Email",
+            "sender", of("id", SENDER_ID)
+        );
+
+        mockMvc.perform(
+            post("/api/communicationManagement/v2/communicationMessage/send").contentType("application/json")
+                .content(TestUtil.convertObjectToJsonBytes(
+                    request)))
+            .andDo(print())
+            .andExpect(status().isOk());
+
+        ArgumentCaptor<CommunicationMessageCreate> captor = ArgumentCaptor.forClass(CommunicationMessageCreate.class);
+        verify(mobileAppMessageHandler).handle(captor.capture());
+
+        assertThat(captor.getValue().getReceiver().get(0).getAppUserId(), equalTo("111111"));
+        assertThat(captor.getValue().getType(), equalTo(Email.name()));
+    }
+
+    @Test
+    @SneakyThrows
     public void testCreateTwilioMessageAndSendIt() {
 
         Map<String, Object> request = of("content", CONTEXT_OF_SMS, "receiver",
-            createReceivers("appUserId", "111111"), "type", "Twilio",
+            createReceivers("email", "email@mail.com"), "type", "Twilio",
             "sender", of("id", SENDER_ID));
 
         mockMvc.perform(
@@ -128,10 +166,11 @@ public class CommunicationMessageApiITest {
 
 
         ArgumentCaptor<CommunicationMessageCreate> captor = ArgumentCaptor.forClass(CommunicationMessageCreate.class);
-        verify(twilioMessageHandler).handle(captor.capture());
+        verify(emailMessageHandler).handle(captor.capture());
 
-        assertThat(captor.getValue().getReceiver().get(0).getAppUserId(), equalTo("111111"));
-        assertThat(captor.getValue().getType(), equalTo(Twilio.name()));
+        CommunicationMessageCreate value = captor.getValue();
+        assertThat(value.getReceiver().get(0).getEmail(), equalTo("email@mail.com"));
+        assertThat(value.getType(), equalTo(Twilio.name()));
     }
 
 

@@ -23,6 +23,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.security.oauth2.provider.OAuth2Request;
@@ -50,6 +51,8 @@ public class RetrieveCommunicationMessageTest {
     private TelegramChannelHandler telegramChannelHandler;
     @MockBean
     private TwilioChannelHandler twilioChannelHandler;
+    @MockBean
+    private JavaMailSender javaMailSender;
     @MockBean
     private ChannelRefreshableConfiguration channelRefreshableConfiguration;
     @MockBean(answer = Answers.RETURNS_DEEP_STUBS)
