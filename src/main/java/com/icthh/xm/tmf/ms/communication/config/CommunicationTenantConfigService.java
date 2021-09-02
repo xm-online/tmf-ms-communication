@@ -25,11 +25,16 @@ public class CommunicationTenantConfigService extends TenantConfigService {
 
     private final Map<String, CommunicationTenantConfig> configs = new ConcurrentHashMap<>();
     private final TenantContextHolder tenantContextHolder;
+    private final ObjectMapper objectMapper;
 
     public CommunicationTenantConfigService(XmConfigProperties xmConfigProperties,
                                             TenantContextHolder tenantContextHolder) {
         super(xmConfigProperties, tenantContextHolder);
         this.tenantContextHolder = tenantContextHolder;
+
+        this.objectMapper = new ObjectMapper(new YAMLFactory());
+        this.objectMapper.registerModule(new JavaTimeModule());
+        this.objectMapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     @Override
@@ -37,10 +42,7 @@ public class CommunicationTenantConfigService extends TenantConfigService {
     public void onRefresh(String updatedKey, String config) {
         try {
             super.onRefresh(updatedKey, config);
-            ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-            objectMapper.registerModule(new JavaTimeModule());
-            objectMapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
-            config = skipNullFields(config, objectMapper);
+            config = skipNullFields(config);
             CommunicationTenantConfig value = objectMapper.readValue(config, CommunicationTenantConfig.class);
             configs.put(getTenantKey(updatedKey), value);
         } catch (Exception e) {
@@ -48,7 +50,7 @@ public class CommunicationTenantConfigService extends TenantConfigService {
         }
     }
 
-    private String skipNullFields(String config, ObjectMapper objectMapper) throws java.io.IOException {
+    private String skipNullFields(String config) throws java.io.IOException {
         objectMapper.setSerializationInclusion(NON_NULL);
         return objectMapper.writeValueAsString(objectMapper.readValue(config, Map.class));
     }
