@@ -38,19 +38,15 @@ public class EmailMessageHandler implements BasicMessageHandler {
     @LogicExtensionPoint(value = "Send", resolver = CustomMessageCreateResolver.class)
     public CommunicationMessage handle(CommunicationMessageCreate messageCreate) {
         log.debug("Handling message {}", messageCreate);
-        List<String> emails = messageCreate.getReceiver().stream()
-            .map(Receiver::getEmail)
-            .collect(Collectors.toList());
-
-        for (String email : emails) {
+        messageCreate.getReceiver().forEach(receiver ->
             mailService.sendEmailWithContent(
                 TenantContextUtils.getRequiredTenantKey(tenantContextHolder),
                 messageCreate.getContent(),
                 messageCreate.getSubject(),
-                email,
+                receiver.getEmail(),
                 messageCreate.getSender().getId()
-            );
-        }
+            ));
+
         return mapper.messageCreateToMessage(messageCreate);
     }
 
