@@ -52,12 +52,13 @@ public class TemplatedEmailMessageHandler implements BasicMessageHandler {
         String templateName = String.valueOf(objectModel.get(TEMPLATE_NAME));
         Locale locale = new Locale(language);
         String sender = messageCreate.getSender().getId();
+        String subject = messageCreate.getSubject();
 
         for (String email : emails) {
             mailService.sendEmailFromTemplate(
                 locale,
                 templateName,
-                null,
+                subject,
                 email,
                 sender,
                 objectModel
