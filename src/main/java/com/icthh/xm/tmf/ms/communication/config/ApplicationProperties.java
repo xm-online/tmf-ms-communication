@@ -1,6 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
 import com.icthh.xm.commons.lep.TenantScriptStorage;
+import com.icthh.xm.tmf.ms.communication.service.smpp.ValidityPeriodType;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -103,6 +104,7 @@ public class ApplicationProperties {
         private int replaceIfPresentFlag;
         private int smDefaultMsgId;
         private String validityPeriod;
+        private ValidityPeriodType validityPeriodType;
         private Byte alphaEncoding;
         private Byte notAlphaEncoding;
     }

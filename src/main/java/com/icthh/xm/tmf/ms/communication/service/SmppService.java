@@ -10,6 +10,7 @@ import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Smpp;
 import com.icthh.xm.tmf.ms.communication.messaging.MessageReceiverListenerAdapter;
+import com.icthh.xm.tmf.ms.communication.service.smpp.ValidityPeriodFactory;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
@@ -21,7 +22,6 @@ import javax.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.validator.routines.IntegerValidator;
 import org.jsmpp.InvalidResponseException;
 import org.jsmpp.PDUException;
 import org.jsmpp.bean.Alphabet;
@@ -50,6 +50,7 @@ public class SmppService {
     private final AbsoluteTimeFormatter timeFormatter = new AbsoluteTimeFormatter();
     private final ApplicationProperties appProps;
     private final List<DeliveryReportListener> deliveryReportListeners;
+    private final ValidityPeriodFactory validityPeriodFactory;
 
     private volatile SMPPSession session;
 
@@ -128,40 +129,26 @@ public class SmppService {
 
         Date scheduleDeliveryTime = new Date();
         String messageId = session.submitShortMessage(
-            smpp.getServiceType(),
-            smpp.getSourceAddrTon(),
-            smpp.getSourceAddrNpi(),
-            getSourceAddr(senderId, smpp),
-            smpp.getDestAddrTon(),
-            smpp.getDestAddrNpi(),
-            destAddrs,
-            new ESMClass(),
-            (protocolId != null ? protocolId.byteValue() : (byte) smpp.getProtocolId()),
-            (byte) smpp.getPriorityFlag(),
-            timeFormatter.format(scheduleDeliveryTime),
-            validityPeriodOrDefault(validityPeriod, scheduleDeliveryTime,
-                IntegerValidator.getInstance().validate(smpp.getValidityPeriod())),
-            new RegisteredDelivery(deliveryReport),
-            (byte) smpp.getReplaceIfPresentFlag(), dataCoding,
-            (byte) smpp.getSmDefaultMsgId(),
-            EMPTY_MESSAGE,
-            optional.toArray(OctetString[]::new)
+                smpp.getServiceType(),
+                smpp.getSourceAddrTon(),
+                smpp.getSourceAddrNpi(),
+                getSourceAddr(senderId, smpp),
+                smpp.getDestAddrTon(),
+                smpp.getDestAddrNpi(),
+                destAddrs,
+                new ESMClass(),
+                (protocolId != null ? protocolId.byteValue() : (byte) smpp.getProtocolId()),
+                (byte) smpp.getPriorityFlag(),
+                timeFormatter.format(scheduleDeliveryTime),
+                validityPeriodFactory.asString(validityPeriod, scheduleDeliveryTime),
+                new RegisteredDelivery(deliveryReport),
+                (byte) smpp.getReplaceIfPresentFlag(), dataCoding,
+                (byte) smpp.getSmDefaultMsgId(),
+                EMPTY_MESSAGE,
+                optional.toArray(OctetString[]::new)
         );
         log.info("Message submitted, message_id is {}", messageId);
         return messageId;
-    }
-
-    private String validityPeriodOrDefault(Integer requestedValidityPeriod,
-                                           Date scheduleDeliveryTime, Integer defaultValidityPeriod) {
-        Integer period = requestedValidityPeriod != null
-            ? requestedValidityPeriod
-            : defaultValidityPeriod;
-
-        if (period != null) {
-            return timeFormatter.format(new Date(scheduleDeliveryTime.getTime() + period * 1000));
-        } else {
-            return null;
-        }
     }
 
     private DataCoding getDataCoding(String message) {
