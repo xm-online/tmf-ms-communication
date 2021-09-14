@@ -24,13 +24,8 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jsmpp.InvalidResponseException;
 import org.jsmpp.PDUException;
-import org.jsmpp.bean.Alphabet;
-import org.jsmpp.bean.DataCoding;
-import org.jsmpp.bean.ESMClass;
-import org.jsmpp.bean.GeneralDataCoding;
-import org.jsmpp.bean.MessageClass;
+import org.jsmpp.bean.*;
 import org.jsmpp.bean.OptionalParameter.OctetString;
-import org.jsmpp.bean.RegisteredDelivery;
 import org.jsmpp.extra.NegativeResponseException;
 import org.jsmpp.extra.ResponseTimeoutException;
 import org.jsmpp.session.BindParameter;
@@ -45,27 +40,26 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SmppService {
 
-    private static final byte[] EMPTY_MESSAGE = "".getBytes();
-
     private final AbsoluteTimeFormatter timeFormatter = new AbsoluteTimeFormatter();
     private final ApplicationProperties appProps;
     private final List<DeliveryReportListener> deliveryReportListeners;
     private final ValidityPeriodFactory validityPeriodFactory;
 
     private volatile SMPPSession session;
+    private final int MAX_SHORT_MESSAGE_OCTETS = 254;
 
     @SneakyThrows
     private SMPPSession createSession(ApplicationProperties appProps) {
         SMPPSession session = new SMPPSession();
         Smpp smpp = appProps.getSmpp();
         BindParameter bindParam = new BindParameter(
-            smpp.getBindType(),
-            smpp.getSystemId(),
-            smpp.getPassword(),
-            smpp.getSystemType(),
-            smpp.getAddrTon(),
-            smpp.getAddrNpi(),
-            smpp.getAddressRange()
+                smpp.getBindType(),
+                smpp.getSystemId(),
+                smpp.getPassword(),
+                smpp.getSystemType(),
+                smpp.getAddrTon(),
+                smpp.getAddrNpi(),
+                smpp.getAddressRange()
         );
         session.setTransactionTimer(smpp.getConnectionTimeout());
         session.connectAndBind(smpp.getHost(), smpp.getPort(), bindParam);
@@ -121,9 +115,15 @@ public class SmppService {
             dataCoding, message.length(), optionalParameters, validityPeriod, protocolId);
 
         List<OctetString> optional = optionalParameters.entrySet().stream()
-            .map(e -> new OctetString(e.getKey(), e.getValue()))
-            .collect(Collectors.toList());
-        optional.add(toPayload(message));
+                .map(e -> new OctetString(e.getKey(), e.getValue()))
+                .collect(Collectors.toList());
+
+        String shortMessage = "";
+        if (shortMessage.length() <= MAX_SHORT_MESSAGE_OCTETS) {
+            shortMessage = message;
+        } else {
+            optional.add(toPayload(message));
+        }
 
         SMPPSession session = getActualSession();
 
@@ -144,7 +144,7 @@ public class SmppService {
                 new RegisteredDelivery(deliveryReport),
                 (byte) smpp.getReplaceIfPresentFlag(), dataCoding,
                 (byte) smpp.getSmDefaultMsgId(),
-                EMPTY_MESSAGE,
+                shortMessage.getBytes(),
                 optional.toArray(OctetString[]::new)
         );
         log.info("Message submitted, message_id is {}", messageId);
