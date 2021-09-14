@@ -231,6 +231,8 @@ application:
         sm-default-msg-id: 0
         alphaEncoding:
         notAlphaEncoding:
+        validity-period: 300
+        validity-period-type: absolute
     firebase:
         enabled: false
         # proxy configuration that apply for Firebase communication only

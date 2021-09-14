@@ -120,6 +120,8 @@ application:
         priority-flag: 1
         replace-if-present-flag: 0
         sm-default-msg-id: 0
+        validity-period: 300
+        validity-period-type: relative
     firebase:
         enabled: false
         proxy:
