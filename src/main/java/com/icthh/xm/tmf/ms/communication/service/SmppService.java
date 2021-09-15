@@ -154,7 +154,7 @@ public class SmppService {
 
     private boolean isValidShortMessage(String message){
         try {
-            StringValidator.validateString(message, StringParameter.SHORT_MESSAGE);
+            StringValidator.validateString(message.getBytes(), StringParameter.SHORT_MESSAGE);
             return true;
         } catch (Exception e){
             return false;
