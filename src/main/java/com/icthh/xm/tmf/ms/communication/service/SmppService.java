@@ -31,6 +31,8 @@ import org.jsmpp.extra.ResponseTimeoutException;
 import org.jsmpp.session.BindParameter;
 import org.jsmpp.session.SMPPSession;
 import org.jsmpp.util.AbsoluteTimeFormatter;
+import org.jsmpp.util.StringParameter;
+import org.jsmpp.util.StringValidator;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -46,7 +48,6 @@ public class SmppService {
     private final ValidityPeriodFactory validityPeriodFactory;
 
     private volatile SMPPSession session;
-    private final int MAX_SHORT_MESSAGE_OCTETS = 254;
 
     @SneakyThrows
     private SMPPSession createSession(ApplicationProperties appProps) {
@@ -119,7 +120,7 @@ public class SmppService {
                 .collect(Collectors.toList());
 
         String shortMessage = "";
-        if (shortMessage.length() <= MAX_SHORT_MESSAGE_OCTETS) {
+        if (isValidShortMessage(message)) {
             shortMessage = message;
         } else {
             optional.add(toPayload(message));
@@ -149,6 +150,15 @@ public class SmppService {
         );
         log.info("Message submitted, message_id is {}", messageId);
         return messageId;
+    }
+
+    private boolean isValidShortMessage(String message){
+        try {
+            StringValidator.validateString(message, StringParameter.SHORT_MESSAGE);
+            return true;
+        } catch (Exception e){
+            return false;
+        }
     }
 
     private DataCoding getDataCoding(String message) {
