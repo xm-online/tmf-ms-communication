@@ -145,7 +145,7 @@ public class SmppService {
                 new RegisteredDelivery(deliveryReport),
                 (byte) smpp.getReplaceIfPresentFlag(), dataCoding,
                 (byte) smpp.getSmDefaultMsgId(),
-                shortMessage.getBytes(),
+                toPayload(shortMessage).getValue(),
                 optional.toArray(OctetString[]::new)
         );
         log.info("Message submitted, message_id is {}", messageId);
@@ -162,7 +162,7 @@ public class SmppService {
     }
 
     private DataCoding getDataCoding(String message) {
-        return isAlpha(message)
+        return isLatin(message)
             ? createEncoding(ALPHA_DEFAULT, appProps.getSmpp().getAlphaEncoding())
             : createEncoding(ALPHA_UCS2, appProps.getSmpp().getNotAlphaEncoding());
     }
@@ -191,12 +191,12 @@ public class SmppService {
         return session;
     }
 
-    private boolean isAlpha(String message) {
+    private boolean isLatin(String message) {
         return StandardCharsets.ISO_8859_1.newEncoder().canEncode(message);
     }
 
     private OctetString toPayload(String message) throws UnsupportedEncodingException {
-        if (isAlpha(message)) {
+        if (isLatin(message)) {
             return new OctetString(MESSAGE_PAYLOAD.code(), message);
         } else {
             return new OctetString(MESSAGE_PAYLOAD.code(), message, UTF_16BE.name());
