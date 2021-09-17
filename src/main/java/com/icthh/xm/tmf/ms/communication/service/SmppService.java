@@ -103,17 +103,17 @@ public class SmppService {
      * @return message id - unique identifier of the message. Used in delivery reports.
      */
     public String send(String destAddrs, String message, String senderId, byte deliveryReport, Map<Short,
-        String> optionalParameters, Integer validityPeriod, Integer protocolId) throws PDUException, IOException,
-        InvalidResponseException,
-        NegativeResponseException,
-        ResponseTimeoutException {
+            String> optionalParameters, Integer validityPeriod, Integer protocolId) throws PDUException, IOException,
+            InvalidResponseException,
+            NegativeResponseException,
+            ResponseTimeoutException {
 
         Smpp smpp = appProps.getSmpp();
 
         DataCoding dataCoding = getDataCoding(message);
         log.info("Start send message from: {} to: {} with encoding [{}] and content.size: {}, " +
-                "optional parameters: {}, validity period: {}, protocol id: {}", senderId, destAddrs,
-            dataCoding, message.length(), optionalParameters, validityPeriod, protocolId);
+                        "optional parameters: {}, validity period: {}, protocol id: {}", senderId, destAddrs,
+                dataCoding, message.length(), optionalParameters, validityPeriod, protocolId);
 
         List<OctetString> optional = optionalParameters.entrySet().stream()
                 .map(e -> new OctetString(e.getKey(), e.getValue()))
@@ -145,26 +145,26 @@ public class SmppService {
                 new RegisteredDelivery(deliveryReport),
                 (byte) smpp.getReplaceIfPresentFlag(), dataCoding,
                 (byte) smpp.getSmDefaultMsgId(),
-                toPayload(shortMessage).getValue(),
+                shortMessage.getBytes(),
                 optional.toArray(OctetString[]::new)
         );
         log.info("Message submitted, message_id is {}", messageId);
         return messageId;
     }
 
-    private boolean isValidShortMessage(String message){
+    private boolean isValidShortMessage(String message) {
         try {
             StringValidator.validateString(message.getBytes(), StringParameter.SHORT_MESSAGE);
             return true;
-        } catch (Exception e){
+        } catch (Exception e) {
             return false;
         }
     }
 
     private DataCoding getDataCoding(String message) {
         return isLatin(message)
-            ? createEncoding(ALPHA_DEFAULT, appProps.getSmpp().getAlphaEncoding())
-            : createEncoding(ALPHA_UCS2, appProps.getSmpp().getNotAlphaEncoding());
+                ? createEncoding(ALPHA_DEFAULT, appProps.getSmpp().getAlphaEncoding())
+                : createEncoding(ALPHA_UCS2, appProps.getSmpp().getNotAlphaEncoding());
     }
 
     private DataCoding createEncoding(Alphabet defaultEncoding, Byte encoding) {
