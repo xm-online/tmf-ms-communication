@@ -145,7 +145,7 @@ public class SmppService {
                 new RegisteredDelivery(deliveryReport),
                 (byte) smpp.getReplaceIfPresentFlag(), dataCoding,
                 (byte) smpp.getSmDefaultMsgId(),
-                shortMessage.getBytes(),
+                shortMessage.getBytes(UTF_16BE),
                 optional.toArray(OctetString[]::new)
         );
         log.info("Message submitted, message_id is {}", messageId);
