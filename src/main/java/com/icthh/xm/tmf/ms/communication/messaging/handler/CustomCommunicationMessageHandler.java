@@ -27,9 +27,9 @@ public class CustomCommunicationMessageHandler implements BasicMessageHandler {
 
     @Override
     @LogicExtensionPoint(value = "Send", resolver = CustomMessageCreateResolver.class)
-    public CommunicationMessage handle(CommunicationMessageCreate message) {
-        warnIfNoLogic(message.getType());
-        return communicationMessageMapper.messageCreateToMessage(message);
+    public CommunicationMessage handle(CommunicationMessageCreate messageCreate) {
+        warnIfNoLogic(messageCreate.getType());
+        return communicationMessageMapper.messageCreateToMessage(messageCreate);
     }
 
     @Override
