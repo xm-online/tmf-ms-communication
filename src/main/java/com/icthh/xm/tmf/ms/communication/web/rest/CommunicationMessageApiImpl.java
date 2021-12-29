@@ -1,7 +1,10 @@
 package com.icthh.xm.tmf.ms.communication.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
+import com.icthh.xm.tmf.ms.communication.lep.keresolver.ProfileKeyResolver;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.MessageHandlerService;
 import com.icthh.xm.tmf.ms.communication.web.api.CommunicationMessageApiDelegate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
@@ -16,6 +19,7 @@ import java.util.List;
 
 @Component
 @AllArgsConstructor
+@LepService(group = "service")
 public class CommunicationMessageApiImpl implements CommunicationMessageApiDelegate {
 
     private final MessageHandlerService messageHandlerService;
@@ -23,6 +27,7 @@ public class CommunicationMessageApiImpl implements CommunicationMessageApiDeleg
     @Timed
     @PreAuthorize("hasPermission({'messageCreate': #messageCreate}, 'COMMUNICATION.MESSAGE.SEND')")
     @PrivilegeDescription("Privilege to create and send communication messages")
+    @LogicExtensionPoint(value = "CreateCommunicationMessage", resolver = ProfileKeyResolver.class)
     @Override
     public ResponseEntity<CommunicationMessage> createsANewCommunicationMessageAndSendIt(
         CommunicationMessageCreate messageCreate) {
