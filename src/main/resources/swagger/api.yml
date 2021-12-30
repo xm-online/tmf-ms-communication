@@ -739,6 +739,10 @@ definitions:
         description: The type of the receiver of the communication message
       relatedParty:
         $ref: '#/definitions/RelatedPartyRef'
+      characteristic:
+        type: array
+        items:
+          $ref: '#/definitions/CommunicationRequestCharacteristic'
       '@type':
         type: string
         description: The class type of the actual resource (for type extension).
