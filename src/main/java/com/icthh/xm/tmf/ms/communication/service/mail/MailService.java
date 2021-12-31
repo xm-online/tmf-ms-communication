@@ -4,6 +4,7 @@ import static com.icthh.xm.tmf.ms.communication.config.Constants.TRANSLATION_KEY
 import static java.util.Locale.ENGLISH;
 import static java.util.Objects.nonNull;
 import static java.util.Optional.ofNullable;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.springframework.context.i18n.LocaleContextHolder.getLocale;
 import static org.springframework.context.i18n.LocaleContextHolder.getLocaleContext;
 import static org.springframework.context.i18n.LocaleContextHolder.setLocale;
@@ -319,7 +320,7 @@ public class MailService {
 
                 Template mailTemplate = new Template(templateKey, emailTemplate, freeMarkerConfiguration);
                 String content = FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, objectModel);
-                MailParams mailParams = resolve(subject, from, templateName, locale);
+                MailParams mailParams = resolve(subject, from, templateName, locale, objectModel);
                 sendEmail(
                     email,
                     mailParams.getSubject(),
@@ -342,21 +343,51 @@ public class MailService {
         return jHipsterProperties.getMail().getFrom().replace("<tenantname>", tenantKey.getValue());
     }
 
-    private MailParams resolve(String subject, String from, String templateName, Locale locale) {
+    private MailParams resolve(String subject,
+                               String from,
+                               String templateName,
+                               Locale locale,
+                               Map<String, Object> objectModel
+    ) {
         MailParams mailParams = new MailParams(subject, from);
 
         List<MailSetting> settings = tenantConfigService.getCommunicationTenantConfig().getMailSettings();
         LocaleContext localeContext = getLocaleContext();
         setLocale(locale);
 
-        mailParams = settings.stream().filter(it -> templateName.equals(it.getTemplateName()))
-            .findFirst()
-            .map(mailSetting -> new MailParams(getI18nName(mailSetting.getSubject()).orElse(subject),
-                getI18nName(mailSetting.getFrom()).orElse(from)))
-            .orElse(mailParams);
+        Optional<MailSetting> mailSettingOptional = settings.stream()
+            .filter(it -> templateName.equals(it.getTemplateName()))
+            .findFirst();
+
+        if (mailSettingOptional.isPresent()) {
+            MailSetting mailSetting = mailSettingOptional.get();
+            log.info("resolve: for templateName: {} found MailSetting: {}", templateName, mailSetting);
+
+            String i18nSubject = getI18nName(mailSetting.getSubject()).orElse(subject);
+            i18nSubject = applyModel(i18nSubject, objectModel);
+            mailParams.setSubject(i18nSubject);
+
+            String i18nFrom = getI18nName(mailSetting.getFrom()).orElse(from);
+            i18nFrom = applyModel(i18nFrom, objectModel);
+            mailParams.setFrom(i18nFrom);
+        }
 
         setLocaleContext(localeContext);
         return mailParams;
+    }
+
+    private String applyModel(String value, Map<String, Object> objectModel) {
+        if (isBlank(value)) {
+            return value;
+        }
+        for (Map.Entry<String, Object> entry : objectModel.entrySet()) {
+            value = value.replace(tokenizeKey(entry.getKey()), String.valueOf(entry.getValue()));
+        }
+        return value;
+    }
+
+    private String tokenizeKey(String key) {
+        return "${" + key + "}";
     }
 
     private Optional<String> getI18nName(Map<String, String> name) {
