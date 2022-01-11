@@ -41,6 +41,7 @@ import org.springframework.cloud.stream.test.binder.MessageCollectorAutoConfigur
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.client.RestTemplate;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles(profiles = "non-async")
@@ -81,6 +82,9 @@ public class MailServiceUnitTest {
 
     @MockBean
     private SmppService smppService;
+
+    @MockBean
+    private RestTemplate restTemplate;
 
     @SneakyThrows
     @Before
