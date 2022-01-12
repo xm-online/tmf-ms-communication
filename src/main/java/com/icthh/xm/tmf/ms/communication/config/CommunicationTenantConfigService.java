@@ -14,7 +14,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -75,6 +77,8 @@ public class CommunicationTenantConfigService extends TenantConfigService {
         private List<MailSetting> mailSettings = new ArrayList<>();
 
         @Data
+        @NoArgsConstructor
+        @AllArgsConstructor
         public static class MailSetting {
             private String templateName;
             private Map<String, String> subject = new HashMap<>();
