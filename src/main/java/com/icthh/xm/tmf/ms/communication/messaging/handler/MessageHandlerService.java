@@ -11,6 +11,7 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 @LepService(group = "service")
@@ -29,9 +30,17 @@ public class MessageHandlerService {
     }
 
     public BasicMessageHandler getHandler(String typeString) {
-        MessageType type = ofNullable(typeString)
-            .map(MessageType::valueOf)
-            .orElseThrow(() -> new IllegalArgumentException("Message type must exist"));
+        if (StringUtils.isBlank(typeString)) {
+            throw new IllegalArgumentException("Message type must exist");
+        }
+        MessageType type;
+        try {
+            type = MessageType.valueOf(typeString);
+        } catch (IllegalArgumentException ignore) {
+            log.info("getHandler: no message type enum defined for type: {}, proceeding with: {}",
+                typeString, MessageType.Custom);
+            type = MessageType.Custom;
+        }
 
         BasicMessageHandler messageHandler = messageHandlerMap.get(type);
         if (messageHandler == null) {

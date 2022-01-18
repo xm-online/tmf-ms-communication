@@ -60,5 +60,6 @@ public class MessageHandlerServiceTest {
         assertEquals(messageHandlerService.getHandler(MessageType.Telegram.name()), customCommunicationMessageHandler);
         assertEquals(messageHandlerService.getHandler(MessageType.Twilio.name()), twilioMessageHandler);
         assertEquals(messageHandlerService.getHandler(MessageType.Email.name()), emailMessageHandler);
+        assertEquals(messageHandlerService.getHandler("random-non-blank-message-type"), customCommunicationMessageHandler);
     }
 }
