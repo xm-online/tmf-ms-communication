@@ -7,6 +7,7 @@ public final class LepXmCommunicationMsConstants {
 
     public static final String BINDING_KEY_COMMONS = "commons";
     public static final String BINDING_KEY_SERVICES = "services";
+    public static final String BINDING_KEY_METER_REGISTRY = "meterRegistry";
     public static final String BINDING_SUB_KEY_SERVICE_TENANT_CONFIG_SERICE = "tenantConfigService";
     public static final String BINDING_SUB_KEY_PERMISSION_SERVICE = "permissionService";
     public static final String BINDING_SUB_KEY_SERVICE_MAIL_SERVICE = "mailService";
