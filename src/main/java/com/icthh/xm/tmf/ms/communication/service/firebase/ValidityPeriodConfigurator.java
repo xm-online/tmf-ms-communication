@@ -34,5 +34,7 @@ class ValidityPeriodConfigurator implements MessageConfigurator {
             String.valueOf(Instant.now().plus(ttlSeconds, ChronoUnit.SECONDS).toEpochMilli() / 1000));
 
         builder.getAndroidConfigBuilder().setTtl(ttlSeconds * 1000L);
+
+        builder.getWebPushBuilder().putHeader("ttl", String.valueOf(ttlSeconds));
     }
 }
