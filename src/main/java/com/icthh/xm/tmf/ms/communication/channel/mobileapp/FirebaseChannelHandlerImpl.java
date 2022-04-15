@@ -15,6 +15,7 @@ import java.net.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -50,19 +51,20 @@ public class FirebaseChannelHandlerImpl implements FirebaseApplicationConfigurat
             return;
         }
 
-        for (CommunicationSpec.MobileApp config : spec.getChannels().getMobileApp()) {
+        for (CommunicationSpec.Firebase config : spec.getChannels().getMobileApp()) {
             configure(tenantKey, config);
         }
     }
 
     /**
      * Configures a Firebase application. Uses private key file passed through
-     * {@link CommunicationSpec.MobileApp#getPrivateKeyEnvironmentVariableName()}
+     * {@link CommunicationSpec.Firebase#getPrivateKeyEnvironmentVariableName()}
      * environment variable. Uses Firebase v1 API.
      */
     @SneakyThrows
-    private void configure(String tenantKey, CommunicationSpec.MobileApp config) {
+    private void configure(String tenantKey, CommunicationSpec.Firebase config) {
         String keyName = config.getPrivateKeyEnvironmentVariableName();
+
         InputStream privateKey =
             new ByteArrayInputStream(Optional.ofNullable(
                 System.getenv().get(keyName))
@@ -76,6 +78,7 @@ public class FirebaseChannelHandlerImpl implements FirebaseApplicationConfigurat
         String appName = buildAppName(tenantKey, config.getApplicationName());
 
         Map<String, FirebaseApp> apps = tenantApps.computeIfAbsent(tenantKey, t -> new HashMap<>());
+
         FirebaseApp existing = apps.get(appName);
 
         if (existing != null) {
@@ -88,7 +91,7 @@ public class FirebaseChannelHandlerImpl implements FirebaseApplicationConfigurat
         apps.put(appName, firebaseApp);
     }
 
-    private FirebaseOptions buildFirebaseOptions(CommunicationSpec.MobileApp config, InputStream privateKey) throws IOException {
+    private FirebaseOptions buildFirebaseOptions(CommunicationSpec.Firebase config, InputStream privateKey) throws IOException {
 
         FirebaseOptions.Builder builder = FirebaseOptions.builder();
         NetHttpTransport.Builder httpTransportBuilder = new NetHttpTransport.Builder();

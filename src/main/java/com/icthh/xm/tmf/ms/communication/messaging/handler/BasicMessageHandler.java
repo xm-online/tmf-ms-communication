@@ -19,4 +19,5 @@ public interface BasicMessageHandler {
     CommunicationMessage handle(CommunicationMessageCreate messageCreate);
 
     MessageType getType();
+
 }

@@ -26,7 +26,7 @@ import com.google.firebase.messaging.SendResponse;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.channel.mobileapp.FirebaseApplicationConfigurationProvider;
-import com.icthh.xm.tmf.ms.communication.service.MobileAppMessagePayloadCustomizationService;
+import com.icthh.xm.tmf.ms.communication.service.FirebaseMessagePayloadCustomizationService;
 import com.icthh.xm.tmf.ms.communication.service.firebase.response.ErrorOnlyResponseBuildingStrategy;
 import com.icthh.xm.tmf.ms.communication.service.firebase.response.FullResponseBuildingStrategy;
 import com.icthh.xm.tmf.ms.communication.service.firebase.response.SummaryResponseBuildingStrategy;
@@ -81,14 +81,16 @@ public class FirebaseServiceTest {
     private TenantContextHolder tenantContextHolder = mock(TenantContextHolder.class);
     private FirebaseApplicationConfigurationProvider configurationProvider =
         mock(FirebaseApplicationConfigurationProvider.class);
-    private MobileAppMessagePayloadCustomizationService payloadCustomizationServiceMock =
-        mock(MobileAppMessagePayloadCustomizationService.class);
+    private FirebaseMessagePayloadCustomizationService payloadCustomizationServiceMock =
+        mock(FirebaseMessagePayloadCustomizationService.class);
+    private ApplicationSelector applicationSelector = new ApplicationSelector();
+    private BuilderConfigurator builderConfigurator = new BuilderConfigurator();
 
     private FirebaseService firebaseService = new FirebaseService(configurationProvider,
         tenantContextHolder, payloadCustomizationServiceMock, List.of(
         new ValidityPeriodConfigurator(), new BadgeConfigurator(), new ImageConfigurator()),
         List.of(new SummaryResponseBuildingStrategy(), new ErrorOnlyResponseBuildingStrategy(),
-            new FullResponseBuildingStrategy()));
+            new FullResponseBuildingStrategy()), applicationSelector, builderConfigurator);
     //given:
     private FirebaseMessaging messagingMock = mock(FirebaseMessaging.class);
 
@@ -256,7 +258,8 @@ public class FirebaseServiceTest {
             HashMap<Object, Object> answer = new HashMap<>(invocation.getArgument(0));
             answer.put(CUSTOMIZED_KEY, CUSTOMIZED_VALUE);
             return answer;
-        }).when(payloadCustomizationServiceMock).customizePayload(anyMap());
+        }).when(payloadCustomizationServiceMock).customizePayload(anyMap(), any());
+
     }
 
     @Test
