@@ -56,7 +56,9 @@ public class ExtendedApiCustomLogic {
     }
 
     /**
-     * Implement mechanism that will allow to specify custom characteristics applicable for each receiver
+     * Implement mechanism that will allow specifying custom characteristics applicable for each receiver.
+     * Ih characteristics with specific name is defined in common block and for specific receiver,
+     * the value of common characteristic will be overloaded with specific value.
      * @param messageCreate .input message
      * @return List of CommunicationMessageCreate messages, grouped by receivers characteristics
      */
