@@ -11,26 +11,30 @@ import lombok.extern.slf4j.Slf4j;
  * Configurator for Firebase builders that allows implement custom logic via LEPs.
  */
 @Slf4j
+// todo I suggest moving firebase-related LEPs to service.message.firebase
 @LepService(group = "service.message")
 public class BuilderConfigurator {
     @LogicExtensionPoint(value = "CustomizeApnsConfig", resolver = CustomMessageResolver.class)
     public ApnsConfig getApnsConfig(final BuilderWrapper builderWrapper, CommunicationMessage message) {
-        return builderWrapper.getApnsBuilder().setAps(builderWrapper.getApsBuilder().build()).build();
+        Aps aps = builderWrapper.getApsBuilder().build();
+        return builderWrapper.getApnsBuilder()
+            .setAps(aps)
+            .build();
     }
 
     @LogicExtensionPoint(value = "CustomizeWebpushConfig", resolver = CustomMessageResolver.class)
     public WebpushConfig getWebpushConfig(final BuilderWrapper builderWrapper, CommunicationMessage message) {
         WebpushNotification webpushNotification = builderWrapper.getWebpushNotificationBuilder().build();
-        WebpushConfig webpushConfig = builderWrapper.getWebPushBuilder()
+        return builderWrapper.getWebPushBuilder()
                 .setNotification(webpushNotification)
                 .build();
-        return webpushConfig;
     }
 
     @LogicExtensionPoint(value = "CustomizeAndroidConfig", resolver = CustomMessageResolver.class)
     public AndroidConfig getAndroidConfig(final BuilderWrapper builderWrapper, CommunicationMessage message) {
+        AndroidNotification androidNotification = builderWrapper.getAndroidNotificationBuilder().build();
         return builderWrapper.getAndroidConfigBuilder()
-                .setNotification(builderWrapper.getAndroidNotificationBuilder().build())
+                .setNotification(androidNotification)
                 .build();
     }
 
@@ -38,5 +42,4 @@ public class BuilderConfigurator {
     public Notification getNotification(final BuilderWrapper builderWrapper, CommunicationMessage message) {
         return builderWrapper.getNotificationBuilder().build();
     }
-
 }

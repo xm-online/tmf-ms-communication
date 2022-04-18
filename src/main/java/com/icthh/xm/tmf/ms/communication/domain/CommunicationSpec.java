@@ -27,7 +27,7 @@ public class CommunicationSpec implements Serializable {
         private List<Viber> viber = new LinkedList<>();
         private List<Sms> sms = new LinkedList<>();
         private List<Twilio> twilio = new LinkedList<>();
-        private List<Firebase> mobileApp = new LinkedList<>(); //old name for backward config compatibility
+        private List<Firebase> mobileApp = new LinkedList<>();
         // other channels
     }
 
@@ -82,6 +82,7 @@ public class CommunicationSpec implements Serializable {
     @Setter
     @ToString
     public static class Channel {
+
         private String key;
         private String queue;
     }

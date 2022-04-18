@@ -5,7 +5,7 @@ import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.tmf.ms.communication.channel.mobileapp.FirebaseApplicationConfigurationProvider;
 import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageCreateResolver;
 import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageResolver;
-import com.icthh.xm.tmf.ms.communication.messaging.handler.logic.ExtendedApiCustomLogic;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.logic.FirebaseMessageHelper;
 import com.icthh.xm.tmf.ms.communication.service.firebase.FirebaseService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
@@ -21,16 +21,18 @@ import java.util.List;
 @LepService(group = "service.message")
 @Slf4j
 @ConditionalOnBean(FirebaseApplicationConfigurationProvider.class)
-public abstract class FirebaseMessageHandler implements BasicMessageHandler  {
+public abstract class FirebaseMessageHandler implements BasicMessageHandler {
 
     protected final FirebaseService firebaseService;
     protected final CommunicationMessageMapper mapper;
-    protected final ExtendedApiCustomLogic extendedApiCustomLogic;
+    protected final FirebaseMessageHelper firebaseMessageHelper;
 
-    public FirebaseMessageHandler(FirebaseService firebaseService, CommunicationMessageMapper mapper, ExtendedApiCustomLogic extendedApiCustomLogic) {
+    public FirebaseMessageHandler(FirebaseService firebaseService,
+                                  CommunicationMessageMapper mapper,
+                                  FirebaseMessageHelper firebaseMessageHelper) {
         this.firebaseService = firebaseService;
         this.mapper = mapper;
-        this.extendedApiCustomLogic = extendedApiCustomLogic;
+        this.firebaseMessageHelper = firebaseMessageHelper;
     }
 
     @Override
@@ -45,24 +47,29 @@ public abstract class FirebaseMessageHandler implements BasicMessageHandler  {
     public CommunicationMessage handle(CommunicationMessageCreate messageCreate) {
         log.debug("Handling {} message {}", getType(), messageCreate);
 
-        CommunicationMessageCreate processedReceivers = extendedApiCustomLogic.processReceivers(messageCreate);
-        List<CommunicationMessageCreate> processedMessages = extendedApiCustomLogic.splitMessagesByCharacteristics(processedReceivers);
+        CommunicationMessageCreate processedReceivers = firebaseMessageHelper.processReceivers(messageCreate);
+        List<CommunicationMessageCreate> processedMessages = firebaseMessageHelper
+            .splitMessagesByCharacteristics(processedReceivers);
 
         List<CommunicationMessage> responses = new ArrayList<>();
         processedMessages.forEach(message -> {
-            CommunicationMessageCreate modifiedMessage = extendedApiCustomLogic.applyCharacteristics(message);
+            CommunicationMessageCreate modifiedMessage = firebaseMessageHelper.applyCharacteristics(message);
 
             modifiedMessage.getCharacteristic().add(
-                    new CommunicationRequestCharacteristic().name(ParameterNames.RESULT_TYPE).value(getResponseStrategy()));
+                new CommunicationRequestCharacteristic()
+                    .name(ParameterNames.RESULT_TYPE)
+                    .value(getResponseStrategy())
+            );
 
-            CommunicationMessage firebaseResponse = firebaseService.sendPushNotification(mapper.messageCreateToMessage(modifiedMessage));
+            CommunicationMessage firebaseResponse = firebaseService
+                .sendPushNotification(mapper.messageCreateToMessage(modifiedMessage));
             responses.add(firebaseResponse);
         });
 
-        return extendedApiCustomLogic.mergeResponse(responses, messageCreate);
+        return firebaseMessageHelper.mergeResponse(responses, messageCreate);
     }
 
-    public String getResponseStrategy() { return "FULL";}
-
-
+    public String getResponseStrategy() {
+        return "FULL";
+    }
 }

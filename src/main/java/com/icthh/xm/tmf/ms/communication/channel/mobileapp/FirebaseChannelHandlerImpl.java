@@ -15,7 +15,6 @@ import java.net.Proxy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -64,7 +63,6 @@ public class FirebaseChannelHandlerImpl implements FirebaseApplicationConfigurat
     @SneakyThrows
     private void configure(String tenantKey, CommunicationSpec.Firebase config) {
         String keyName = config.getPrivateKeyEnvironmentVariableName();
-
         InputStream privateKey =
             new ByteArrayInputStream(Optional.ofNullable(
                 System.getenv().get(keyName))
@@ -78,7 +76,6 @@ public class FirebaseChannelHandlerImpl implements FirebaseApplicationConfigurat
         String appName = buildAppName(tenantKey, config.getApplicationName());
 
         Map<String, FirebaseApp> apps = tenantApps.computeIfAbsent(tenantKey, t -> new HashMap<>());
-
         FirebaseApp existing = apps.get(appName);
 
         if (existing != null) {

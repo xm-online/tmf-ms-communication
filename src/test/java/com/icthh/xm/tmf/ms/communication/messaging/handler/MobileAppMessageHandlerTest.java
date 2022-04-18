@@ -4,7 +4,7 @@ import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingH
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 
-import com.icthh.xm.tmf.ms.communication.messaging.handler.logic.ExtendedApiCustomLogic;
+import com.icthh.xm.tmf.ms.communication.messaging.handler.logic.FirebaseMessageHelper;
 import com.icthh.xm.tmf.ms.communication.service.firebase.FirebaseService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
@@ -30,7 +30,7 @@ public class MobileAppMessageHandlerTest {
     MobileAppMessageHandler mobileAppMessageHandler;
 
     @InjectMocks
-    ExtendedApiCustomLogic mobileAppMessageHandlerSteps;
+    FirebaseMessageHelper mobileAppMessageHandlerSteps;
 
     @Test
     public void handleMessageTest() {
@@ -110,5 +110,4 @@ public class MobileAppMessageHandlerTest {
 
         return msg;
     }
-
 }

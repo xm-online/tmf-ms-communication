@@ -83,14 +83,25 @@ public class FirebaseServiceTest {
         mock(FirebaseApplicationConfigurationProvider.class);
     private FirebaseMessagePayloadCustomizationService payloadCustomizationServiceMock =
         mock(FirebaseMessagePayloadCustomizationService.class);
-    private ApplicationSelector applicationSelector = new ApplicationSelector();
+    private FirebaseApplicationSelector applicationSelector = new FirebaseApplicationSelector();
     private BuilderConfigurator builderConfigurator = new BuilderConfigurator();
 
-    private FirebaseService firebaseService = new FirebaseService(configurationProvider,
-        tenantContextHolder, payloadCustomizationServiceMock, List.of(
-        new ValidityPeriodConfigurator(), new BadgeConfigurator(), new ImageConfigurator()),
-        List.of(new SummaryResponseBuildingStrategy(), new ErrorOnlyResponseBuildingStrategy(),
-            new FullResponseBuildingStrategy()), applicationSelector, builderConfigurator);
+    private FirebaseService firebaseService = new FirebaseService(
+        configurationProvider,
+        tenantContextHolder,
+        payloadCustomizationServiceMock,
+        List.of(
+            new ValidityPeriodConfigurator(),
+            new BadgeConfigurator(),
+            new ImageConfigurator()
+        ),
+        List.of(
+            new SummaryResponseBuildingStrategy(),
+            new ErrorOnlyResponseBuildingStrategy(),
+            new FullResponseBuildingStrategy()
+        ),
+        applicationSelector,
+        builderConfigurator);
     //given:
     private FirebaseMessaging messagingMock = mock(FirebaseMessaging.class);
 
@@ -132,11 +143,11 @@ public class FirebaseServiceTest {
 
         assertEquals(extractField("tokens", multicastMessage), List.of(APP_USER_ID_1, APP_USER_ID_2));
         assertEquals(Map.of(
-            RESULT_TYPE, FULL,
-            CUSTOMIZED_KEY, CUSTOMIZED_VALUE,
-            CUSTOM_NAME, CUSTOM_VALUE,
-            VALIDITY_PERIOD_NAME, VALIDITY_SECONDS,
-            BADGE_NAME, BADGE_VALUE),
+                RESULT_TYPE, FULL,
+                CUSTOMIZED_KEY, CUSTOMIZED_VALUE,
+                CUSTOM_NAME, CUSTOM_VALUE,
+                VALIDITY_PERIOD_NAME, VALIDITY_SECONDS,
+                BADGE_NAME, BADGE_VALUE),
             extractField("data", multicastMessage));
 
         Notification notifications = (Notification) extractField("notification", multicastMessage);
@@ -169,16 +180,16 @@ public class FirebaseServiceTest {
         assertEquals(0, (int) result.failureCount());
         List<Detail> details = result.details();
         assertEquals(List.of(
-            new Detail()
-                .status(Detail.Status.SUCCESS)
-                .messageId(FCM_MESSAGE_ID)
-                .receiver(new Receiver().id(RECEIVER_ID_1).appUserId(APP_USER_ID_1)),
-            new Detail()
-                .status(Detail.Status.ERROR)
-                .error(new ErrorDetail()
-                    .code("UNREGISTERED")
-                    .description("msg"))
-                .receiver(new Receiver().id(RECEIVER_ID_2).appUserId(APP_USER_ID_2))),
+                new Detail()
+                    .status(Detail.Status.SUCCESS)
+                    .messageId(FCM_MESSAGE_ID)
+                    .receiver(new Receiver().id(RECEIVER_ID_1).appUserId(APP_USER_ID_1)),
+                new Detail()
+                    .status(Detail.Status.ERROR)
+                    .error(new ErrorDetail()
+                        .code("UNREGISTERED")
+                        .description("msg"))
+                    .receiver(new Receiver().id(RECEIVER_ID_2).appUserId(APP_USER_ID_2))),
             details);
     }
 
@@ -228,12 +239,12 @@ public class FirebaseServiceTest {
         Assertions.assertEquals(1, (int) result.successCount());
         assertEquals(0, (int) result.failureCount());
         assertEquals(List.of(
-            new Detail()
-                .status(Detail.Status.ERROR)
-                .error(new ErrorDetail()
-                    .code("UNREGISTERED")
-                    .description("msg"))
-                .receiver(new Receiver().id(RECEIVER_ID_2).appUserId(APP_USER_ID_2))),
+                new Detail()
+                    .status(Detail.Status.ERROR)
+                    .error(new ErrorDetail()
+                        .code("UNREGISTERED")
+                        .description("msg"))
+                    .receiver(new Receiver().id(RECEIVER_ID_2).appUserId(APP_USER_ID_2))),
             result.details());
     }
 
@@ -259,7 +270,6 @@ public class FirebaseServiceTest {
             answer.put(CUSTOMIZED_KEY, CUSTOMIZED_VALUE);
             return answer;
         }).when(payloadCustomizationServiceMock).customizePayload(anyMap(), any());
-
     }
 
     @Test
@@ -274,9 +284,9 @@ public class FirebaseServiceTest {
                 .sender(new Sender()
                     .id("sender-id"))
                 .receiver(List.of(
-                    new Receiver()
-                        .id("receiver-id")
-                        .appUserId("app-user-id")
+                        new Receiver()
+                            .id("receiver-id")
+                            .appUserId("app-user-id")
                     )
                 )
                 .characteristic(null));
@@ -329,12 +339,12 @@ public class FirebaseServiceTest {
             .content(TEST_CONTENT)
             .subject(TEST_SUBJECT)
             .receiver(List.of(
-                new Receiver()
-                    .id(RECEIVER_ID_1)
-                    .appUserId(APP_USER_ID_1),
-                new Receiver()
-                    .id(RECEIVER_ID_2)
-                    .appUserId(APP_USER_ID_2)
+                    new Receiver()
+                        .id(RECEIVER_ID_1)
+                        .appUserId(APP_USER_ID_1),
+                    new Receiver()
+                        .id(RECEIVER_ID_2)
+                        .appUserId(APP_USER_ID_2)
                 )
             )
             .characteristic(characteristics);

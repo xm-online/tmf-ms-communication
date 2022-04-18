@@ -1,6 +1,13 @@
 package com.icthh.xm.tmf.ms.communication.service.firebase;
 
-import com.google.firebase.messaging.*;
+import com.google.firebase.messaging.AndroidConfig;
+import com.google.firebase.messaging.ApnsConfig;
+import com.google.firebase.messaging.BatchResponse;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.MulticastMessage;
+import com.google.firebase.messaging.Notification;
+import com.google.firebase.messaging.SendResponse;
+import com.google.firebase.messaging.WebpushConfig;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.channel.mobileapp.FirebaseApplicationConfigurationProvider;
@@ -44,7 +51,7 @@ public class FirebaseService {
     private final List<MessageConfigurator> messageConfigurators;
     private final ResponseBuildingStrategy defaultResponseBuildingStrategy;
     private final Map<String, ResponseBuildingStrategy> responseBuildingStrategies;
-    private final ApplicationSelector applicationSelector;
+    private final FirebaseApplicationSelector applicationSelector;
     private final BuilderConfigurator builderConfigurator;
 
     public FirebaseService(FirebaseApplicationConfigurationProvider firebaseApplicationConfigurationProvider,
@@ -52,7 +59,7 @@ public class FirebaseService {
                            FirebaseMessagePayloadCustomizationService payloadCustomizer,
                            List<MessageConfigurator> messageConfigurators,
                            List<ResponseBuildingStrategy> responseBuildingStrategies,
-                           ApplicationSelector applicationSelector,
+                           FirebaseApplicationSelector applicationSelector,
                            BuilderConfigurator builderConfigurator) {
         this.firebaseApplicationConfigurationProvider = firebaseApplicationConfigurationProvider;
         this.tenantContextHolder = tenantContextHolder;
@@ -111,13 +118,13 @@ public class FirebaseService {
         messageConfigurators.forEach(cr -> cr.apply(builderWrapper, message, rawData));
 
         WebpushConfig webpushConfig = builderConfigurator.getWebpushConfig(builderWrapper, message);
-        ApnsConfig apnsConfig1 = builderConfigurator.getApnsConfig(builderWrapper, message);
+        ApnsConfig apnsConfig = builderConfigurator.getApnsConfig(builderWrapper, message);
         AndroidConfig androidConfig = builderConfigurator.getAndroidConfig(builderWrapper, message);
         Notification notification = builderConfigurator.getNotification(builderWrapper, message);
 
         List<String> tokens = receivers.stream().map(Receiver::getAppUserId).collect(toList());
         MulticastMessage.Builder messageBuilder = builderWrapper.getFirebaseMessageBuilder()
-                .setApnsConfig(apnsConfig1)
+                .setApnsConfig(apnsConfig)
                 .setAndroidConfig(androidConfig)
                 .setNotification(notification)
                 .setWebpushConfig(webpushConfig)
@@ -153,9 +160,9 @@ public class FirebaseService {
     }
 
     private FirebaseMessaging getFirebaseMessaging(CommunicationMessage message) {
-        String applicationConfigName = applicationSelector.getApplicationName(message);
-        return firebaseApplicationConfigurationProvider.getFirebaseMessaging(
-            tenantContextHolder.getTenantKey(), applicationConfigName)
+        String applicationName = applicationSelector.getApplicationName(message);
+        return firebaseApplicationConfigurationProvider
+            .getFirebaseMessaging(tenantContextHolder.getTenantKey(), applicationName)
             .orElseThrow(() -> new BusinessException(ErrorCodes.SENDER_ID_INVALID, "Sender id is not valid"));
     }
 
