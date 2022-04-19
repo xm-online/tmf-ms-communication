@@ -160,7 +160,7 @@ public class FirebaseService {
     }
 
     private FirebaseMessaging getFirebaseMessaging(CommunicationMessage message) {
-        String applicationName = applicationSelector.getApplicationName(message);
+        String applicationName = applicationSelector.resolveApplicationName(message);
         return firebaseApplicationConfigurationProvider
             .getFirebaseMessaging(tenantContextHolder.getTenantKey(), applicationName)
             .orElseThrow(() -> new BusinessException(ErrorCodes.SENDER_ID_INVALID, "Sender id is not valid"));

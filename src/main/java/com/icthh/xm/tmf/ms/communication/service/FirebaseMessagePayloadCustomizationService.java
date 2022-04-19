@@ -14,10 +14,16 @@ import lombok.extern.slf4j.Slf4j;
 @LepService(group = "service.customizer")
 public class FirebaseMessagePayloadCustomizationService {
 
-    // todo please revert back old LEP definition for backward compatibility
     @LogicExtensionPoint(value = "CustomizeMessagePayload", resolver = CustomMessageResolver.class)
     public Map<String, String> customizePayload(Map<String, String> rawData, CommunicationMessage message) {
         log.info("No-ops payload customizer, returning data from input");
+        return rawData;
+    }
+
+    @LogicExtensionPoint("CustomizeMobileAppMessagePayload")
+    @Deprecated
+    public Map<String, String> customizePayload(Map<String, String> rawData) {
+        log.debug("No-ops payload customizer, returning data from input");
         return rawData;
     }
 }

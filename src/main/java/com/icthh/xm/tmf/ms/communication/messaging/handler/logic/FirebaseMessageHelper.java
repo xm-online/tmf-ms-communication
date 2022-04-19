@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@LepService(group = "service.message", name = "default")
+@LepService(group = "service.message.firebase", name = "default")
 @Slf4j
 @ConditionalOnBean(FirebaseApplicationConfigurationProvider.class)
 public class FirebaseMessageHelper {
@@ -118,8 +118,8 @@ public class FirebaseMessageHelper {
     }
 
     /**
-     * TODO add javadoc here
-     * @param messageCreate
+     *  Add additional processing for Receivers' data before sending request to Firebase
+     *  @param messageCreate - input message to update
      * @return
      */
     @LogicExtensionPoint(value = "ProcessReceivers", resolver = CustomMessageCreateResolver.class)
@@ -129,8 +129,8 @@ public class FirebaseMessageHelper {
     }
 
     /**
-     * TODO add javadoc here
-     * @param messageCreate
+     * Add additional processing of characteristics before processing input messages
+     * @param messageCreate - input message to update
      * @return
      */
     @LogicExtensionPoint(value = "ApplyCharacteristics", resolver = CustomMessageCreateResolver.class)
