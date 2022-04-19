@@ -8,12 +8,11 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 /**
  * Firebase application name selector. Allows overloading default logic
  */
-@LepService(group = "service.message")
+@LepService(group = "service.message.firebase")
 public class FirebaseApplicationSelector {
 
-    // todo I suggest renaming to "ResolveApplicationName"
-    @LogicExtensionPoint(value = "GetFirebaseApplicationName",  resolver = CustomMessageResolver.class)
-    public String getApplicationName(CommunicationMessage message) {
+    @LogicExtensionPoint(value = "ResolveApplicationName",  resolver = CustomMessageResolver.class)
+    public String resolveApplicationName(CommunicationMessage message) {
         return message.getSender().getId();
     }
 }

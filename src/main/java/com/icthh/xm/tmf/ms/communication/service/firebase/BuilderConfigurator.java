@@ -11,8 +11,7 @@ import lombok.extern.slf4j.Slf4j;
  * Configurator for Firebase builders that allows implement custom logic via LEPs.
  */
 @Slf4j
-// todo I suggest moving firebase-related LEPs to service.message.firebase
-@LepService(group = "service.message")
+@LepService(group = "service.message.firebase")
 public class BuilderConfigurator {
     @LogicExtensionPoint(value = "CustomizeApnsConfig", resolver = CustomMessageResolver.class)
     public ApnsConfig getApnsConfig(final BuilderWrapper builderWrapper, CommunicationMessage message) {
