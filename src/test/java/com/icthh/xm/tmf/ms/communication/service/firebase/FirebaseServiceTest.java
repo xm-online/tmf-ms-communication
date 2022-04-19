@@ -26,7 +26,7 @@ import com.google.firebase.messaging.SendResponse;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.channel.mobileapp.FirebaseApplicationConfigurationProvider;
-import com.icthh.xm.tmf.ms.communication.service.MobileAppMessagePayloadCustomizationService;
+import com.icthh.xm.tmf.ms.communication.service.FirebaseMessagePayloadCustomizationService;
 import com.icthh.xm.tmf.ms.communication.service.firebase.response.ErrorOnlyResponseBuildingStrategy;
 import com.icthh.xm.tmf.ms.communication.service.firebase.response.FullResponseBuildingStrategy;
 import com.icthh.xm.tmf.ms.communication.service.firebase.response.SummaryResponseBuildingStrategy;
@@ -81,14 +81,27 @@ public class FirebaseServiceTest {
     private TenantContextHolder tenantContextHolder = mock(TenantContextHolder.class);
     private FirebaseApplicationConfigurationProvider configurationProvider =
         mock(FirebaseApplicationConfigurationProvider.class);
-    private MobileAppMessagePayloadCustomizationService payloadCustomizationServiceMock =
-        mock(MobileAppMessagePayloadCustomizationService.class);
+    private FirebaseMessagePayloadCustomizationService payloadCustomizationServiceMock =
+        mock(FirebaseMessagePayloadCustomizationService.class);
+    private FirebaseApplicationSelector applicationSelector = new FirebaseApplicationSelector();
+    private BuilderConfigurator builderConfigurator = new BuilderConfigurator();
 
-    private FirebaseService firebaseService = new FirebaseService(configurationProvider,
-        tenantContextHolder, payloadCustomizationServiceMock, List.of(
-        new ValidityPeriodConfigurator(), new BadgeConfigurator(), new ImageConfigurator()),
-        List.of(new SummaryResponseBuildingStrategy(), new ErrorOnlyResponseBuildingStrategy(),
-            new FullResponseBuildingStrategy()));
+    private FirebaseService firebaseService = new FirebaseService(
+        configurationProvider,
+        tenantContextHolder,
+        payloadCustomizationServiceMock,
+        List.of(
+            new ValidityPeriodConfigurator(),
+            new BadgeConfigurator(),
+            new ImageConfigurator()
+        ),
+        List.of(
+            new SummaryResponseBuildingStrategy(),
+            new ErrorOnlyResponseBuildingStrategy(),
+            new FullResponseBuildingStrategy()
+        ),
+        applicationSelector,
+        builderConfigurator);
     //given:
     private FirebaseMessaging messagingMock = mock(FirebaseMessaging.class);
 
@@ -130,11 +143,11 @@ public class FirebaseServiceTest {
 
         assertEquals(extractField("tokens", multicastMessage), List.of(APP_USER_ID_1, APP_USER_ID_2));
         assertEquals(Map.of(
-            RESULT_TYPE, FULL,
-            CUSTOMIZED_KEY, CUSTOMIZED_VALUE,
-            CUSTOM_NAME, CUSTOM_VALUE,
-            VALIDITY_PERIOD_NAME, VALIDITY_SECONDS,
-            BADGE_NAME, BADGE_VALUE),
+                RESULT_TYPE, FULL,
+                CUSTOMIZED_KEY, CUSTOMIZED_VALUE,
+                CUSTOM_NAME, CUSTOM_VALUE,
+                VALIDITY_PERIOD_NAME, VALIDITY_SECONDS,
+                BADGE_NAME, BADGE_VALUE),
             extractField("data", multicastMessage));
 
         Notification notifications = (Notification) extractField("notification", multicastMessage);
@@ -167,16 +180,16 @@ public class FirebaseServiceTest {
         assertEquals(0, (int) result.failureCount());
         List<Detail> details = result.details();
         assertEquals(List.of(
-            new Detail()
-                .status(Detail.Status.SUCCESS)
-                .messageId(FCM_MESSAGE_ID)
-                .receiver(new Receiver().id(RECEIVER_ID_1).appUserId(APP_USER_ID_1)),
-            new Detail()
-                .status(Detail.Status.ERROR)
-                .error(new ErrorDetail()
-                    .code("UNREGISTERED")
-                    .description("msg"))
-                .receiver(new Receiver().id(RECEIVER_ID_2).appUserId(APP_USER_ID_2))),
+                new Detail()
+                    .status(Detail.Status.SUCCESS)
+                    .messageId(FCM_MESSAGE_ID)
+                    .receiver(new Receiver().id(RECEIVER_ID_1).appUserId(APP_USER_ID_1)),
+                new Detail()
+                    .status(Detail.Status.ERROR)
+                    .error(new ErrorDetail()
+                        .code("UNREGISTERED")
+                        .description("msg"))
+                    .receiver(new Receiver().id(RECEIVER_ID_2).appUserId(APP_USER_ID_2))),
             details);
     }
 
@@ -226,12 +239,12 @@ public class FirebaseServiceTest {
         Assertions.assertEquals(1, (int) result.successCount());
         assertEquals(0, (int) result.failureCount());
         assertEquals(List.of(
-            new Detail()
-                .status(Detail.Status.ERROR)
-                .error(new ErrorDetail()
-                    .code("UNREGISTERED")
-                    .description("msg"))
-                .receiver(new Receiver().id(RECEIVER_ID_2).appUserId(APP_USER_ID_2))),
+                new Detail()
+                    .status(Detail.Status.ERROR)
+                    .error(new ErrorDetail()
+                        .code("UNREGISTERED")
+                        .description("msg"))
+                    .receiver(new Receiver().id(RECEIVER_ID_2).appUserId(APP_USER_ID_2))),
             result.details());
     }
 
@@ -256,7 +269,7 @@ public class FirebaseServiceTest {
             HashMap<Object, Object> answer = new HashMap<>(invocation.getArgument(0));
             answer.put(CUSTOMIZED_KEY, CUSTOMIZED_VALUE);
             return answer;
-        }).when(payloadCustomizationServiceMock).customizePayload(anyMap());
+        }).when(payloadCustomizationServiceMock).customizePayload(anyMap(), any());
     }
 
     @Test
@@ -271,9 +284,9 @@ public class FirebaseServiceTest {
                 .sender(new Sender()
                     .id("sender-id"))
                 .receiver(List.of(
-                    new Receiver()
-                        .id("receiver-id")
-                        .appUserId("app-user-id")
+                        new Receiver()
+                            .id("receiver-id")
+                            .appUserId("app-user-id")
                     )
                 )
                 .characteristic(null));
@@ -326,12 +339,12 @@ public class FirebaseServiceTest {
             .content(TEST_CONTENT)
             .subject(TEST_SUBJECT)
             .receiver(List.of(
-                new Receiver()
-                    .id(RECEIVER_ID_1)
-                    .appUserId(APP_USER_ID_1),
-                new Receiver()
-                    .id(RECEIVER_ID_2)
-                    .appUserId(APP_USER_ID_2)
+                    new Receiver()
+                        .id(RECEIVER_ID_1)
+                        .appUserId(APP_USER_ID_1),
+                    new Receiver()
+                        .id(RECEIVER_ID_2)
+                        .appUserId(APP_USER_ID_2)
                 )
             )
             .characteristic(characteristics);

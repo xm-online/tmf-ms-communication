@@ -14,7 +14,7 @@ import lombok.Value;
  * Wrapper around Firebase {@link MulticastMessage} builders.
  */
 @Value
-class BuilderWrapper {
+public class BuilderWrapper {
     MulticastMessage.Builder firebaseMessageBuilder = MulticastMessage.builder();
     ApnsConfig.Builder apnsBuilder = ApnsConfig.builder();
     Aps.Builder apsBuilder = Aps.builder();
