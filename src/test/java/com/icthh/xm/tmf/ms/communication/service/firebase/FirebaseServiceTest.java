@@ -174,18 +174,18 @@ public class FirebaseServiceTest {
 
 
         //verify the response:
-        Result result = messageResult.result();
+        Result result = messageResult.getResult();
         assertNotNull(result);
-        Assertions.assertEquals(1, (int) result.successCount());
-        assertEquals(0, (int) result.failureCount());
-        List<Detail> details = result.details();
+        Assertions.assertEquals(1, (int) result.getSuccessCount());
+        assertEquals(0, (int) result.getFailureCount());
+        List<Detail> details = result.getDetails();
         assertEquals(List.of(
                 new Detail()
-                    .status(Detail.Status.SUCCESS)
+                    .status(Detail.StatusEnum.SUCCESS)
                     .messageId(FCM_MESSAGE_ID)
                     .receiver(new Receiver().id(RECEIVER_ID_1).appUserId(APP_USER_ID_1)),
                 new Detail()
-                    .status(Detail.Status.ERROR)
+                    .status(Detail.StatusEnum.ERROR)
                     .error(new ErrorDetail()
                         .code("UNREGISTERED")
                         .description("msg"))
@@ -208,11 +208,11 @@ public class FirebaseServiceTest {
         assertNotNull(messageResult);
 
         //verify the response:
-        Result result = messageResult.result();
+        Result result = messageResult.getResult();
         assertNotNull(result);
-        Assertions.assertEquals(1, (int) result.successCount());
-        assertEquals(0, (int) result.failureCount());
-        assertNull(result.details());
+        Assertions.assertEquals(1, (int) result.getSuccessCount());
+        assertEquals(0, (int) result.getFailureCount());
+        assertNull(result.getDetails());
     }
 
     @Test
@@ -234,18 +234,18 @@ public class FirebaseServiceTest {
         assertNotNull(messageResult);
 
         //verify the response:
-        Result result = messageResult.result();
+        Result result = messageResult.getResult();
         assertNotNull(result);
-        Assertions.assertEquals(1, (int) result.successCount());
-        assertEquals(0, (int) result.failureCount());
+        Assertions.assertEquals(1, (int) result.getSuccessCount());
+        assertEquals(0, (int) result.getFailureCount());
         assertEquals(List.of(
                 new Detail()
-                    .status(Detail.Status.ERROR)
+                    .status(Detail.StatusEnum.ERROR)
                     .error(new ErrorDetail()
                         .code("UNREGISTERED")
                         .description("msg"))
                     .receiver(new Receiver().id(RECEIVER_ID_2).appUserId(APP_USER_ID_2))),
-            result.details());
+            result.getDetails());
     }
 
     @SneakyThrows

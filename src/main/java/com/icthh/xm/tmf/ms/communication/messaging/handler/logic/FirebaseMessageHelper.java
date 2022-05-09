@@ -45,10 +45,10 @@ public class FirebaseMessageHelper {
             mergedResponse.getReceiver().addAll(response.getReceiver());
             if (response instanceof ExtendedCommunicationMessage) {
                 ExtendedCommunicationMessage responseItem = (ExtendedCommunicationMessage) response;
-                Result itemResult = responseItem.result();
-                failureCnt += itemResult.failureCount();
-                successCnt += itemResult.successCount();
-                details.addAll(itemResult.details());
+                Result itemResult = responseItem.getResult();
+                failureCnt += itemResult.getFailureCount();
+                successCnt += itemResult.getSuccessCount();
+                details.addAll(itemResult.getDetails());
             }
         }
         mergedResponse.result(new Result().successCount(successCnt).failureCount(failureCnt).details(details));

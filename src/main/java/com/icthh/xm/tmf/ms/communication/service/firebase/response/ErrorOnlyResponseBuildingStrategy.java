@@ -41,14 +41,14 @@ public class ErrorOnlyResponseBuildingStrategy extends SummaryResponseBuildingSt
 
                 details.add(new Detail()
                     .receiver(receivers.get(i))
-                    .status(Detail.Status.ERROR)
+                    .status(Detail.StatusEnum.ERROR)
                     .error(new ErrorDetail()
                         .code(String.valueOf(exception.getMessagingErrorCode()))
                         .description(exception.getMessage())));
             }
         }
 
-        message.result().details(details);
+        message.getResult().details(details);
         message.id(UUID.randomUUID().toString());
 
         return message;

@@ -139,4 +139,25 @@ public class MailServiceUnitTest {
         List<String> allValues = captor.getAllValues();
         assertThat(allValues).containsExactly(EMAIL, "Subject with value1", "test@communication.com");
     }
+
+    @Test
+    public void testTemplateEmailWithExtendedAttachment () {
+        String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/" + TEMPLATE_NAME + "/en.ftl";
+        String body = "<#import \"/" + TENANT_NAME + "/" + TEMPLATE_NAME + "-BASE/en\" as main>OTHER_<@main.body>_CUSTOM_</@main.body>";
+        templateService.onRefresh(mainPath, body);
+
+        MailService spiedMailService = spy(mailService);
+        spiedMailService.sendEmailFromTemplateWithAttachments(
+            TenantContextUtils.getRequiredTenantKey(tenantContextHolder.getContext()),
+            ENGLISH,
+            TEMPLATE_NAME,
+            SUBJECT,
+            EMAIL,
+            Map.of(
+                "variable1", "value1",
+                "variable2", "value2"
+            ),
+            RID, FROM,
+            Map.of("fileName.txt", "sdfsdfsdf"));
+    }
 }
