@@ -3,12 +3,8 @@ info:
     title: Communication Management Extentions
     version: 1.0.0
 paths:
-    /ExtendedAttachment:
+    /ping:
         get:
-            operationId: listCommunicationMessage
-            summary: List or find 'CommunicationMessage' objects
-            tags:
-                - communicationMessage
             responses:
                 '200':
                     description: Ok
