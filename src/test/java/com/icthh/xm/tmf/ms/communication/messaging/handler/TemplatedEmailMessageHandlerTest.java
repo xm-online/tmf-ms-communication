@@ -1,5 +1,11 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
@@ -12,6 +18,9 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestChara
 import com.icthh.xm.tmf.ms.communication.web.api.model.ExtendedAttachment;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
+import java.util.List;
+import java.util.Optional;
+
 import org.apache.commons.codec.binary.Base64;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,16 +33,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.io.ByteArrayResource;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class TemplatedEmailMessageHandlerTest {
@@ -76,7 +77,7 @@ public class TemplatedEmailMessageHandlerTest {
     }
 
     @Test
-    public void testHandleMessage_shouldSendEmailFromTemplateWithAttachments() {
+    public void testHandleMessage_shouldSendEmailWithTemplateAndAttachments() {
         CommunicationMessageCreate messageCreate = new CommunicationMessageCreate();
         messageCreate.setContent("content");
         messageCreate.setSubject("subject");

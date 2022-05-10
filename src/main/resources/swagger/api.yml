@@ -713,6 +713,7 @@ definitions:
         description: The base type for use in polymorphic collections
       attachmentType:
           type: string
+          default: Attachment
     required:
         - attachmentType
   Receiver:

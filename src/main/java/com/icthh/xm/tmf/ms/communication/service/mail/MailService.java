@@ -391,7 +391,9 @@ public class MailService {
     }
 
     private Optional<String> getI18nName(Map<String, String> name) {
-        if (name == null) return Optional.empty();
+        if (name == null) {
+            return Optional.empty();
+        }
         if (name.containsKey(TRANSLATION_KEY)) {
             String translationKey = name.get(TRANSLATION_KEY);
             return Optional.of(localizationMessageService.getMessage(translationKey));
