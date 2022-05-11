@@ -26,6 +26,7 @@ void createOpenApiGenerateTask(String ymlName) {
         configOptions = [delegatePattern: "true", title: "communication"]
         validateSpec = true
         importMappings = [Problem:"org.zalando.problem.Problem"]
+        templateDir = "$rootDir/src/main/resources/openapi/mustache/JavaSpring"
     }
     compileJava.dependsOn(taskName)
 
