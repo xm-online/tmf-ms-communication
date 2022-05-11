@@ -91,17 +91,14 @@ public class TemplatedEmailMessageHandler implements BasicMessageHandler {
             return Map.of();
         }
 
-        if (attachments.get(0) instanceof ExtendedAttachment) {
-            return attachments.stream()
-                .filter(Objects::nonNull)
-                .map(it -> (ExtendedAttachment) it)
-                .filter(it -> StringUtils.isNotBlank(it.getFileBytes()))
-                .collect(Collectors.toMap(ExtendedAttachment::getName,
-                    it -> new ByteArrayResource(Base64.decodeBase64(it.getFileBytes()))
-                ));
-        }
-
-        return Map.of();
+        return attachments.stream()
+            .filter(Objects::nonNull)
+            .filter(it -> it instanceof ExtendedAttachment)
+            .map(it -> (ExtendedAttachment) it)
+            .filter(it -> StringUtils.isNotBlank(it.getFileBytes()))
+            .collect(Collectors.toMap(ExtendedAttachment::getName,
+                it -> new ByteArrayResource(Base64.decodeBase64(it.getFileBytes()))
+            ));
     }
 
     @Override
