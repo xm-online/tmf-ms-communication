@@ -89,7 +89,7 @@ public class TemplatedEmailMessageHandlerTest {
         messageCreate.setCharacteristic(createBaseTemplateCharacteristicList());
 
         ExtendedAttachment attachment = new ExtendedAttachment();
-        attachment.setAttachmentType("ExtendedAttachment");
+        attachment.setAtType("ExtendedAttachment");
         attachment.setName("fileName.txt");
         attachment.setFileBytes("json array file bytes");
         messageCreate.setAttachment(List.of(attachment));

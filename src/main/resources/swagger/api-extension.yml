@@ -2,12 +2,7 @@ swagger: '2.0'
 info:
     title: Communication Management Extentions
     version: 1.0.0
-paths:
-    /ping:
-        get:
-            responses:
-                '200':
-                    description: Ok
+paths: {}
 definitions:
     ExtendedAttachment:
         allOf:

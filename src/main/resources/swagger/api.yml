@@ -670,7 +670,6 @@ definitions:
   Attachment:
     type: object
     description: 'Complements the description of an element (for instance a product) through video, pictures...'
-    discriminator: attachmentType
     properties:
       description:
         type: string
@@ -711,11 +710,6 @@ definitions:
       '@baseType':
         type: string
         description: The base type for use in polymorphic collections
-      attachmentType:
-          type: string
-          default: Attachment
-    required:
-        - attachmentType
   Receiver:
     type: object
     description: <b><i>Receivers of the communication message.</i></b>
