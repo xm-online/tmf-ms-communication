@@ -39,12 +39,12 @@ public class FullResponseBuildingStrategy extends SummaryResponseBuildingStrateg
                 .receiver(receivers.get(i));
 
             if (response.isSuccessful()) {
-                detail.status(Detail.Status.SUCCESS)
+                detail.status(Detail.StatusEnum.SUCCESS)
                     .messageId(response.getMessageId());
             } else {
                 FirebaseMessagingException exception = response.getException();
 
-                detail.status(Detail.Status.ERROR)
+                detail.status(Detail.StatusEnum.ERROR)
                     .error(new ErrorDetail()
                         .code(String.valueOf(exception.getMessagingErrorCode()))
                         .description(exception.getMessage()));
@@ -52,7 +52,7 @@ public class FullResponseBuildingStrategy extends SummaryResponseBuildingStrateg
             details.add(detail);
         }
 
-        message.result().details(details);
+        message.getResult().details(details);
         message.id(UUID.randomUUID().toString());
 
         return message;

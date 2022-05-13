@@ -670,6 +670,7 @@ definitions:
   Attachment:
     type: object
     description: 'Complements the description of an element (for instance a product) through video, pictures...'
+    discriminator: '@type'
     properties:
       description:
         type: string

@@ -256,7 +256,8 @@ dependencies {
     testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:${archunit_junit5_version}"
     testImplementation "org.assertj:assertj-core"
     testImplementation "junit:junit"
-    testImplementation "org.mockito:mockito-core:3.2.4"
+    testImplementation "org.mockito:mockito-core:3.8.0"
+    testImplementation "org.mockito:mockito-inline:3.8.0"
     testImplementation "org.hamcrest:hamcrest-library"
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 

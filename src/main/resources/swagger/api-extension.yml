@@ -1,44 +1,62 @@
 swagger: '2.0'
+info:
+    title: Communication Management Extentions
+    version: 1.0.0
+paths: {}
 definitions:
+    ExtendedAttachment:
+        allOf:
+            -   $ref: 'api.yml#/definitions/Attachment'
+            -   type: object
+                properties:
+                    fileBytes:
+                        type: string
+                required:
+                    - fileBytes
     ExtendedCommunicationMessage:
         allOf:
-            -   $ref: '#/definitions/CommunicationMessage'
+            -   $ref: 'api.yml#/definitions/CommunicationMessage'
             -   type: object
-            required:
-                - result
-            properties:
-                result:
-                    $ref: '#/definitions/Result'
-                    description: Arequest results
+                properties:
+                    result:
+                        $ref: '#/definitions/Result'
+                        description: Arequest results
+                required:
+                    - result
     Result:
-        required:
-            - successCount
-            - failureCount
         properties:
             successCount:
                 type: integer
             failureCount:
                 type: integer
             details:
-                $ref: '#/definitions/Details'
-    Details:
+                type: array
+                items:
+                    $ref: '#/definitions/Detail'
         required:
-            - status
-            - receiver
+            - successCount
+            - failureCount
+    Detail:
         properties:
             status:
                 type: string
+                enum:
+                    - SUCCESS
+                    - ERROR
             receiver:
-                $ref: '#/definitions/Receiver'
+                $ref: 'api.yml#/definitions/Receiver'
             messageId:
                 type: string
             error:
-                $ref: '#/definitions/ErrorDescription'
-    ErrorDescription:
+                $ref: '#/definitions/ErrorDetail'
         required:
-            - code
+            - status
+            - receiver
+    ErrorDetail:
         properties:
             code:
                 type: string
             description:
                 type: string
+        required:
+            - code
