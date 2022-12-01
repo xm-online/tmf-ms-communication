@@ -139,4 +139,19 @@ public class MailServiceUnitTest {
         List<String> allValues = captor.getAllValues();
         assertThat(allValues).containsExactly(EMAIL, "Subject with value1", "test@communication.com");
     }
+
+    @Test
+    public void testEmailTemplateUpdateConfig() {
+        String emailPath = "/config/tenants/XM/communication/emails/activation/subfolder/en.ftl";
+        String customEmailPath = "/config/tenants/XM/communication/customer-emails/register/subfolder/en.ftl";
+        String config = "Some email content";
+        String config_custom = "Some custom email content";
+
+        templateService.onRefresh(emailPath, config);
+        templateService.onRefresh(customEmailPath, config_custom);
+
+        assertThat(templateService.getEmailTemplate("XM", "activation/subfolder", "en")).isEqualTo(config);
+        assertThat(templateService.getEmailTemplate("XM", "register/subfolder", "en")).isEqualTo(config_custom);
+       // assertThat(templateService.getEmailTemplate("XM", "activation/subfolder", "de")).isEqualTo(config);
+    }
 }

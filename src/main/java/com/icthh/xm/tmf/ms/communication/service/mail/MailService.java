@@ -313,7 +313,7 @@ public class MailService {
             }
 
             String templateKey = EmailTemplateUtil.emailTemplateKey(tenantKey, templateName, locale.getLanguage());
-            String emailTemplate = tenantEmailTemplateService.getEmailTemplate(templateKey);
+            String emailTemplate = tenantEmailTemplateService.getEmailTemplate(tenantKey.getValue(), templateName, locale.getLanguage());
 
             try {
                 tenantContextHolder.getPrivilegedContext().setTenant(new PlainTenant(tenantKey));
