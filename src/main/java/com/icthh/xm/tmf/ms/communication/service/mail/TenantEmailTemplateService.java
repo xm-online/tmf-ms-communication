@@ -9,16 +9,10 @@ import freemarker.cache.StringTemplateLoader;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
-
-import static com.icthh.xm.tmf.ms.communication.config.Constants.TRANSLATION_KEY;
-import static java.util.Locale.ENGLISH;
-import static org.springframework.context.i18n.LocaleContextHolder.getLocale;
 
 /**
  * Service for managing email template.
@@ -52,6 +46,9 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
 
     @LoggingAspectConfig(resultDetails = false)
     public Optional<String> getTemplateOverrideable(String tenantKey, String templatePath, String langKey) {
+        if (StringUtils.isBlank(langKey)) {
+            langKey = DEFAULT_LANG_KEY;
+        }
         String templateKey = EmailTemplateUtil.emailTemplateKey(TenantKey.valueOf(tenantKey), templatePath, langKey);
 
         if (customEmailTemplates.containsKey(templateKey)) {
@@ -107,10 +104,4 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
         }
     }
 
-    private String getEmailTemplateByTemplatesMap(String emailTemplateKey, Map<String, String> emailTemplates) {
-        if (!emailTemplates.containsKey(emailTemplateKey)) {
-            throw new IllegalArgumentException("Email template was not found");
-        }
-        return emailTemplates.get(emailTemplateKey);
-    }
 }

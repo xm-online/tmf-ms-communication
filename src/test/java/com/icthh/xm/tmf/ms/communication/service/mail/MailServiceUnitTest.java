@@ -152,6 +152,6 @@ public class MailServiceUnitTest {
 
         assertThat(templateService.getEmailTemplate("XM", "activation/subfolder", "en")).isEqualTo(config);
         assertThat(templateService.getEmailTemplate("XM", "register/subfolder", "en")).isEqualTo(config_custom);
-       // assertThat(templateService.getEmailTemplate("XM", "activation/subfolder", "de")).isEqualTo(config);
+        assertThat(templateService.getEmailTemplate("XM", "activation/subfolder", "de")).isEqualTo(config);
     }
 }
