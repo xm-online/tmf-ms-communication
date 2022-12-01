@@ -63,9 +63,11 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
     @Override
     public void onRefresh(String key, String config) {
         if (matcher.match(pathPattern, key)) {
-            updateTemplates(emailTemplates, pathPattern, key, config);
+            String templateKey = updateTemplates(emailTemplates, pathPattern, key, config);
+            updateTemplateLoaderByEmailTemplate(templateKey, config);
         } else if (matcher.match(customEmailPathPattern, key)) {
-            updateTemplates(customEmailTemplates, customEmailPathPattern, key, config);
+            String templateKey = updateTemplates(customEmailTemplates, customEmailPathPattern, key, config);
+            updateTemplateLoaderByCustomEmailTemplate(templateKey, config);
         }
     }
 
@@ -81,7 +83,7 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
         }
     }
 
-    private void updateTemplates(Map<String, String> emailTemplates, String pathPattern, String key, String config) {
+    private String updateTemplates(Map<String, String> emailTemplates, String pathPattern, String key, String config) {
         Map<String, String> pathVariables = matcher.extractUriTemplateVariables(pathPattern, key);
         String templatePath = matcher.extractPathWithinPattern(pathPattern, key);
         String langKey = pathVariables.get(LANG_KEY);
@@ -93,14 +95,37 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
 
         if (StringUtils.isBlank(config)) {
             emailTemplates.remove(templateKey);
-            templateLoader.removeTemplate(templateKey);
             log.info("Email template '{}' with locale {} for tenant '{}' was removed", templatePath,
                 langKey, tenantKeyValue);
         } else {
             emailTemplates.put(templateKey, config);
-            templateLoader.putTemplate(templateKey, config);
             log.info("Email template '{}' with locale {} for tenant '{}' was updated", templatePath,
                 langKey, tenantKeyValue);
+        }
+
+        return templateKey;
+    }
+
+    private void updateTemplateLoaderByEmailTemplate(String templateKey, String config) {
+        if (!customEmailTemplates.containsKey(templateKey)) {
+            if (StringUtils.isBlank(config)) {
+                templateLoader.removeTemplate(templateKey);
+            } else {
+                templateLoader.putTemplate(templateKey, config);
+            }
+        }
+    }
+
+    private void updateTemplateLoaderByCustomEmailTemplate(String templateKey, String config) {
+        if (StringUtils.isBlank(config)) {
+            if (!emailTemplates.containsKey(templateKey)) {
+                templateLoader.removeTemplate(templateKey);
+            } else {
+                String defaultConfig = emailTemplates.get(templateKey);
+                templateLoader.putTemplate(templateKey, defaultConfig);
+            }
+        } else {
+            templateLoader.putTemplate(templateKey, config);
         }
     }
 

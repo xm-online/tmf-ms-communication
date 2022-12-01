@@ -190,8 +190,8 @@ application:
     stream-binding-enabled: true
 
     # https://github.com/xm-online/tmf-ms-communication/wiki/Email-Template-Naming-Convention
-    email-path-pattern: /config/tenants/{tenantKey}/communication/emails/**/{lang}.ftl
-    custom-email-path-pattern: /config/tenants/{tenantKey}/communication/customer-emails/**/{lang}.ftl
+    email-path-pattern: /config/tenants/{tenantKey}/communication/emails/**/{langKey}.ftl
+    custom-email-path-pattern: /config/tenants/{tenantKey}/communication/customer-emails/**/{langKey}.ftl
     channel-specification-path-pattern: /config/tenants/{tenantName}/communication/communication.yml
     messaging:
         send-queue-name-template: communication_%s_%s_send

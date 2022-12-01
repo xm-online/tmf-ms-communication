@@ -2,6 +2,8 @@ package com.icthh.xm.tmf.ms.communication.service.mail;
 
 import static java.util.Locale.ENGLISH;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -26,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.mail.internet.MimeMessage;
+
+import freemarker.cache.StringTemplateLoader;
 import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,6 +46,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
+import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
 
 @RunWith(SpringRunner.class)
 @ActiveProfiles(profiles = "non-async")
@@ -61,6 +66,9 @@ public class MailServiceUnitTest {
 
     @Autowired
     private TenantEmailTemplateService templateService;
+
+    @Autowired
+    private StringTemplateLoader templateLoader;
 
     @MockBean
     private JavaMailSender javaMailSender;
@@ -141,17 +149,83 @@ public class MailServiceUnitTest {
     }
 
     @Test
+    public void testEmailTemplateCreateConfig() {
+        String emailPath = "/config/tenants/XM/communication/emails/activation/subfolder/en.ftl";
+        String customEmailPath = "/config/tenants/XM/communication/customer-emails/register/subfolder/en.ftl";
+        String config = "Some email content";
+        String configCustom = "Some custom email content";
+
+        templateService.onRefresh(emailPath, config);
+        templateService.onRefresh(customEmailPath, configCustom);
+
+        assertThat(templateService.getEmailTemplate("XM", "activation/subfolder", "en")).isEqualTo(config);
+        assertThat(templateService.getEmailTemplate("XM", "register/subfolder", "en")).isEqualTo(configCustom);
+        assertThat(templateService.getEmailTemplate("XM", "activation/subfolder", "")).isEqualTo(config);
+        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en")).isEqualTo(config);
+        assertThat(getContentFromTemplateLoader("XM/register/subfolder/en")).isEqualTo(configCustom);
+    }
+
+    @Test
     public void testEmailTemplateUpdateConfig() {
         String emailPath = "/config/tenants/XM/communication/emails/activation/subfolder/en.ftl";
         String customEmailPath = "/config/tenants/XM/communication/customer-emails/register/subfolder/en.ftl";
         String config = "Some email content";
-        String config_custom = "Some custom email content";
+        String configCustom = "Some custom email content";
+        String newConfig = "Some new email content";
+        String newConfigCustom = "Some new custom email content";
 
         templateService.onRefresh(emailPath, config);
-        templateService.onRefresh(customEmailPath, config_custom);
+        templateService.onRefresh(customEmailPath, configCustom);
+        templateService.onRefresh(emailPath, newConfig);
+        templateService.onRefresh(customEmailPath, newConfigCustom);
 
-        assertThat(templateService.getEmailTemplate("XM", "activation/subfolder", "en")).isEqualTo(config);
-        assertThat(templateService.getEmailTemplate("XM", "register/subfolder", "en")).isEqualTo(config_custom);
-        assertThat(templateService.getEmailTemplate("XM", "activation/subfolder", "de")).isEqualTo(config);
+        assertThat(templateService.getEmailTemplate("XM", "activation/subfolder", "en")).isEqualTo(newConfig);
+        assertThat(templateService.getEmailTemplate("XM", "register/subfolder", "en")).isEqualTo(newConfigCustom);
+    }
+
+    @Test
+    public void testEmailTemplateDeleteConfig() {
+        String customEmailPath = "/config/tenants/XM/communication/customer-emails/register/subfolder/en.ftl";
+        String configCustom = "Some custom email content";
+
+        templateService.onRefresh(customEmailPath, configCustom);
+        templateService.onRefresh(customEmailPath, "");
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () ->
+            templateService.getEmailTemplate("XM", "register/subfolder", "en"));
+        String expectedMessage = "Email template was not found";
+        String actualMessage = exception.getMessage();
+        assertTrue(actualMessage.contains(expectedMessage));
+    }
+
+    @Test
+    public void testEmailTemplateLoaderCrossUpdateConfig() {
+        String emailPath = "/config/tenants/XM/communication/emails/activation/subfolder/en.ftl";
+        String customEmailPath = "/config/tenants/XM/communication/customer-emails/activation/subfolder/en.ftl";
+        String config = "Some email content";
+        String configCustom = "Some custom email content";
+
+        templateService.onRefresh(emailPath, config);
+        templateService.onRefresh(customEmailPath, configCustom);
+        templateService.onRefresh(emailPath, config);
+        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en")).isEqualTo(configCustom);
+
+        templateService.onRefresh(customEmailPath, "");
+        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en")).isEqualTo(config);
+
+        templateService.onRefresh(customEmailPath, configCustom);
+        templateService.onRefresh(emailPath, "");
+        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en")).isEqualTo(configCustom);
+
+        templateService.onRefresh(emailPath, "");
+        templateService.onRefresh(customEmailPath, "");
+        assertThrows(NullPointerException.class, () -> getContentFromTemplateLoader("XM/activation/subfolder/en"));
+
+    }
+
+    @SneakyThrows
+    private String getContentFromTemplateLoader(String templateKey) {
+        Object templateSource = templateLoader.findTemplateSource(templateKey);
+        return IOUtils.toString(templateLoader.getReader(templateSource, ""));
     }
 }
