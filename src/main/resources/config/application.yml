@@ -192,6 +192,8 @@ application:
     # https://github.com/xm-online/tmf-ms-communication/wiki/Email-Template-Naming-Convention
     email-path-pattern: \/config\/tenants\/(?<tenantName>[A-Z0-9]*)\/communication\/emails\/(?<templateName>[a-zA-Z0-9-\/]*)\/(?<langKey>[a-z]*)\.ftl
     channel-specification-path-pattern: /config/tenants/{tenantName}/communication/communication.yml
+    email-specification-path-pattern: /config/tenants/{tenantName}/communication/email-spec.yml
+    custom-email-specification-path-pattern: /config/tenants/{tenantName}/communication/customer-email-spec.yml
     messaging:
         send-queue-name-template: communication_%s_%s_send
         recive-queue-name-template: communication_%s_%s_recive
