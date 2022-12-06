@@ -4,7 +4,7 @@ emails:
       name: "First template"
       defaultSubjectTemplate: "Default subject 1"
       templatePath: uaa/emails/en/firstTemplateKey.ftl
-      defaultContext: |
+      contextExample: |
           {
               "name": "Default name"
           }
@@ -25,7 +25,7 @@ emails:
       name: "Second template"
       defaultSubjectTemplate: "Default subject 2"
       templatePath: uaa/emails/en/secondTemplateKey.ftl
-      defaultContext: |
+      contextExample: |
           {
               "title": "Default title"
           }

@@ -1,12 +1,14 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
-import com.icthh.xm.tmf.ms.communication.domain.spec.EmailSpec;
+import com.icthh.xm.tmf.ms.communication.domain.spec.CustomerEmailTemplateSpec;
+import com.icthh.xm.tmf.ms.communication.domain.spec.DefaultEmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,7 @@ import org.springframework.core.io.ClassPathResource;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -44,6 +47,8 @@ public class EmailSpecificationServiceTest {
 
     private TenantContextHolder tenantContextHolder;
 
+    private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+
     @Before
     public void setUp() {
         tenantContextHolder = mock(TenantContextHolder.class);
@@ -62,8 +67,8 @@ public class EmailSpecificationServiceTest {
         emailSpecificationService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
         emailSpecificationService.onRefresh(CUSTOMER_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         List<EmailTemplateSpec> expectedEmailSpecList = List.of(
-            getEmailSpec(customEmailSpecificationConfig).get(0),
-            getEmailSpec(emailSpecificationConfig).get(1)
+            getCustomerEmailTemplateSpecList(customEmailSpecificationConfig).get(0),
+            getDefaultEmailTemplateSpecList(emailSpecificationConfig).get(1)
         ).stream().sorted().collect(Collectors.toList());
 
         List<EmailTemplateSpec> emailSpecList = emailSpecificationService.getEmailSpecList().stream().sorted().collect(Collectors.toList());
@@ -71,14 +76,15 @@ public class EmailSpecificationServiceTest {
     }
 
     @Test
+    @SneakyThrows
     public void getEmailSpecListWithoutDefault() {
         String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
         String customEmailSpecificationConfig = loadFile("config/specs/customer-email-spec-2.yml");
         emailSpecificationService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
         emailSpecificationService.onRefresh(CUSTOMER_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         List<EmailTemplateSpec> expectedEmailSpecList = List.of(
-            getEmailSpec(customEmailSpecificationConfig).get(0),
-            getEmailSpec(emailSpecificationConfig).get(1)
+            getCustomerEmailTemplateSpecList(customEmailSpecificationConfig).get(0),
+            getDefaultEmailTemplateSpecList(emailSpecificationConfig).get(1)
         ).stream().sorted().collect(Collectors.toList());
 
         List<EmailTemplateSpec> emailSpecList = emailSpecificationService.getEmailSpecList().stream().sorted().collect(Collectors.toList());
@@ -93,10 +99,15 @@ public class EmailSpecificationServiceTest {
     }
 
     @SneakyThrows
-    private List<EmailTemplateSpec> getEmailSpec(String config) {
-        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        EmailSpec emailSpec = mapper.readValue(config, EmailSpec.class);
-        return emailSpec.getEmails();
+    private List<EmailTemplateSpec> getDefaultEmailTemplateSpecList(String config) {
+        Map<String, List<EmailTemplateSpec>> defaultEmailSpec = mapper.readValue(config, new TypeReference<Map<String, List<DefaultEmailTemplateSpec>>>(){});
+        return defaultEmailSpec.get("emails");
+    }
+
+    @SneakyThrows
+    private List<EmailTemplateSpec> getCustomerEmailTemplateSpecList(String config) {
+        Map<String, List<EmailTemplateSpec>> customerEmailSpec = mapper.readValue(config, new TypeReference<Map<String, List<CustomerEmailTemplateSpec>>>(){});
+        return customerEmailSpec.get("emails");
     }
 
     @SneakyThrows
