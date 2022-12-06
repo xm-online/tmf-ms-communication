@@ -24,15 +24,12 @@ import static java.lang.String.format;
 @RequiredArgsConstructor
 public class EmailTemplateService {
 
-    private final TenantContextHolder tenantContextHolder;
     private final Configuration freeMarkerConfiguration;
 
     @SneakyThrows
     public RenderTemplateResponse renderEmailContent(RenderTemplateRequest renderTemplateRequest) {
         try {
-            String tenantKey = tenantContextHolder.getTenantKey();
-            String templateKey = format("%s/en/%s", tenantKey, UUID.randomUUID());
-            Template mailTemplate = new Template(templateKey, renderTemplateRequest.getContent(), freeMarkerConfiguration);
+            Template mailTemplate = new Template(UUID.randomUUID().toString(), renderTemplateRequest.getContent(), freeMarkerConfiguration);
             String renderedContent = FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, renderTemplateRequest.getModel());
             RenderTemplateResponse renderTemplateResponse = new RenderTemplateResponse();
             renderTemplateResponse.setContent(renderedContent);

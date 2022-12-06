@@ -35,19 +35,12 @@ public class EmailTemplateServiceUnitTest {
     @Autowired
     private EmailTemplateService subject;
 
-    @Autowired
-    private TenantContextHolder tenantContextHolder;
-
     @MockBean
     private SmppService smppService;
 
     @MockBean
     private RestTemplate restTemplate;
 
-    @Before
-    public void setup() {
-        TenantContextUtils.setTenant(tenantContextHolder, "XM");
-    }
     @Test
     public void renderEmailContent() {
         String content = loadFile("templates/templateToRender.ftl");
