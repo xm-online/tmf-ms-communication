@@ -7,7 +7,7 @@ import javax.validation.constraints.NotNull;
 import java.util.Map;
 
 @Data
-public class EmailTemplateDto {
+public class RenderTemplateRequest {
     @NotBlank
     private String content;
     @NotNull

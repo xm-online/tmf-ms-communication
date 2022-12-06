@@ -1,11 +1,15 @@
 package com.icthh.xm.tmf.ms.communication.service.mail;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
-import com.icthh.xm.tmf.ms.communication.domain.dto.EmailTemplateDto;
+import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
+import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
+import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException;
+import freemarker.core.Environment;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
@@ -23,16 +27,20 @@ public class EmailTemplateService {
     private final TenantContextHolder tenantContextHolder;
     private final Configuration freeMarkerConfiguration;
 
-    public String renderEmailContent(EmailTemplateDto emailTemplateDto) {
+    @SneakyThrows
+    public RenderTemplateResponse renderEmailContent(RenderTemplateRequest renderTemplateRequest) {
         try {
             String tenantKey = tenantContextHolder.getTenantKey();
             String templateKey = format("%s/en/%s", tenantKey, UUID.randomUUID());
-            Template mailTemplate = new Template(templateKey, emailTemplateDto.getContent(), freeMarkerConfiguration);
-            return FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, emailTemplateDto.getModel());
+            Template mailTemplate = new Template(templateKey, renderTemplateRequest.getContent(), freeMarkerConfiguration);
+            String renderedContent = FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, renderTemplateRequest.getModel());
+            RenderTemplateResponse renderTemplateResponse = new RenderTemplateResponse();
+            renderTemplateResponse.setContent(renderedContent);
+            return renderTemplateResponse;
         } catch (TemplateException | IOException e) {
-            log.error("Template could not be rendered with content: {} and model: {}. Error: {}", emailTemplateDto.getContent(),
-                emailTemplateDto.getModel(), e.getMessage());
-            return null;
+            log.error("Template could not be rendered with content: {} and model: {}. Error: {}", renderTemplateRequest.getContent(),
+                renderTemplateRequest.getModel(), e.getMessage());
+            throw new RenderTemplateException(e.getMessage(), renderTemplateRequest.getContent(), renderTemplateRequest.getModel());
         }
     }
 }

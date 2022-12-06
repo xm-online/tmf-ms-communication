@@ -4,8 +4,9 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.tmf.ms.communication.CommunicationApp;
 import com.icthh.xm.tmf.ms.communication.config.SecurityBeanOverrideConfiguration;
-import com.icthh.xm.tmf.ms.communication.domain.dto.EmailTemplateDto;
+import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
+import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
@@ -53,28 +54,26 @@ public class EmailTemplateServiceUnitTest {
         Map<String, Object> model = Map.of("title", "Test", "baseUrl", "testUrl", "user",
             Map.of("firstName", "Name", "lastName", "Surname", "resetKey", "key"));
         String expectedContent = loadFile("templates/renderedTemplate.html");
-        EmailTemplateDto emailTemplateDto = createEmailTemplateDto(content, model);
+        RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto(content, model);
 
-        String actual = subject.renderEmailContent(emailTemplateDto);
+        String actual = subject.renderEmailContent(renderTemplateRequest).getContent();
 
         assertThat(actual).isNotNull();
         assertThat(actual).isEqualTo(expectedContent);
     }
 
-    @Test
+    @Test(expected = RenderTemplateException.class)
     public void renderEmailContentReturnNullWhenContentNotValid(){
-        EmailTemplateDto emailTemplateDto = createEmailTemplateDto("${subjectNotValid{", Map.of());
+        RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto("${subjectNotValid{", Map.of());
 
-        String actual = subject.renderEmailContent(emailTemplateDto);
-
-        assertThat(actual).isNull();
+        subject.renderEmailContent(renderTemplateRequest);
     }
 
-    private EmailTemplateDto createEmailTemplateDto(String content, Map model) {
-        EmailTemplateDto emailTemplateDto = new EmailTemplateDto();
-        emailTemplateDto.setContent(content);
-        emailTemplateDto.setModel(model);
-        return emailTemplateDto;
+    private RenderTemplateRequest createEmailTemplateDto(String content, Map model) {
+        RenderTemplateRequest renderTemplateRequest = new RenderTemplateRequest();
+        renderTemplateRequest.setContent(content);
+        renderTemplateRequest.setModel(model);
+        return renderTemplateRequest;
     }
 
     @SneakyThrows

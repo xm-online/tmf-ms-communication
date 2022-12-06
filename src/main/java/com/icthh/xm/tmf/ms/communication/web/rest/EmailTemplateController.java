@@ -1,7 +1,8 @@
 package com.icthh.xm.tmf.ms.communication.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import com.icthh.xm.tmf.ms.communication.domain.dto.EmailTemplateDto;
+import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
+import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
 import com.icthh.xm.tmf.ms.communication.service.mail.EmailTemplateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +22,9 @@ public class EmailTemplateController {
 
     @Timed
     @PostMapping("/render")
-    public ResponseEntity<String> renderEmailContentToHtml(@Valid @RequestBody EmailTemplateDto emailTemplateDto) {
-        String htmlContent = emailTemplateService.renderEmailContent(emailTemplateDto);
-        return ResponseEntity.ok(htmlContent);
+    public ResponseEntity<RenderTemplateResponse> renderEmailContentToHtml(@Valid @RequestBody RenderTemplateRequest renderTemplateRequest) {
+        RenderTemplateResponse response = emailTemplateService.renderEmailContent(renderTemplateRequest);
+        return ResponseEntity.ok(response);
     }
 
 }
