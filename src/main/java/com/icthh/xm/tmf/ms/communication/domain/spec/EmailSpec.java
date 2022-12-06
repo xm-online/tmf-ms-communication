@@ -10,5 +10,5 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class EmailSpec {
-    private List<EmailTemplateSpec> emailTemplateSpecs;
+    private List<EmailTemplateSpec> emails;
 }

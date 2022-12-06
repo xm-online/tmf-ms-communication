@@ -1,0 +1,23 @@
+---
+emails:
+    - templateKey: firstTemplateKey
+      name: "First template"
+      defaultSubjectTemplate: "Custom subject 1"
+      templatePath: uaa/emails/en/firstTemplateKey.ftl
+      defaultContext: |
+          {
+              "name": "Custom name"
+          }
+      contextSpec: |
+          {
+              "type": "object",
+              "properties": {
+                  "name": { "type": "string" }
+              }
+          }
+      contextForm: |
+          {
+            "form": [
+               { "key": "name", "title": { "en": "Name" }, "type": "string" }
+            ]
+          }

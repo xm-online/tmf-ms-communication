@@ -15,9 +15,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -43,8 +45,9 @@ public class EmailSpecificationService implements RefreshableConfiguration {
         if (!emailSpecs.containsKey(cfgTenantKey)) {
             throw new IllegalArgumentException("Email specification not found");
         }
-        Map<String, EmailTemplateSpec> emailSpec = emailSpecs.get(cfgTenantKey);
-        Map<String, EmailTemplateSpec> customerEmailSpec = customerEmailSpecs.get(cfgTenantKey);
+        Map<String, EmailTemplateSpec> emailSpec = Optional.ofNullable(emailSpecs.get(cfgTenantKey)).orElseGet(Collections::emptyMap);
+        Map<String, EmailTemplateSpec> customerEmailSpec = Optional.ofNullable(customerEmailSpecs.get(cfgTenantKey)).orElseGet(Collections::emptyMap);
+        customerEmailSpec.keySet().retainAll(emailSpec.keySet());
         Map<String, EmailTemplateSpec> processedEmailSpec = new HashMap<>(emailSpec);
         processedEmailSpec.putAll(customerEmailSpec);
 
@@ -54,26 +57,47 @@ public class EmailSpecificationService implements RefreshableConfiguration {
     @Override
     public void onRefresh(String updatedKey, String config) {
         try {
-            String tenantName = matcher.extractUriTemplateVariables(properties.getEmailSpecificationPathPattern(), updatedKey).get(TENANT_NAME);
+            String tenantName = getTenantKey(updatedKey);
+            ConcurrentHashMap<String, Map<String, EmailTemplateSpec>> updatedSpec = getUpdatedSpec(updatedKey);
 
             if (StringUtils.isBlank(config)) {
-                emailSpecs.remove(tenantName);
+                updatedSpec.remove(tenantName);
                 log.info("Email specification for tenant {} was removed", tenantName);
             } else {
                 EmailSpec emailSpec = mapper.readValue(config, EmailSpec.class);
-                List<EmailTemplateSpec> emailTemplateSpecs = emailSpec.getEmailTemplateSpecs();
+                List<EmailTemplateSpec> emailTemplateSpecs = emailSpec.getEmails();
                 Map<String, EmailTemplateSpec> emailSpecMap = emailTemplateSpecs.stream()
                     .collect(Collectors.toMap(EmailTemplateSpec::getTemplateKey, Function.identity()));
-                emailSpecs.put(tenantName, emailSpecMap);
+                updatedSpec.put(tenantName, emailSpecMap);
                 log.info("Email specification for tenant {} was updated", tenantName);
             }
         } catch (Exception e) {
-            log.error("Error read specification from path {}" + updatedKey, e);
+            log.error("Error read specification from path {}", updatedKey, e);
         }
     }
 
     @Override
     public boolean isListeningConfiguration(String updatedKey) {
         return matcher.match(properties.getEmailSpecificationPathPattern(), updatedKey);
+    }
+
+    private ConcurrentHashMap<String, Map<String, EmailTemplateSpec>> getUpdatedSpec(String updatedKey) {
+        if (matcher.match(properties.getEmailSpecificationPathPattern(), updatedKey)) {
+            return emailSpecs;
+        } else {
+            return customerEmailSpecs;
+        }
+    }
+
+    private String getTenantKey(String updatedKey) {
+        String emailSpecPattern;
+        if (matcher.match(properties.getEmailSpecificationPathPattern(), updatedKey)) {
+            emailSpecPattern = properties.getEmailSpecificationPathPattern();
+        } else if (matcher.match(properties.getCustomEmailSpecificationPathPattern(), updatedKey)) {
+            emailSpecPattern = properties.getCustomEmailSpecificationPathPattern();
+        } else {
+            throw new IllegalArgumentException("Error read specification from path " + updatedKey);
+        }
+        return matcher.extractUriTemplateVariables(emailSpecPattern, updatedKey).get(TENANT_NAME);
     }
 }
