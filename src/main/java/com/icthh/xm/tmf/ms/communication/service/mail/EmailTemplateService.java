@@ -1,4 +1,4 @@
-package com.icthh.xm.tmf.ms.communication.service;
+package com.icthh.xm.tmf.ms.communication.service.mail;
 
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.domain.dto.EmailTemplateDto;
