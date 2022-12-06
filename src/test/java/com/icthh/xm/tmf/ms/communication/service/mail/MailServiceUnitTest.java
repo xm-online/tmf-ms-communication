@@ -151,7 +151,7 @@ public class MailServiceUnitTest {
     @Test
     public void testEmailTemplateCreateConfig() {
         String emailPath = "/config/tenants/XM/communication/emails/activation/subfolder/en.ftl";
-        String customEmailPath = "/config/tenants/XM/communication/customer-emails/register/subfolder/en.ftl";
+        String customEmailPath = "/config/tenants/XM/communication/custom-emails/register/subfolder/en.ftl";
         String config = "Some email content";
         String configCustom = "Some custom email content";
 
@@ -168,7 +168,7 @@ public class MailServiceUnitTest {
     @Test
     public void testEmailTemplateUpdateConfig() {
         String emailPath = "/config/tenants/XM/communication/emails/activation/subfolder/en.ftl";
-        String customEmailPath = "/config/tenants/XM/communication/customer-emails/register/subfolder/en.ftl";
+        String customEmailPath = "/config/tenants/XM/communication/custom-emails/register/subfolder/en.ftl";
         String config = "Some email content";
         String configCustom = "Some custom email content";
         String newConfig = "Some new email content";
@@ -185,7 +185,7 @@ public class MailServiceUnitTest {
 
     @Test
     public void testEmailTemplateDeleteConfig() {
-        String customEmailPath = "/config/tenants/XM/communication/customer-emails/register/subfolder/en.ftl";
+        String customEmailPath = "/config/tenants/XM/communication/custom-emails/register/subfolder/en.ftl";
         String configCustom = "Some custom email content";
 
         templateService.onRefresh(customEmailPath, configCustom);
@@ -201,7 +201,7 @@ public class MailServiceUnitTest {
     @Test
     public void testEmailTemplateLoaderCrossUpdateConfig() {
         String emailPath = "/config/tenants/XM/communication/emails/activation/subfolder/en.ftl";
-        String customEmailPath = "/config/tenants/XM/communication/customer-emails/activation/subfolder/en.ftl";
+        String customEmailPath = "/config/tenants/XM/communication/custom-emails/activation/subfolder/en.ftl";
         String config = "Some email content";
         String configCustom = "Some custom email content";
 
