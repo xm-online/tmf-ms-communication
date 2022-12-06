@@ -1,0 +1,65 @@
+---
+emails:
+    - templateKey: activationEmail
+      name: "Activation email"
+      defaultSubjectTemplate: "Account activation"
+      templatePath: uaa/activation/en.ftl
+      defaultContext: |
+          {
+              "name": "Custom name"
+          }
+      contextSpec: |
+          {
+              "type": "object",
+              "properties": {
+                  "name": { "type": "string" }
+              }
+          }
+      contextForm: |
+          {
+            "form": [
+               { "key": "name", "title": { "en": "Name" }, "type": "string" }
+            ]
+          }
+    - templateKey: accountCreationEmail
+      name: "Account creation email"
+      defaultSubjectTemplate: "Account creation"
+      templatePath: uaa/creation/en.ftl
+      defaultContext: |
+          {
+              "name": "Custom name 3"
+          }
+      contextSpec: |
+          {
+              "type": "object",
+              "properties": {
+                  "name": { "type": "string" }
+              }
+          }
+      contextForm: |
+          {
+            "form": [
+               { "key": "name", "title": { "en": "Name" }, "type": "string" }
+            ]
+          }
+    - templateKey: passwordResetEmail
+      name: "Password reset email"
+      defaultSubjectTemplate: "uaa password reset"
+      templatePath: uaa/passwordReset/en.ftl
+      defaultContext: |
+          {
+              "name": "Custom name 3"
+          }
+      contextSpec: |
+          {
+              "type": "object",
+              "properties": {
+                  "name": { "type": "string" }
+              }
+          }
+      contextForm: |
+          {
+            "form": [
+               { "key": "name", "title": { "en": "Name" }, "type": "string" }
+            ]
+          }
