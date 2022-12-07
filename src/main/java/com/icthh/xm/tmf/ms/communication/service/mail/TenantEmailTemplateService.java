@@ -5,12 +5,14 @@ import com.icthh.xm.commons.logging.LoggingAspectConfig;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import freemarker.cache.StringTemplateLoader;
+
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.util.AntPathMatcher;
 
 /**
  * Service for managing email template.
@@ -19,63 +21,57 @@ import org.springframework.stereotype.Service;
 @Service
 public class TenantEmailTemplateService implements RefreshableConfiguration {
 
-    private static final String TEMPLATE_NAME = "templateName";
     private static final String LANG_KEY = "langKey";
-    private static final String TENANT_NAME = "tenantName";
-
+    private static final String TENANT_KEY = "tenantKey";
+    private static final String FILE_PATTERN = "/%s.ftl";
+    private static final String DEFAULT_LANG_KEY = "en";
+    private final AntPathMatcher matcher = new AntPathMatcher();
     private final ConcurrentHashMap<String, String> emailTemplates = new ConcurrentHashMap<>();
-    private final Pattern pattern;
+    private final ConcurrentHashMap<String, String> customEmailTemplates = new ConcurrentHashMap<>();
+    private final String pathPattern;
+    private final String customEmailPathPattern;
     private final StringTemplateLoader templateLoader;
 
     public TenantEmailTemplateService(ApplicationProperties applicationProperties,
                                       StringTemplateLoader templateLoader) {
         this.templateLoader = templateLoader;
-        this.pattern = Pattern.compile(applicationProperties.getEmailPathPattern());
+        this.pathPattern = applicationProperties.getEmailPathPattern();
+        this.customEmailPathPattern = applicationProperties.getCustomEmailPathPattern();
     }
 
-    /**
-     * Search email template by email template key.
-     *
-     * @param emailTemplateKey search key
-     * @return email template
-     */
     @LoggingAspectConfig(resultDetails = false)
-    public String getEmailTemplate(String emailTemplateKey) {
-        if (!emailTemplates.containsKey(emailTemplateKey)) {
-            throw new IllegalArgumentException("Email template was not found");
+    public String getEmailTemplate(String tenantKey, String templatePath, String langKey) {
+        return getTemplateOverrideable(tenantKey, templatePath, langKey).orElseThrow(() -> new IllegalArgumentException("Email template was not found"));
+    }
+
+    @LoggingAspectConfig(resultDetails = false)
+    public Optional<String> getTemplateOverrideable(String tenantKey, String templatePath, String langKey) {
+        if (StringUtils.isBlank(langKey)) {
+            langKey = DEFAULT_LANG_KEY;
         }
-        return emailTemplates.get(emailTemplateKey);
+        String templateKey = EmailTemplateUtil.emailTemplateKey(TenantKey.valueOf(tenantKey), templatePath, langKey);
+
+        if (customEmailTemplates.containsKey(templateKey)) {
+            return Optional.of(customEmailTemplates.get(templateKey));
+        } else if (emailTemplates.containsKey(templateKey)) {
+            return Optional.of(emailTemplates.get(templateKey));
+        }
+
+        return Optional.empty();
     }
 
     @Override
     public void onRefresh(String key, String config) {
-        Matcher matcher = pattern.matcher(key);
-        if (!matcher.find()) {
-            return;
-        }
-        String tenantKeyValue = matcher.group(TENANT_NAME);
-        String langKey = matcher.group(LANG_KEY);
-        String templateName = matcher.group(TEMPLATE_NAME);
-
-        String templateKey = EmailTemplateUtil.emailTemplateKey(TenantKey.valueOf(tenantKeyValue),
-            templateName, langKey);
-
-        if (StringUtils.isBlank(config)) {
-            emailTemplates.remove(templateKey);
-            templateLoader.removeTemplate(templateKey);
-            log.info("Email template '{}' with locale {} for tenant '{}' was removed", templateName,
-                            langKey, tenantKeyValue);
-        } else {
-            emailTemplates.put(templateKey, config);
-            templateLoader.putTemplate(templateKey, config);
-            log.info("Email template '{}' with locale {} for tenant '{}' was updated", templateName,
-                            langKey, tenantKeyValue);
+        if (matcher.match(pathPattern, key)) {
+            updateTemplates(emailTemplates, pathPattern, key, config);
+        } else if (matcher.match(customEmailPathPattern, key)) {
+            updateTemplates(customEmailTemplates, customEmailPathPattern, key, config);
         }
     }
 
     @Override
     public boolean isListeningConfiguration(String updatedKey) {
-        return pattern.matcher(updatedKey).matches();
+        return matcher.match(pathPattern, updatedKey) || matcher.match(customEmailPathPattern, updatedKey);
     }
 
     @Override
@@ -84,4 +80,30 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
             onRefresh(key, config);
         }
     }
+
+    private void updateTemplates(Map<String, String> emailTemplates, String pathPattern, String key, String config) {
+        Map<String, String> pathVariables = matcher.extractUriTemplateVariables(pathPattern, key);
+        String templatePath = matcher.extractPathWithinPattern(pathPattern, key);
+        String langKey = pathVariables.get(LANG_KEY);
+        String templateFileName = String.format(FILE_PATTERN, pathVariables.get(LANG_KEY));
+        templatePath = templatePath.substring(0, templatePath.lastIndexOf(templateFileName));
+        String tenantKeyValue = pathVariables.get(TENANT_KEY);
+
+        String templateKey = EmailTemplateUtil.emailTemplateKey(TenantKey.valueOf(tenantKeyValue), templatePath, langKey);
+
+        if (StringUtils.isBlank(config)) {
+            emailTemplates.remove(templateKey);
+            log.info("Email template '{}' with locale {} for tenant '{}' was removed", templatePath,
+                langKey, tenantKeyValue);
+        } else {
+            emailTemplates.put(templateKey, config);
+            log.info("Email template '{}' with locale {} for tenant '{}' was updated", templatePath,
+                langKey, tenantKeyValue);
+        }
+
+        getTemplateOverrideable(tenantKeyValue, templatePath, langKey)
+            .ifPresentOrElse((cfg) -> templateLoader.putTemplate(templateKey, cfg),
+                                () -> templateLoader.removeTemplate(templateKey));
+    }
+
 }
