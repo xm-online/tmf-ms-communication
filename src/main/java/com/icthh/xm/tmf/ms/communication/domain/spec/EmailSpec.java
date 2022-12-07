@@ -1,14 +1,11 @@
 package com.icthh.xm.tmf.ms.communication.domain.spec;
 
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Map;
 
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.toList;

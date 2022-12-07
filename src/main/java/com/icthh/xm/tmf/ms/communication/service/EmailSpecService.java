@@ -4,12 +4,9 @@ import com.icthh.xm.commons.logging.LoggingAspectConfig;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.spec.CustomerEmailSpec;
-import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailSpec;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import static java.util.Collections.emptyList;
 
 @Component
 @RequiredArgsConstructor

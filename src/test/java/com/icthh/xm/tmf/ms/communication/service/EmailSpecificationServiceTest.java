@@ -7,7 +7,6 @@ import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
-import com.icthh.xm.tmf.ms.communication.domain.spec.CustomerEmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +23,6 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,7 +40,9 @@ public class EmailSpecificationServiceTest {
 
     @Spy
     @InjectMocks
-    private EmailSpecificationService emailSpecificationService;
+    private EmailSpecService emailSpecService;
+
+    private CustomerEmailSpecService customerEmailSpecService;
 
     private TenantContextHolder tenantContextHolder;
 
@@ -56,21 +56,20 @@ public class EmailSpecificationServiceTest {
         applicationProperties.setEmailSpecificationPathPattern(EMAIL_SPECIFICATION_PATH_PATTERN);
         applicationProperties.setCustomEmailSpecificationPathPattern(CUSTOMER_EMAIL_SPECIFICATION_PATH_PATTERN);
 
-        emailSpecificationService = new EmailSpecificationService(applicationProperties, tenantContextHolder);
+        customerEmailSpecService = new CustomerEmailSpecService(applicationProperties);
+        emailSpecService = new EmailSpecService(applicationProperties, customerEmailSpecService, tenantContextHolder);
     }
 
     @Test
     public void getEmailSpecList() {
         String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
         String customEmailSpecificationConfig = loadFile("config/specs/customer-email-spec.yml");
-        emailSpecificationService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
-        emailSpecificationService.onRefresh(CUSTOMER_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
-        List<EmailTemplateSpec> expectedEmailSpecList = List.of(
-            getCustomerEmailTemplateSpecList(customEmailSpecificationConfig).get(0),
-            getDefaultEmailTemplateSpecList(emailSpecificationConfig).get(1)
-        ).stream().sorted().collect(Collectors.toList());
+        emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
+        customerEmailSpecService.onRefresh(CUSTOMER_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
+        List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
+        expectedEmailSpecList.get(0).setSubjectTemplate("Custom subject 1");
 
-        List<EmailTemplateSpec> emailSpecList = emailSpecificationService.getEmailSpecList().stream().sorted().collect(Collectors.toList());
+        List<EmailTemplateSpec> emailSpecList = emailSpecService.getEmailSpec().getEmails();
         assertEquals(expectedEmailSpecList, emailSpecList);
     }
 
@@ -79,14 +78,12 @@ public class EmailSpecificationServiceTest {
     public void getEmailSpecListWithoutDefault() {
         String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
         String customEmailSpecificationConfig = loadFile("config/specs/customer-email-spec-2.yml");
-        emailSpecificationService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
-        emailSpecificationService.onRefresh(CUSTOMER_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
-        List<EmailTemplateSpec> expectedEmailSpecList = List.of(
-            getCustomerEmailTemplateSpecList(customEmailSpecificationConfig).get(0),
-            getDefaultEmailTemplateSpecList(emailSpecificationConfig).get(1)
-        ).stream().sorted().collect(Collectors.toList());
+        emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
+        customerEmailSpecService.onRefresh(CUSTOMER_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
+        List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
+        expectedEmailSpecList.get(0).setSubjectTemplate("Custom subject 1");
 
-        List<EmailTemplateSpec> emailSpecList = emailSpecificationService.getEmailSpecList().stream().sorted().collect(Collectors.toList());
+        List<EmailTemplateSpec> emailSpecList = emailSpecService.getEmailSpec().getEmails();
         assertEquals(expectedEmailSpecList, emailSpecList);
     }
 
@@ -101,12 +98,6 @@ public class EmailSpecificationServiceTest {
     private List<EmailTemplateSpec> getDefaultEmailTemplateSpecList(String config) {
         Map<String, List<EmailTemplateSpec>> defaultEmailSpec = mapper.readValue(config, new TypeReference<Map<String, List<EmailTemplateSpec>>>(){});
         return defaultEmailSpec.get("emails");
-    }
-
-    @SneakyThrows
-    private List<EmailTemplateSpec> getCustomerEmailTemplateSpecList(String config) {
-        Map<String, List<EmailTemplateSpec>> customerEmailSpec = mapper.readValue(config, new TypeReference<Map<String, List<CustomerEmailTemplateSpec>>>(){});
-        return customerEmailSpec.get("emails");
     }
 
     @SneakyThrows

@@ -1,13 +1,13 @@
 package com.icthh.xm.tmf.ms.communication.domain.spec;
 
-import java.util.Optional;
-import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import javax.annotation.Nullable;
+import java.util.Optional;
 
 @Data
 @EqualsAndHashCode()

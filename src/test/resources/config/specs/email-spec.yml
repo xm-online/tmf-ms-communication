@@ -2,7 +2,7 @@
 emails:
     - templateKey: firstTemplateKey
       name: "First template"
-      defaultSubjectTemplate: "Default subject 1"
+      subjectTemplate: "Default subject 1"
       templatePath: uaa/emails/en/firstTemplateKey.ftl
       contextExample: |
           {
@@ -23,7 +23,7 @@ emails:
           }
     - templateKey: secondTemplateKey
       name: "Second template"
-      defaultSubjectTemplate: "Default subject 2"
+      subjectTemplate: "Default subject 2"
       templatePath: uaa/emails/en/secondTemplateKey.ftl
       contextExample: |
           {

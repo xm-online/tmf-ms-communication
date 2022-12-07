@@ -2,7 +2,6 @@ package com.icthh.xm.tmf.ms.communication.service;
 
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.spec.CustomerEmailSpec;
-import com.icthh.xm.tmf.ms.communication.domain.spec.CustomerEmailTemplateSpec;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
