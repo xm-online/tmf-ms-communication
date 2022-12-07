@@ -1,11 +1,8 @@
 package com.icthh.xm.tmf.ms.communication.config.tenant;
 
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
-import com.icthh.xm.commons.migration.db.tenant.provisioner.TenantDatabaseProvisioner;
 import com.icthh.xm.commons.tenantendpoint.TenantManager;
-import com.icthh.xm.commons.tenantendpoint.provisioner.TenantAbilityCheckerProvisioner;
 import com.icthh.xm.commons.tenantendpoint.provisioner.TenantConfigProvisioner;
-import com.icthh.xm.commons.tenantendpoint.provisioner.TenantListProvisioner;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.commons.config.domain.Configuration;
 import lombok.SneakyThrows;
@@ -28,6 +25,7 @@ import static com.icthh.xm.commons.config.domain.Configuration.of;
 import static com.icthh.xm.commons.tenantendpoint.provisioner.TenantConfigProvisioner.prependTenantPath;
 import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_EMAILS_PATH_PATTERN;
 import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_EMAILS_PATTERN;
+import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_EMAIL_SPEC_CONFIG_PATH;
 import static com.icthh.xm.tmf.ms.communication.config.Constants.PATH_TO_EMAILS;
 import static com.icthh.xm.tmf.ms.communication.config.Constants.PATH_TO_EMAILS_IN_CONFIG;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -39,19 +37,13 @@ import static org.springframework.core.io.support.ResourcePatternUtils.getResour
 public class TenantManagerConfiguration {
 
     private static final String APP_NAME = "communication";
-    private AntPathMatcher matcher = new AntPathMatcher();
+    private final AntPathMatcher matcher = new AntPathMatcher();
 
     @Bean
-    public TenantManager tenantManager(TenantAbilityCheckerProvisioner abilityCheckerProvisioner,
-                                       TenantDatabaseProvisioner databaseProvisioner,
-                                       TenantConfigProvisioner configProvisioner,
-                                       TenantListProvisioner tenantListProvisioner) {
+    public TenantManager tenantManager(TenantConfigProvisioner configProvisioner) {
 
         TenantManager manager = TenantManager.builder()
-            .service(abilityCheckerProvisioner)
-            .service(tenantListProvisioner)
             .service(configProvisioner)
-            .service(databaseProvisioner)
             .build();
         log.info("Configured tenant manager: {}", manager);
         return manager;
@@ -73,7 +65,7 @@ public class TenantManagerConfiguration {
             .builder()
             .tenantConfigRepository(tenantConfigRepository)
             .configuration(of().path(applicationProperties.getDefaultEmailSpecificationPathPattern())
-                .content(readResource("/config/specs/default-email-spec.yml"))
+                .content(readResource(DEFAULT_EMAIL_SPEC_CONFIG_PATH))
                 .build())
             .configurations(emailConfigs)
             .build();

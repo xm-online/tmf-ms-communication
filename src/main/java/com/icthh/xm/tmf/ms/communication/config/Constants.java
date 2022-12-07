@@ -12,6 +12,7 @@ public final class Constants {
     public static final String ANONYMOUS_USER = "anonymoususer";
     public static final String DEFAULT_LANGUAGE = "en";
     public static final String TRANSLATION_KEY = "trKey";
+    public static final String DEFAULT_EMAIL_SPEC_CONFIG_PATH = "config/specs/default-email-spec.yml";
     public static final String DEFAULT_EMAILS_PATTERN = "classpath*:config/emails/**/*.ftl";
     public static final String PATH_TO_EMAILS = "/config/emails/";
     public static final String DEFAULT_EMAILS_PATH_PATTERN = "/config/emails/**/{langKey}.ftl";
