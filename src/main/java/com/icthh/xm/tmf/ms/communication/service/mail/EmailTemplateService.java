@@ -34,9 +34,13 @@ public class EmailTemplateService {
             RenderTemplateResponse renderTemplateResponse = new RenderTemplateResponse();
             renderTemplateResponse.setContent(renderedContent);
             return renderTemplateResponse;
-        } catch (TemplateException | IOException e) {
-            log.error("Template could not be rendered with content: {} and model: {}. Error: {}", renderTemplateRequest.getContent(),
-                renderTemplateRequest.getModel(), e.getMessage());
+        } catch (TemplateException e) {
+            log.error("Template could not be rendered with content: {} and model: {}.", renderTemplateRequest.getContent(),
+                renderTemplateRequest.getModel(), e);
+            throw new RenderTemplateException(e.getMessageWithoutStackTop(), renderTemplateRequest.getContent(), renderTemplateRequest.getModel());
+        } catch (IOException e) {
+            log.error("Template could not be rendered with content: {} and model: {}.", renderTemplateRequest.getContent(),
+                renderTemplateRequest.getModel(), e);
             throw new RenderTemplateException(e.getMessage(), renderTemplateRequest.getContent(), renderTemplateRequest.getModel());
         }
     }

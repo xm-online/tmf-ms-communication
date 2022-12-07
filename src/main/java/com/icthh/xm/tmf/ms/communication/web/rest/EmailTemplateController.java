@@ -22,9 +22,8 @@ public class EmailTemplateController {
 
     @Timed
     @PostMapping("/render")
-    public ResponseEntity<RenderTemplateResponse> renderEmailContentToHtml(@Valid @RequestBody RenderTemplateRequest renderTemplateRequest) {
-        RenderTemplateResponse response = emailTemplateService.renderEmailContent(renderTemplateRequest);
-        return ResponseEntity.ok(response);
+    public RenderTemplateResponse renderEmailContentToHtml(@Valid @RequestBody RenderTemplateRequest renderTemplateRequest) {
+        return emailTemplateService.renderEmailContent(renderTemplateRequest);
     }
 
 }
