@@ -1,0 +1,44 @@
+---
+emails:
+    - templateKey: firstTemplateKey
+      name: "First template"
+      subjectTemplate: "Default subject 1"
+      templatePath: uaa/emails/en/firstTemplateKey.ftl
+      contextExample: |
+          {
+              "name": "Default name"
+          }
+      contextSpec: |
+          {
+              "type": "object",
+              "properties": {
+                  "name": { "type": "string" }
+              }
+          }
+      contextForm: |
+          {
+            "form": [
+               { "key": "name", "title": { "en": "Name" }, "type": "string" }
+            ]
+          }
+    - templateKey: secondTemplateKey
+      name: "Second template"
+      subjectTemplate: "Default subject 2"
+      templatePath: uaa/emails/en/secondTemplateKey.ftl
+      contextExample: |
+          {
+              "title": "Default title"
+          }
+      contextSpec: |
+          {
+              "type": "object",
+              "properties": {
+                  "title": { "type": "string" }
+              }
+          }
+      contextForm: |
+          {
+            "form": [
+               { "key": "title", "title": { "en": "Title" }, "type": "string" }
+            ]
+          }

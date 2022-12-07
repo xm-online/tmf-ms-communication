@@ -1,0 +1,6 @@
+---
+emails:
+    - templateKey: firstTemplateKey
+      subjectTemplate: "Custom subject 1"
+    - templateKey: thirdTemplateKey
+      subjectTemplate: "Custom subject 3"
