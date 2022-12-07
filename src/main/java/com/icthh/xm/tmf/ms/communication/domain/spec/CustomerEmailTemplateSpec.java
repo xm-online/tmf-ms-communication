@@ -8,11 +8,12 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode()
 @ToString(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class CustomerEmailTemplateSpec extends EmailTemplateSpec {
-    private String subject;
+public class CustomerEmailTemplateSpec {
+    private String templateKey;
+    private String subjectTemplate;
 }

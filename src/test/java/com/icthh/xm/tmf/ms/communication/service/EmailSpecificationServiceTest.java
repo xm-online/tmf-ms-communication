@@ -8,7 +8,6 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.spec.CustomerEmailTemplateSpec;
-import com.icthh.xm.tmf.ms.communication.domain.spec.DefaultEmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -100,7 +99,7 @@ public class EmailSpecificationServiceTest {
 
     @SneakyThrows
     private List<EmailTemplateSpec> getDefaultEmailTemplateSpecList(String config) {
-        Map<String, List<EmailTemplateSpec>> defaultEmailSpec = mapper.readValue(config, new TypeReference<Map<String, List<DefaultEmailTemplateSpec>>>(){});
+        Map<String, List<EmailTemplateSpec>> defaultEmailSpec = mapper.readValue(config, new TypeReference<Map<String, List<EmailTemplateSpec>>>(){});
         return defaultEmailSpec.get("emails");
     }
 
