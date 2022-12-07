@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
+import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.logging.LoggingAspectConfig;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
@@ -16,7 +17,6 @@ public class EmailSpecService extends AbstractRefreshableConfiguration<EmailSpec
     private final CustomerEmailSpecService customerEmailSpecService;
     private final TenantContextHolder tenantContextHolder;
 
-
     @LoggingAspectConfig(resultDetails = false)
     public EmailSpec getEmailSpec() {
         String tenantKey = tenantContextHolder.getTenantKey();
@@ -27,14 +27,13 @@ public class EmailSpecService extends AbstractRefreshableConfiguration<EmailSpec
     public EmailSpec getEmailSpec(String tenantKey) {
         String cfgTenantKey = tenantKey.toUpperCase();
         if (!getConfigurations().containsKey(cfgTenantKey)) {
-            throw new IllegalArgumentException("Email specification not found");
+            throw new EntityNotFoundException("Email specification not found");
         }
 
         EmailSpec emailSpec = getConfigurations().get(cfgTenantKey);
         CustomerEmailSpec customerEmailSpec = customerEmailSpecService.getConfigurations().get(cfgTenantKey);
         return emailSpec.override(customerEmailSpec);
     }
-
 
     @Override
     public String getConfigPathPattern() {
