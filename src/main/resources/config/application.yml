@@ -194,7 +194,7 @@ application:
     custom-email-path-pattern: /config/tenants/{tenantKey}/communication/custom-emails/**/{langKey}.ftl
     channel-specification-path-pattern: /config/tenants/{tenantName}/communication/communication.yml
     email-specification-path-pattern: /config/tenants/{tenantName}/communication/email-spec.yml
-    custom-email-specification-path-pattern: /config/tenants/{tenantName}/communication/customer-email-spec.yml
+    custom-email-specification-path-pattern: /config/tenants/{tenantName}/communication/custom-email-spec.yml
     messaging:
         send-queue-name-template: communication_%s_%s_send
         recive-queue-name-template: communication_%s_%s_recive
