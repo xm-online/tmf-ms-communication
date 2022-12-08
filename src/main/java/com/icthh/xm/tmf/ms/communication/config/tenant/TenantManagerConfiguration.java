@@ -57,9 +57,7 @@ public class TenantManagerConfiguration {
 
         Resource[] resources = getResourcePatternResolver(resourceLoader).getResources(DEFAULT_EMAILS_PATTERN);
 
-        List<Configuration> emailConfigs = stream(resources).filter(pathIsExpected())
-                                                            .map(this::resourceToConfiguration)
-                                                            .collect(Collectors.toList());
+        List<Configuration> emailConfigs = stream(resources).map(this::resourceToConfiguration).collect(Collectors.toList());
 
         TenantConfigProvisioner provisioner = TenantConfigProvisioner
             .builder()
@@ -101,19 +99,6 @@ public class TenantManagerConfiguration {
 
     private String toFullPath(String path) {
         return prependTenantPath(Paths.get(APP_NAME, path).toString());
-    }
-
-    private Predicate<Resource> pathIsExpected() {
-        return (Resource resource) -> {
-            try {
-                return Optional.ofNullable(resource.getURL().getPath())
-                    .map(f -> f.contains(PATH_TO_EMAILS))
-                    .orElse(false);
-            } catch (IOException e) {
-                log.warn("can not get url for resource: {}", resource);
-                return false;
-            }
-        };
     }
 
 }

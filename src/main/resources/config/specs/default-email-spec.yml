@@ -15,7 +15,6 @@ emails:
           }
       contextSpec: |
           {
-
               "type": "object",
               "properties": {
                   "user": {
