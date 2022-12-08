@@ -4,7 +4,7 @@ import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.logging.LoggingAspectConfig;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
-import com.icthh.xm.tmf.ms.communication.domain.spec.CustomerEmailSpec;
+import com.icthh.xm.tmf.ms.communication.domain.spec.CustomEmailSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailSpec;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 public class EmailSpecService extends AbstractRefreshableConfiguration<EmailSpec> {
 
     private final ApplicationProperties properties;
-    private final CustomerEmailSpecService customerEmailSpecService;
+    private final CustomEmailSpecService customEmailSpecService;
     private final TenantContextHolder tenantContextHolder;
 
     @LoggingAspectConfig(resultDetails = false)
@@ -31,8 +31,8 @@ public class EmailSpecService extends AbstractRefreshableConfiguration<EmailSpec
         }
 
         EmailSpec emailSpec = getConfigurations().get(cfgTenantKey);
-        CustomerEmailSpec customerEmailSpec = customerEmailSpecService.getConfigurations().get(cfgTenantKey);
-        return emailSpec.override(customerEmailSpec);
+        CustomEmailSpec customEmailSpec = customEmailSpecService.getConfigurations().get(cfgTenantKey);
+        return emailSpec.override(customEmailSpec);
     }
 
     @Override

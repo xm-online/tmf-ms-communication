@@ -3,6 +3,7 @@ package com.icthh.xm.tmf.ms.communication.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
@@ -25,7 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -34,15 +35,15 @@ import static org.mockito.Mockito.when;
 public class EmailSpecificationServiceTest {
 
     private static final String EMAIL_SPECIFICATION_PATH_PATTERN = "/config/tenants/{tenantName}/communication/email-spec.yml";
-    private static final String CUSTOMER_EMAIL_SPECIFICATION_PATH_PATTERN = "/config/tenants/{tenantName}/communication/customer-email-spec.yml";
+    private static final String CUSTOM_EMAIL_SPECIFICATION_PATH_PATTERN = "/config/tenants/{tenantName}/communication/custom-email-spec.yml";
     private static final String EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/email-spec.yml";
-    private static final String CUSTOMER_EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/customer-email-spec.yml";
+    private static final String CUSTOM_EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/custom-email-spec.yml";
 
     @Spy
     @InjectMocks
     private EmailSpecService emailSpecService;
 
-    private CustomerEmailSpecService customerEmailSpecService;
+    private CustomEmailSpecService customEmailSpecService;
 
     private TenantContextHolder tenantContextHolder;
 
@@ -54,18 +55,18 @@ public class EmailSpecificationServiceTest {
         mockTenant("TEST");
         ApplicationProperties applicationProperties = new ApplicationProperties();
         applicationProperties.setEmailSpecificationPathPattern(EMAIL_SPECIFICATION_PATH_PATTERN);
-        applicationProperties.setCustomEmailSpecificationPathPattern(CUSTOMER_EMAIL_SPECIFICATION_PATH_PATTERN);
+        applicationProperties.setCustomEmailSpecificationPathPattern(CUSTOM_EMAIL_SPECIFICATION_PATH_PATTERN);
 
-        customerEmailSpecService = new CustomerEmailSpecService(applicationProperties);
-        emailSpecService = new EmailSpecService(applicationProperties, customerEmailSpecService, tenantContextHolder);
+        customEmailSpecService = new CustomEmailSpecService(applicationProperties);
+        emailSpecService = new EmailSpecService(applicationProperties, customEmailSpecService, tenantContextHolder);
     }
 
     @Test
     public void getEmailSpecList() {
         String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
-        String customEmailSpecificationConfig = loadFile("config/specs/customer-email-spec.yml");
+        String customEmailSpecificationConfig = loadFile("config/specs/custom-email-spec.yml");
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
-        customerEmailSpecService.onRefresh(CUSTOMER_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
+        customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
         expectedEmailSpecList.get(0).setSubjectTemplate("Custom subject 1");
 
@@ -77,14 +78,19 @@ public class EmailSpecificationServiceTest {
     @SneakyThrows
     public void getEmailSpecListWithoutDefault() {
         String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
-        String customEmailSpecificationConfig = loadFile("config/specs/customer-email-spec-2.yml");
+        String customEmailSpecificationConfig = loadFile("config/specs/custom-email-spec-2.yml");
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
-        customerEmailSpecService.onRefresh(CUSTOMER_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
+        customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
         expectedEmailSpecList.get(0).setSubjectTemplate("Custom subject 1");
 
         List<EmailTemplateSpec> emailSpecList = emailSpecService.getEmailSpec().getEmails();
         assertEquals(expectedEmailSpecList, emailSpecList);
+    }
+
+    @Test(expected = EntityNotFoundException.class)
+    public void getEmailSpecListNotFound() {
+        emailSpecService.getEmailSpec();
     }
 
     public void mockTenant(String tenant) {

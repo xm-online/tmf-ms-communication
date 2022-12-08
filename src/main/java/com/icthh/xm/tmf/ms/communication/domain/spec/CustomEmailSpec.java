@@ -8,6 +8,6 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CustomerEmailSpec {
-    private List<CustomerEmailTemplateSpec> emails;
+public class CustomEmailSpec {
+    private List<CustomEmailTemplateSpec> emails;
 }

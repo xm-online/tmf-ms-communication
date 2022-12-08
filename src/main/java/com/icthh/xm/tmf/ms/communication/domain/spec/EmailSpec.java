@@ -17,14 +17,14 @@ import static java.util.stream.Collectors.toMap;
 public class EmailSpec {
     private List<EmailTemplateSpec> emails;
 
-    public EmailSpec override(@Nullable CustomerEmailSpec emailSpec) {
+    public EmailSpec override(@Nullable CustomEmailSpec emailSpec) {
         if (emailSpec == null) {
             return new EmailSpec(emails);
         }
 
-        Map<String, CustomerEmailTemplateSpec> customerEmails = emailSpec.getEmails().stream()
-                .collect(toMap(CustomerEmailTemplateSpec::getTemplateKey, identity()));
-        var emails = this.emails.stream().map(it -> it.override(customerEmails.get(it.getTemplateKey()))).collect(toList());
+        Map<String, CustomEmailTemplateSpec> customEmails = emailSpec.getEmails().stream()
+                .collect(toMap(CustomEmailTemplateSpec::getTemplateKey, identity()));
+        var emails = this.emails.stream().map(it -> it.override(customEmails.get(it.getTemplateKey()))).collect(toList());
         return new EmailSpec(emails);
     }
 }
