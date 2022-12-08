@@ -39,7 +39,6 @@ public class ApplicationProperties {
     private Messaging messaging = new Messaging();
     private BusinessRule businessRule = new BusinessRule();
     private String exceptionTranslator;
-    private String defaultEmailSpecificationPathPattern;
 
     @Getter
     @Setter

@@ -52,7 +52,7 @@ public class TenantManagerConfigurationUnitTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
 
-        when(applicationProperties.getDefaultEmailSpecificationPathPattern()).thenReturn("/config/tenants/{tenantName}/communication/default-email-spec.yml");
+        when(applicationProperties.getEmailSpecificationPathPattern()).thenReturn("/config/tenants/{tenantName}/communication/email-spec.yml");
 
         configProvisioner = spy(configuration.tenantConfigProvisioner(tenantConfigRepository,
                                                                       applicationProperties,
@@ -69,7 +69,7 @@ public class TenantManagerConfigurationUnitTest {
 
     private List<Configuration> isExpectedConfigsByParams() {
         return argThat((List<Configuration> configs) ->
-            containsConfig(configs,"/config/tenants/{tenantName}/communication/default-email-spec.yml", readResource(DEFAULT_EMAIL_SPEC_CONFIG_PATH))
+            containsConfig(configs,"/config/tenants/{tenantName}/communication/email-spec.yml", readResource(DEFAULT_EMAIL_SPEC_CONFIG_PATH))
                 && containsConfig(configs,"/config/tenants/{tenantName}/communication/emails/uaa/activation/en.ftl", readResource(CONFIG_EMAILS_PATH + "activation/en.ftl"))
                 && containsConfig(configs,"/config/tenants/{tenantName}/communication/emails/uaa/creation/en.ftl", readResource(CONFIG_EMAILS_PATH + "creation/en.ftl"))
                 && containsConfig(configs,"/config/tenants/{tenantName}/communication/emails/uaa/passwordReset/en.ftl", readResource(CONFIG_EMAILS_PATH + "passwordReset/en.ftl"))

@@ -62,7 +62,7 @@ public class TenantManagerConfiguration {
         TenantConfigProvisioner provisioner = TenantConfigProvisioner
             .builder()
             .tenantConfigRepository(tenantConfigRepository)
-            .configuration(of().path(applicationProperties.getDefaultEmailSpecificationPathPattern())
+            .configuration(of().path(applicationProperties.getEmailSpecificationPathPattern())
                 .content(readResource(DEFAULT_EMAIL_SPEC_CONFIG_PATH))
                 .build())
             .configurations(emailConfigs)
