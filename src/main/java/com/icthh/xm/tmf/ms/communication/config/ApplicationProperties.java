@@ -33,6 +33,9 @@ public class ApplicationProperties {
     private boolean streamBindingEnabled;
     private String channelSpecificationPathPattern;
     private String emailPathPattern;
+    private String customEmailPathPattern;
+    private String emailSpecificationPathPattern;
+    private String customEmailSpecificationPathPattern;
     private Messaging messaging = new Messaging();
     private BusinessRule businessRule = new BusinessRule();
     private String exceptionTranslator;

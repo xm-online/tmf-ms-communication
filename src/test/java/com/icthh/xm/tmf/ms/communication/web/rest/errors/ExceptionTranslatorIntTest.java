@@ -145,4 +145,14 @@ public class ExceptionTranslatorIntTest {
             .andExpect(jsonPath("$.title").value("Internal Server Error"));
     }
 
+    @Test
+    public void testRenderTemplateException() throws Exception {
+        mockMvc.perform(post("/test/render-template-exception"))
+            .andExpect(status().isBadRequest())
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.message").value("render failed"))
+            .andExpect(jsonPath("$.content").value("${{test"))
+            .andExpect(jsonPath("$.model.test").value("test"));
+    }
+
 }

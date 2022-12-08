@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+import static com.icthh.xm.tmf.ms.communication.web.rest.errors.ErrorConstants.ERR_RENDER_TEMPLATE;
+
 /**
  * Controller advice to translate the server side exceptions to client-friendly json structures.
  * The error response follows RFC7807 - Problem Details for HTTP APIs (https://tools.ietf.org/html/rfc7807)
@@ -95,5 +97,17 @@ public class CustomExceptionTranslator implements ProblemHandling {
     @ExceptionHandler
     public ResponseEntity<Problem> handleBadRequestAlertException(BadRequestAlertException ex, NativeWebRequest request) {
         return create(ex, request, HeaderUtil.createFailureAlert(ex.getEntityName(), ex.getErrorKey(), ex.getMessage()));
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Problem> handleRenderTemplateException(RenderTemplateException ex, NativeWebRequest request){
+        Problem problem = Problem.builder()
+            .withStatus(Status.BAD_REQUEST)
+            .with("errCode", ERR_RENDER_TEMPLATE)
+            .with("message", ex.getMessage())
+            .with("content", ex.getContent())
+            .with("model", ex.getModel())
+            .build();
+        return create(ex, problem, request);
     }
 }
