@@ -1,0 +1,113 @@
+---
+emails:
+    - templateKey: activationEmail
+      name: "Activation email"
+      defaultSubjectTemplate: "Account activation"
+      templatePath: uaa/activation/en.ftl
+      contextExample: |
+          {
+              "user": {
+                "firstName": "John",
+                "lastName": "Doe",
+                "activationKey": "myactivationkey"
+              },
+              "baseUrl": "my-company.com"
+          }
+      contextSpec: |
+          {
+              "type": "object",
+              "properties": {
+                  "user": {
+                        "type": "object",
+                        "properties": {
+                            "firstName": { "type": "string" },
+                            "lastName": { "type": "string" },
+                            "activationKey": { "type": "string" }
+                        }
+                  },
+                  "baseUrl": { "type": "string" }
+              }
+          }
+      contextForm: |
+          {
+            "form": [
+               { "key": "user.firstName", "title": { "en": "First name" }, "type": "string" },
+               { "key": "user.lastName", "title": { "en": "Last name" }, "type": "string" },
+               { "key": "user.activationKey", "title": { "en": "Activation key" }, "type": "string" },
+               { "key": "baseUrl", "title": { "en": "Base URL" }, "type": "string" }
+            ]
+          }
+    - templateKey: accountCreationEmail
+      name: "Account creation email"
+      defaultSubjectTemplate: "Account creation"
+      templatePath: uaa/creation/en.ftl
+      contextExample: |
+          {
+              "user": {
+                "firstName": "John",
+                "lastName": "Doe",
+                "resetKey": "myresetkey"
+              },
+              "baseUrl": "my-company.com"
+          }
+      contextSpec: |
+          {
+              "type": "object",
+              "properties": {
+                  "user": {
+                        "type": "object",
+                        "properties": {
+                            "firstName": { "type": "string" },
+                            "lastName": { "type": "string" },
+                            "resetKey": { "type": "string" }
+                        }
+                  },
+                  "baseUrl": { "type": "string" }
+              }
+          }
+      contextForm: |
+          {
+            "form": [
+               { "key": "user.firstName", "title": { "en": "First name" }, "type": "string" },
+               { "key": "user.lastName", "title": { "en": "Last name" }, "type": "string" },
+               { "key": "user.resetKey", "title": { "en": "Reset key" }, "type": "string" },
+               { "key": "baseUrl", "title": { "en": "Base URL" }, "type": "string" }
+            ]
+          }
+    - templateKey: passwordResetEmail
+      name: "Password reset email"
+      defaultSubjectTemplate: "uaa password reset"
+      templatePath: uaa/passwordReset/en.ftl
+      contextExample: |
+          {
+              "user": {
+                "firstName": "John",
+                "lastName": "Doe",
+                "resetKey": "myresetkey"
+              },
+              "baseUrl": "my-company.com"
+          }
+      contextSpec: |
+          {
+              "type": "object",
+              "properties": {
+                  "user": {
+                        "type": "object",
+                        "properties": {
+                            "firstName": { "type": "string" },
+                            "lastName": { "type": "string" },
+                            "resetKey": { "type": "string" }
+                        }
+                  },
+                  "baseUrl": { "type": "string" }
+              }
+          }
+      contextForm: |
+          {
+            "form": [
+               { "key": "user.firstName", "title": { "en": "First name" }, "type": "string" },
+               { "key": "user.lastName", "title": { "en": "Last name" }, "type": "string" },
+               { "key": "user.resetKey", "title": { "en": "Reset key" }, "type": "string" },
+               { "key": "baseUrl", "title": { "en": "Base URL" }, "type": "string" }
+            ]
+          }
