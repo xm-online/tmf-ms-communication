@@ -149,6 +149,15 @@ public class MailServiceUnitTest {
     }
 
     @Test
+    public void testComplexTemplateEmailByTemplateKey() {
+        String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/" + TEMPLATE_NAME + "/en.ftl";
+        String basePath = "/config/tenants/" + TENANT_NAME + "/communication/emails/" + TEMPLATE_NAME + "-BASE/en.ftl";
+        String body = "<#import \"/" + TENANT_NAME + "/" + TEMPLATE_NAME + "-BASE/en\" as main>OTHER_<@main.body>_CUSTOM_</@main.body>";
+
+
+    }
+
+    @Test
     public void testEmailTemplateCreateConfig() {
         String emailPath = "/config/tenants/XM/communication/emails/activation/subfolder/en.ftl";
         String customEmailPath = "/config/tenants/XM/communication/custom-emails/register/subfolder/en.ftl";

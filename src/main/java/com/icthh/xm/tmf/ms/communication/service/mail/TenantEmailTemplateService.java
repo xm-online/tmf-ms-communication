@@ -4,6 +4,8 @@ import com.icthh.xm.commons.config.client.api.RefreshableConfiguration;
 import com.icthh.xm.commons.logging.LoggingAspectConfig;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
+import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
+import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
 import freemarker.cache.StringTemplateLoader;
 
 import java.util.Map;
@@ -13,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
+
+import static java.util.Optional.ofNullable;
 
 /**
  * Service for managing email template.
@@ -31,30 +35,40 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
     private final String pathPattern;
     private final String customEmailPathPattern;
     private final StringTemplateLoader templateLoader;
+    private final EmailSpecService emailSpecService;
 
     public TenantEmailTemplateService(ApplicationProperties applicationProperties,
-                                      StringTemplateLoader templateLoader) {
+                                      StringTemplateLoader templateLoader,
+                                      EmailSpecService emailSpecService) {
         this.templateLoader = templateLoader;
         this.pathPattern = applicationProperties.getEmailPathPattern();
         this.customEmailPathPattern = applicationProperties.getCustomEmailPathPattern();
+        this.emailSpecService = emailSpecService;
     }
 
     @LoggingAspectConfig(resultDetails = false)
-    public String getEmailTemplate(String tenantKey, String templatePath, String langKey) {
-        return getTemplateOverrideable(tenantKey, templatePath, langKey).orElseThrow(() -> new IllegalArgumentException("Email template was not found"));
-    }
-
-    @LoggingAspectConfig(resultDetails = false)
-    public Optional<String> getTemplateOverrideable(String tenantKey, String templatePath, String langKey) {
+    public String getEmailTemplate(String tenantKey, String templateName, String langKey) {
         if (StringUtils.isBlank(langKey)) {
             langKey = DEFAULT_LANG_KEY;
         }
-        String templateKey = EmailTemplateUtil.emailTemplateKey(TenantKey.valueOf(tenantKey), templatePath, langKey);
 
-        if (customEmailTemplates.containsKey(templateKey)) {
-            return Optional.of(customEmailTemplates.get(templateKey));
-        } else if (emailTemplates.containsKey(templateKey)) {
-            return Optional.of(emailTemplates.get(templateKey));
+        String templatePath = EmailTemplateUtil.emailTemplateKey(TenantKey.valueOf(tenantKey), templateName, langKey);
+        return getTemplateOverrideable(templatePath).orElseThrow(() -> new IllegalArgumentException("Email template was not found"));
+    }
+
+    @LoggingAspectConfig(resultDetails = false)
+    public String getEmailTemplateByKey(String tenantKey, String templateKey) {
+        EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpec(tenantKey, templateKey);
+        String templatePath = emailTemplateSpec.getTemplatePath();
+        return getTemplateOverrideable(templatePath).orElseThrow(() -> new IllegalArgumentException("Email template was not found"));
+    }
+
+    @LoggingAspectConfig(resultDetails = false)
+    public Optional<String> getTemplateOverrideable(String templatePath) {
+        if (customEmailTemplates.containsKey(templatePath)) {
+            return Optional.of(customEmailTemplates.get(templatePath));
+        } else if (emailTemplates.containsKey(templatePath)) {
+            return Optional.of(emailTemplates.get(templatePath));
         }
 
         return Optional.empty();
@@ -101,7 +115,7 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
                 langKey, tenantKeyValue);
         }
 
-        getTemplateOverrideable(tenantKeyValue, templatePath, langKey)
+        ofNullable(getEmailTemplate(tenantKeyValue, templatePath, langKey))
             .ifPresentOrElse((cfg) -> templateLoader.putTemplate(templateKey, cfg),
                                 () -> templateLoader.removeTemplate(templateKey));
     }
