@@ -2,7 +2,7 @@ package com.icthh.xm.tmf.ms.communication.service.mail;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
+import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.config.domain.Configuration;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
@@ -24,7 +24,6 @@ import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
 import java.util.UUID;
 
-import static com.icthh.xm.tmf.ms.communication.config.Constants.API_PRIVATE_CONFIG;
 import static com.icthh.xm.tmf.ms.communication.config.Constants.CONFIG_PATH_TEMPLATE;
 import static com.icthh.xm.tmf.ms.communication.config.Constants.CUSTOM_EMAIL_PATH;
 import static com.icthh.xm.tmf.ms.communication.config.Constants.CUSTOM_EMAIL_SPEC;
@@ -36,9 +35,8 @@ public class EmailTemplateService {
 
     private final freemarker.template.Configuration freeMarkerConfiguration;
     private final EmailSpecService emailSpecService;
-    private final TenantConfigRepository tenantConfigRepository;
+    private final CommonConfigRepository  commonConfigRepository;
     private final TenantContextHolder tenantContextHolder;
-    private final ObjectMapper mapper = new ObjectMapper();
     private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
 
     @SneakyThrows
@@ -77,16 +75,11 @@ public class EmailTemplateService {
 
         String emailsSpecYml = yamlMapper.writeValueAsString(emailSpec);
         Configuration configuration = Configuration.of().path(configPath + CUSTOM_EMAIL_SPEC).content(emailsSpecYml).build();
-        updateConfig(configuration, tenantKey);
+        commonConfigRepository.updateConfigFullPath(configuration, "");
 
         String templatePath = emailTemplateSpec.getTemplatePath();
         configuration = Configuration.of().path(configPath + CUSTOM_EMAIL_PATH + templatePath).content(updateTemplateRequest.getContent()).build();
-        updateConfig(configuration, tenantKey);
+        commonConfigRepository.updateConfigFullPath(configuration, "");
     }
 
-    @SneakyThrows
-    private void updateConfig(Configuration configuration, String tenantKey) {
-        String content = mapper.writeValueAsString(configuration);
-        tenantConfigRepository.updateConfigFullPath(tenantKey, API_PRIVATE_CONFIG, content);
-    }
 }

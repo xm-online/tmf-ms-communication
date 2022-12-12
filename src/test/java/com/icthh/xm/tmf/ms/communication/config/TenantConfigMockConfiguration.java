@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.icthh.xm.commons.config.client.config.XmConfigProperties;
+import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.config.client.repository.TenantListRepository;
 import com.icthh.xm.tmf.ms.communication.rules.businesstime.BusinessTimeConfigService;
@@ -42,6 +43,11 @@ public class TenantConfigMockConfiguration {
     @Bean
     public TenantConfigRepository tenantConfigRepository() {
         return mock(TenantConfigRepository.class);
+    }
+
+    @Bean
+    public CommonConfigRepository commonConfigRepository() {
+        return mock(CommonConfigRepository.class);
     }
 
     @Bean

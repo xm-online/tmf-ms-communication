@@ -2,7 +2,7 @@ package com.icthh.xm.tmf.ms.communication.service.mail;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
+import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
 import com.icthh.xm.commons.config.domain.Configuration;
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
@@ -39,10 +39,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.icthh.xm.tmf.ms.communication.config.Constants.API_PRIVATE_CONFIG;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -71,11 +69,10 @@ public class EmailTemplateServiceUnitTest {
 
     private EmailTemplateService subject;
 
-    private final ObjectMapper mapper = new ObjectMapper();
     private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
 
     @Mock
-    private TenantConfigRepository tenantConfigRepository;
+    private CommonConfigRepository commonConfigRepository;
 
     @Mock
     private ApplicationProperties applicationProperties;
@@ -100,7 +97,7 @@ public class EmailTemplateServiceUnitTest {
         CustomEmailSpecService customEmailSpecService = new CustomEmailSpecService(applicationProperties);
         emailSpecService = new EmailSpecService(applicationProperties, customEmailSpecService, tenantContextHolder);
 
-        subject = new EmailTemplateService(freeMarkerConfiguration, emailSpecService, tenantConfigRepository, tenantContextHolder);
+        subject = new EmailTemplateService(freeMarkerConfiguration, emailSpecService, commonConfigRepository, tenantContextHolder);
     }
 
     @Test
@@ -133,19 +130,14 @@ public class EmailTemplateServiceUnitTest {
 
         subject.updateTemplate("firstTemplateKey", updateTemplateRequest);
 
-       /*  InOrder inOrder = Mockito.inOrder(tenantConfigRepository);
-        inOrder.verify(tenantConfigRepository).updateConfigFullPath(eq(TENANT_KEY), eq(API_PRIVATE_CONFIG), argThatIsExpectedSpec());
-        inOrder.verify(tenantConfigRepository).updateConfigFullPath(eq(TENANT_KEY), eq(API_PRIVATE_CONFIG), argThatIsExpectedEmail());
-       */
-
-        ArgumentCaptor<String> configCaptor = ArgumentCaptor.forClass(String.class);
-        verify(tenantConfigRepository, times(2)).updateConfigFullPath(eq(TENANT_KEY), eq(API_PRIVATE_CONFIG), configCaptor.capture());
-        List<String> configs = configCaptor.getAllValues();
+        ArgumentCaptor<Configuration> configCaptor = ArgumentCaptor.forClass(Configuration.class);
+        verify(commonConfigRepository, times(2)).updateConfigFullPath(configCaptor.capture(), eq(""));
+        List<Configuration> configs = configCaptor.getAllValues();
 
         assertTrue(isExpectedSpec(configs.get(0)));
         assertTrue(isExpectedEmail(configs.get(1)));
 
-        verifyNoMoreInteractions(tenantConfigRepository);
+        verifyNoMoreInteractions(commonConfigRepository);
     }
 
     private RenderTemplateRequest createEmailTemplateDto(String content, Map model) {
@@ -177,16 +169,7 @@ public class EmailTemplateServiceUnitTest {
         return updateTemplateRequest;
     }
 
-    private String argThatIsExpectedSpec() {
-        return argThat(this::isExpectedSpec);
-    }
-
-    private String argThatIsExpectedEmail() {
-        return argThat(this::isExpectedEmail);
-    }
-
-    private boolean isExpectedSpec(String config) {
-        Configuration configuration = readConfiguration(config);
+    private boolean isExpectedSpec(Configuration configuration) {
         EmailSpec emailSpec = readEmailSpec(configuration.getContent());
         EmailTemplateSpec emailTemplateSpec = emailSpec.getEmails().stream()
             .filter((spec) -> spec.getTemplateKey().equals("firstTemplateKey")).findFirst().get();
@@ -195,15 +178,9 @@ public class EmailTemplateServiceUnitTest {
             && emailTemplateSpec.getSubjectTemplate().equals(UPDATED_SUBJECT_NAME);
     }
 
-    private boolean isExpectedEmail(String config) {
-        Configuration configuration = readConfiguration(config);
+    private boolean isExpectedEmail(Configuration configuration) {
         return configuration.getPath().equals(CUSTOM_EMAIL_TEMPLATES_PATH + "uaa/emails/en/firstTemplateKey.ftl")
             && configuration.getContent().equals(loadFile("templates/updatedTemplate.ftl"));
-    }
-
-    @SneakyThrows
-    private Configuration readConfiguration(String config) {
-        return mapper.readValue(config, Configuration.class);
     }
 
     @SneakyThrows
