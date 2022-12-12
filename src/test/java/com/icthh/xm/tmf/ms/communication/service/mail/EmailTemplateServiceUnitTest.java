@@ -15,6 +15,7 @@ import com.icthh.xm.tmf.ms.communication.domain.spec.CustomEmailSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.CustomEmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
+import com.icthh.xm.tmf.ms.communication.mapper.TemplateDetailsMapper;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
 import com.icthh.xm.tmf.ms.communication.service.CustomEmailSpecService;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
@@ -72,6 +73,9 @@ public class EmailTemplateServiceUnitTest {
     @Autowired
     private ApplicationProperties applicationProperties;
 
+    @Autowired
+    private TemplateDetailsMapper templateDetailsMapper;
+
     @MockBean
     private SmppService smppService;
 
@@ -88,7 +92,8 @@ public class EmailTemplateServiceUnitTest {
         subject = new EmailTemplateService(freeMarkerConfiguration,
             emailSpecService,
             tenantEmailTemplateService,
-            tenantContextHolder);
+            tenantContextHolder,
+            templateDetailsMapper);
     }
 
     @Test
@@ -127,11 +132,10 @@ public class EmailTemplateServiceUnitTest {
         TemplateDetails actual = subject.getTemplateDetailsByKey("firstTemplateKey");
 
         assertThat(actual.getContent()).isEqualTo(templateBody);
-        assertThat(actual.getEmailForm()).isEqualTo(expectedEmailTemplate.getContextForm());
-        assertThat(actual.getEmailSpec()).isEqualTo(expectedEmailTemplate.getContextSpec());
-        assertThat(actual.getEmailData()).isEqualTo(expectedEmailTemplate.getContextExample());
-        assertThat(actual.getSubject()).isEqualTo(expectedCustomEmailTemplate.getSubjectTemplate());
-        assertThat(actual.getName()).isEqualTo(expectedCustomEmailTemplate.getName());
+        assertThat(actual.getContextForm()).isEqualTo(expectedEmailTemplate.getContextForm());
+        assertThat(actual.getContextSpec()).isEqualTo(expectedEmailTemplate.getContextSpec());
+        assertThat(actual.getContextExample()).isEqualTo(expectedEmailTemplate.getContextExample());
+        assertThat(actual.getSubjectTemplate()).isEqualTo(expectedCustomEmailTemplate.getSubjectTemplate());
     }
 
     @Test
@@ -146,11 +150,10 @@ public class EmailTemplateServiceUnitTest {
         TemplateDetails actual = subject.getTemplateDetailsByKey("secondTemplateKey");
 
         assertThat(actual.getContent()).isEqualTo(templateBody);
-        assertThat(actual.getEmailForm()).isEqualTo(expected.getContextForm());
-        assertThat(actual.getEmailSpec()).isEqualTo(expected.getContextSpec());
-        assertThat(actual.getEmailData()).isEqualTo(expected.getContextExample());
-        assertThat(actual.getSubject()).isEqualTo(expected.getSubjectTemplate());
-        assertThat(actual.getName()).isEqualTo(expected.getName());
+        assertThat(actual.getContextForm()).isEqualTo(expected.getContextForm());
+        assertThat(actual.getContextSpec()).isEqualTo(expected.getContextSpec());
+        assertThat(actual.getContextExample()).isEqualTo(expected.getContextExample());
+        assertThat(actual.getSubjectTemplate()).isEqualTo(expected.getSubjectTemplate());
     }
 
     @Test(expected = EntityNotFoundException.class)

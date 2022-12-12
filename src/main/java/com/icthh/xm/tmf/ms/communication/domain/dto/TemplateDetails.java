@@ -4,10 +4,9 @@ import lombok.Data;
 
 @Data
 public class TemplateDetails {
-    private String subject;
-    private String name;
+    private String subjectTemplate;
     private String content;
-    private String emailSpec;
-    private String emailForm;
-    private String emailData;
+    private String contextSpec;
+    private String contextForm;
+    private String contextExample;
 }

@@ -69,7 +69,6 @@ public class EmailSpecificationServiceTest {
         customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
         expectedEmailSpecList.get(0).setSubjectTemplate("Custom subject 1");
-        expectedEmailSpecList.get(0).setName("Custom template name");
 
         List<EmailTemplateSpec> emailSpecList = emailSpecService.getEmailSpec().getEmails();
         assertEquals(expectedEmailSpecList, emailSpecList);
@@ -84,7 +83,6 @@ public class EmailSpecificationServiceTest {
         customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
         expectedEmailSpecList.get(0).setSubjectTemplate("Custom subject 1");
-        expectedEmailSpecList.get(0).setName("Custom template name");
 
         List<EmailTemplateSpec> emailSpecList = emailSpecService.getEmailSpec().getEmails();
         assertEquals(expectedEmailSpecList, emailSpecList);

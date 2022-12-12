@@ -6,6 +6,7 @@ import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
 import com.icthh.xm.tmf.ms.communication.domain.dto.TemplateDetails;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
+import com.icthh.xm.tmf.ms.communication.mapper.TemplateDetailsMapper;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
 import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException;
 import freemarker.template.Configuration;
@@ -31,6 +32,8 @@ public class EmailTemplateService {
     private final EmailSpecService emailSpecService;
     private final TenantEmailTemplateService tenantEmailTemplateService;
     private final TenantContextHolder tenantContextHolder;
+
+    private final TemplateDetailsMapper templateDetailsMapper;
 
     @SneakyThrows
     public RenderTemplateResponse renderEmailContent(RenderTemplateRequest renderTemplateRequest) {
@@ -68,13 +71,8 @@ public class EmailTemplateService {
     }
 
     private TemplateDetails createTemplateDetails(String templateContent, EmailTemplateSpec emailTemplateSpec) {
-        TemplateDetails templateDetails = new TemplateDetails();
+        TemplateDetails templateDetails = templateDetailsMapper.emailTemplateToDetails(emailTemplateSpec);
         templateDetails.setContent(templateContent);
-        templateDetails.setName(emailTemplateSpec.getName());
-        templateDetails.setSubject(emailTemplateSpec.getSubjectTemplate());
-        templateDetails.setEmailSpec(emailTemplateSpec.getContextSpec());
-        templateDetails.setEmailForm(emailTemplateSpec.getContextForm());
-        templateDetails.setEmailData(emailTemplateSpec.getContextExample());
         return templateDetails;
     }
 }

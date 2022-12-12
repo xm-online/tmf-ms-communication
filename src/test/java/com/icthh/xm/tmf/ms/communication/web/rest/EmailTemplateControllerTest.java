@@ -130,22 +130,20 @@ public class EmailTemplateControllerTest {
 
         mockMvc.perform(get(API_BASE + "/" + DEFAULT_TEMPLATE_KEY))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.name").value(templateDetails.getName()))
-            .andExpect(jsonPath("$.subject").value(templateDetails.getSubject()))
+            .andExpect(jsonPath("$.subjectTemplate").value(templateDetails.getSubjectTemplate()))
             .andExpect(jsonPath("$.content").value(templateDetails.getContent()))
-            .andExpect(jsonPath("$.emailData").value(templateDetails.getEmailData()))
-            .andExpect(jsonPath("$.emailSpec").value(templateDetails.getEmailSpec()))
-            .andExpect(jsonPath("$.emailForm").value(templateDetails.getEmailForm()));
+            .andExpect(jsonPath("$.contextExample").value(templateDetails.getContextExample()))
+            .andExpect(jsonPath("$.contextSpec").value(templateDetails.getContextSpec()))
+            .andExpect(jsonPath("$.contextForm").value(templateDetails.getContextForm()));
     }
 
     private TemplateDetails createTemplateDetails() {
         TemplateDetails templateDetails = new TemplateDetails();
         templateDetails.setContent(DEFAULT_CONTENT);
-        templateDetails.setSubject("Subject 1");
-        templateDetails.setName("Name 1");
-        templateDetails.setEmailSpec("{}");
-        templateDetails.setEmailForm("{}");
-        templateDetails.setEmailData("{}");
+        templateDetails.setSubjectTemplate("Subject 1");
+        templateDetails.setContextSpec("{}");
+        templateDetails.setContextForm("{}");
+        templateDetails.setContextExample("{}");
         return templateDetails;
     }
 
