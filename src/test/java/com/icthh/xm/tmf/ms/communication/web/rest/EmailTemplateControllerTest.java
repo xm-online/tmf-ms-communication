@@ -2,6 +2,7 @@ package com.icthh.xm.tmf.ms.communication.web.rest;
 
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
+import com.icthh.xm.tmf.ms.communication.domain.dto.TemplateDetails;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
@@ -41,6 +42,7 @@ public class EmailTemplateControllerTest {
     private static final String DEFAULT_RENDERED_RESPONSE = "xm@test.com";
     private static final String DEFAULT_CONTENT = "${subject}@${domainName}.com";
     private static final String API_BASE = "/api/templates";
+    private static final String DEFAULT_TEMPLATE_KEY = "templateKey";
 
     private MockMvc mockMvc;
 
@@ -117,6 +119,34 @@ public class EmailTemplateControllerTest {
 
         verify(emailSpecService).getEmailSpec();
         verifyNoMoreInteractions(emailSpecService);
+    }
+
+    @Test
+    @SneakyThrows
+    public void getTemplateDetailsByKey() {
+        TemplateDetails templateDetails = createTemplateDetails();
+
+        when(emailTemplateService.getTemplateDetailsByKey(eq(DEFAULT_TEMPLATE_KEY))).thenReturn(templateDetails);
+
+        mockMvc.perform(get(API_BASE + "/" + DEFAULT_TEMPLATE_KEY))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.name").value(templateDetails.getName()))
+            .andExpect(jsonPath("$.subject").value(templateDetails.getSubject()))
+            .andExpect(jsonPath("$.content").value(templateDetails.getContent()))
+            .andExpect(jsonPath("$.emailData").value(templateDetails.getEmailData()))
+            .andExpect(jsonPath("$.emailSpec").value(templateDetails.getEmailSpec()))
+            .andExpect(jsonPath("$.emailForm").value(templateDetails.getEmailForm()));
+    }
+
+    private TemplateDetails createTemplateDetails() {
+        TemplateDetails templateDetails = new TemplateDetails();
+        templateDetails.setContent(DEFAULT_CONTENT);
+        templateDetails.setSubject("Subject 1");
+        templateDetails.setName("Name 1");
+        templateDetails.setEmailSpec("{}");
+        templateDetails.setEmailForm("{}");
+        templateDetails.setEmailData("{}");
+        return templateDetails;
     }
 
     private RenderTemplateRequest createEmailTemplateDto() {
