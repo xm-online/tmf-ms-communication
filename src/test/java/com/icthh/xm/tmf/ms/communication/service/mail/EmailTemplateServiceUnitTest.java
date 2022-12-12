@@ -6,7 +6,6 @@ import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.config.domain.Configuration;
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
-import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.CommunicationApp;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
@@ -24,6 +23,7 @@ import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
@@ -40,15 +40,16 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.icthh.xm.tmf.ms.communication.config.Constants.API_PRIVATE_CONFIG;
-import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_EMAIL_SPEC_CONFIG_PATH;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @EnableAutoConfiguration(exclude = MessageCollectorAutoConfiguration.class)
@@ -71,6 +72,7 @@ public class EmailTemplateServiceUnitTest {
     private EmailTemplateService subject;
 
     private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
 
     @Mock
     private TenantConfigRepository tenantConfigRepository;
@@ -131,8 +133,18 @@ public class EmailTemplateServiceUnitTest {
 
         subject.updateTemplate("firstTemplateKey", updateTemplateRequest);
 
-        verify(tenantConfigRepository).updateConfigFullPath(eq(TENANT_KEY), eq(API_PRIVATE_CONFIG), isExpectedSpecConfigByParams());
-        verify(tenantConfigRepository).updateConfigFullPath(eq(TENANT_KEY), eq(API_PRIVATE_CONFIG), isExpectedEmailConfigByParams());
+       /*  InOrder inOrder = Mockito.inOrder(tenantConfigRepository);
+        inOrder.verify(tenantConfigRepository).updateConfigFullPath(eq(TENANT_KEY), eq(API_PRIVATE_CONFIG), argThatIsExpectedSpec());
+        inOrder.verify(tenantConfigRepository).updateConfigFullPath(eq(TENANT_KEY), eq(API_PRIVATE_CONFIG), argThatIsExpectedEmail());
+       */
+
+        ArgumentCaptor<String> configCaptor = ArgumentCaptor.forClass(String.class);
+        verify(tenantConfigRepository, times(2)).updateConfigFullPath(eq(TENANT_KEY), eq(API_PRIVATE_CONFIG), configCaptor.capture());
+        List<String> configs = configCaptor.getAllValues();
+
+        assertTrue(isExpectedSpec(configs.get(0)));
+        assertTrue(isExpectedEmail(configs.get(1)));
+
         verifyNoMoreInteractions(tenantConfigRepository);
     }
 
@@ -165,30 +177,37 @@ public class EmailTemplateServiceUnitTest {
         return updateTemplateRequest;
     }
 
-    private String isExpectedSpecConfigByParams() {
-        return argThat((String config) -> {
-                Configuration configuration = readConfiguration(config, Configuration.class);
-                EmailSpec emailSpec = readConfiguration(configuration.getContent(), EmailSpec.class);
-                EmailTemplateSpec emailTemplateSpec = emailSpec.getEmails().stream()
-                    .filter((spec) -> spec.getTemplateKey().equals("firstTemplateKey")).findFirst().get();
-                return configuration.getPath().equals(CUSTOM_EMAIL_SPECIFICATION_PATH)
-                    && emailTemplateSpec.getName().equals(UPDATED_TEMPLATE_NAME)
-                    && emailTemplateSpec.getSubjectTemplate().equals(UPDATED_SUBJECT_NAME);
-            }
-        );
+    private String argThatIsExpectedSpec() {
+        return argThat(this::isExpectedSpec);
     }
 
-    private String isExpectedEmailConfigByParams() {
-        return argThat((String config) -> {
-                Configuration configuration = readConfiguration(config, Configuration.class);
-                return configuration.getPath().equals(CUSTOM_EMAIL_TEMPLATES_PATH + "uaa/emails/en/firstTemplateKey.ftl")
-                    && configuration.getContent().equals(loadFile("templates/updatedTemplate.ftl"));
-            }
-        );
+    private String argThatIsExpectedEmail() {
+        return argThat(this::isExpectedEmail);
+    }
+
+    private boolean isExpectedSpec(String config) {
+        Configuration configuration = readConfiguration(config);
+        EmailSpec emailSpec = readEmailSpec(configuration.getContent());
+        EmailTemplateSpec emailTemplateSpec = emailSpec.getEmails().stream()
+            .filter((spec) -> spec.getTemplateKey().equals("firstTemplateKey")).findFirst().get();
+        return configuration.getPath().equals(CUSTOM_EMAIL_SPECIFICATION_PATH)
+            && emailTemplateSpec.getName().equals(UPDATED_TEMPLATE_NAME)
+            && emailTemplateSpec.getSubjectTemplate().equals(UPDATED_SUBJECT_NAME);
+    }
+
+    private boolean isExpectedEmail(String config) {
+        Configuration configuration = readConfiguration(config);
+        return configuration.getPath().equals(CUSTOM_EMAIL_TEMPLATES_PATH + "uaa/emails/en/firstTemplateKey.ftl")
+            && configuration.getContent().equals(loadFile("templates/updatedTemplate.ftl"));
     }
 
     @SneakyThrows
-    private <T> T readConfiguration(String config, Class<T> type) {
-        return mapper.readValue(config, type);
+    private Configuration readConfiguration(String config) {
+        return mapper.readValue(config, Configuration.class);
+    }
+
+    @SneakyThrows
+    private EmailSpec readEmailSpec(String spec) {
+        return yamlMapper.readValue(spec, EmailSpec.class);
     }
 }

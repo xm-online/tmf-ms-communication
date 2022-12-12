@@ -1,7 +1,11 @@
 package com.icthh.xm.tmf.ms.communication.web.rest;
 
+import com.icthh.xm.commons.i18n.error.web.ExceptionTranslator;
+import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
+import com.icthh.xm.tmf.ms.communication.domain.dto.UpdateTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
@@ -11,13 +15,18 @@ import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.validation.Validator;
 
 import java.util.List;
 import java.util.Map;
@@ -25,17 +34,20 @@ import java.util.Map;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
+@WithMockUser(authorities = {"SUPER-ADMIN"})
 public class EmailTemplateControllerTest {
 
     private static final String DEFAULT_RENDERED_RESPONSE = "xm@test.com";
@@ -43,6 +55,21 @@ public class EmailTemplateControllerTest {
     private static final String API_BASE = "/api/templates";
 
     private MockMvc mockMvc;
+
+    @Autowired
+    private TenantContextHolder tenantContextHolder;
+
+    @Autowired
+    private MappingJackson2HttpMessageConverter jacksonMessageConverter;
+
+    @Autowired
+    private PageableHandlerMethodArgumentResolver pageableArgumentResolver;
+
+    @Autowired
+    private ExceptionTranslator exceptionTranslator;
+
+    @Autowired
+    private Validator validator;
 
     @Autowired
     private EmailTemplateController subject;
@@ -58,7 +85,14 @@ public class EmailTemplateControllerTest {
 
     @Before
     public void setup() {
-        this.mockMvc = MockMvcBuilders.standaloneSetup(subject).build();
+        TenantContextUtils.setTenant(tenantContextHolder, "XM");
+        MockitoAnnotations.openMocks(this);
+
+        this.mockMvc = MockMvcBuilders.standaloneSetup(subject)
+            .setCustomArgumentResolvers(pageableArgumentResolver)
+            .setControllerAdvice(exceptionTranslator)
+            .setMessageConverters(jacksonMessageConverter)
+            .setValidator(validator).build();
     }
 
     @Test
@@ -119,6 +153,22 @@ public class EmailTemplateControllerTest {
         verifyNoMoreInteractions(emailSpecService);
     }
 
+    @Test
+    @SneakyThrows
+    public void testUpdateTemplate() {
+        UpdateTemplateRequest updateTemplateRequest = createUpdateRequestTemplate();
+
+        String templateKey = "templateKey1";
+
+        mockMvc.perform(put(API_BASE + "/" + templateKey)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(TestUtil.convertObjectToJsonBytes(updateTemplateRequest)))
+            .andExpect(status().isOk());
+
+        verify(emailTemplateService).updateTemplate(eq(templateKey), refEq(updateTemplateRequest));
+        verifyNoMoreInteractions(emailTemplateService);
+    }
+
     private RenderTemplateRequest createEmailTemplateDto() {
         RenderTemplateRequest renderTemplateRequest = new RenderTemplateRequest();
         renderTemplateRequest.setContent(DEFAULT_CONTENT);
@@ -134,5 +184,14 @@ public class EmailTemplateControllerTest {
 
     private static Object[] two(Object single) {
         return new Object[]{single, single};
+    }
+
+    private UpdateTemplateRequest createUpdateRequestTemplate() {
+        UpdateTemplateRequest updateTemplateRequest = new UpdateTemplateRequest();
+        updateTemplateRequest.setTemplateName("template 1");
+        updateTemplateRequest.setTemplateSubject("template subject");
+        updateTemplateRequest.setContent("some content");
+
+        return updateTemplateRequest;
     }
 }

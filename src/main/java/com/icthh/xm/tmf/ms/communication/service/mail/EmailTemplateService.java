@@ -5,7 +5,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.repository.TenantConfigRepository;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.config.domain.Configuration;
-import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
 import com.icthh.xm.tmf.ms.communication.domain.dto.UpdateTemplateRequest;
