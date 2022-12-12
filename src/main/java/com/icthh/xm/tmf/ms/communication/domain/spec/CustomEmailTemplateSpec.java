@@ -12,4 +12,5 @@ import lombok.experimental.Accessors;
 public class CustomEmailTemplateSpec {
     private String templateKey;
     private String subjectTemplate;
+    private String name;
 }

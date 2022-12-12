@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import javax.annotation.Nullable;
 import java.util.Optional;
+import java.util.function.Function;
 
 @Data
 @AllArgsConstructor
@@ -21,18 +22,25 @@ public class EmailTemplateSpec {
     private String contextForm;
 
     public EmailTemplateSpec override(@Nullable CustomEmailTemplateSpec customEmailTemplateSpec) {
-        String subject = Optional.ofNullable(customEmailTemplateSpec)
-                .map(CustomEmailTemplateSpec::getSubjectTemplate)
-                .orElse(subjectTemplate);
+        String subject = getCustomEmailTemplateField(customEmailTemplateSpec, CustomEmailTemplateSpec::getSubjectTemplate, subjectTemplate);
+        String templateName = getCustomEmailTemplateField(customEmailTemplateSpec, CustomEmailTemplateSpec::getName, name);
 
         return new EmailTemplateSpec(
                 templateKey,
-                name,
+                templateName,
                 subject,
                 templatePath,
                 contextExample,
                 contextSpec,
                 contextForm
         );
+    }
+
+    private String getCustomEmailTemplateField(CustomEmailTemplateSpec customEmailTemplateSpec,
+                                               Function<CustomEmailTemplateSpec, String> getter,
+                                               String defaultValue) {
+       return Optional.ofNullable(customEmailTemplateSpec)
+            .map(getter)
+            .orElse(defaultValue);
     }
 }
