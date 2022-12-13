@@ -23,6 +23,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.util.List;
 import java.util.Map;
 
+import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_LANGUAGE;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.eq;
@@ -97,9 +98,11 @@ public class EmailTemplateControllerTest {
     @Test
     @SneakyThrows
     public void getEmailSpec() {
+        Map<String, String> firstSubject = Map.of(DEFAULT_LANGUAGE,"Subject 1");
+        Map<String, String> secondSubject = Map.of(DEFAULT_LANGUAGE,"Subject 2");
         List<EmailTemplateSpec> emailTemplateSpecList = List.of(
-            new EmailTemplateSpec("firstKey", "Name 1", "Subject 1", "firstKey.ftl", "{}", "{}", "{}"),
-            new EmailTemplateSpec("secondKey", "Name 2", "Subject 2", "secondKey.ftl", "{}", "{}", "{}")
+            new EmailTemplateSpec("firstKey", "Name 1", firstSubject, "firstKey.ftl", "{}", "{}", "{}"),
+            new EmailTemplateSpec("secondKey", "Name 2", secondSubject, "secondKey.ftl", "{}", "{}", "{}")
         );
         EmailSpec emailSpec = new EmailSpec();
         emailSpec.setEmails(emailTemplateSpecList);
@@ -111,7 +114,7 @@ public class EmailTemplateControllerTest {
             .andExpect(jsonPath("$", hasSize(emailTemplateSpecList.size())))
             .andExpect(jsonPath("$.[*].templateKey").value(containsInAnyOrder("firstKey", "secondKey")))
             .andExpect(jsonPath("$.[*].name").value(containsInAnyOrder("Name 1", "Name 2")))
-            .andExpect(jsonPath("$.[*].subjectTemplate").value(containsInAnyOrder("Subject 1", "Subject 2")))
+            .andExpect(jsonPath("$.[*].subjectTemplate.en").value(containsInAnyOrder("Subject 1", "Subject 2")))
             .andExpect(jsonPath("$.[*].templatePath").value(containsInAnyOrder("firstKey.ftl", "secondKey.ftl")))
             .andExpect(jsonPath("$.[*].contextExample").value(containsInAnyOrder(two("{}"))))
             .andExpect(jsonPath("$.[*].contextSpec").value(containsInAnyOrder(two("{}"))))
