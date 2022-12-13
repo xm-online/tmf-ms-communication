@@ -1,6 +1,6 @@
 ---
 emails:
     - templateKey: firstTemplateKey
-      subjectTemplate: "Custom subject 1"
+      subjectTemplate: {en: "Custom subject 1"}
     - templateKey: thirdTemplateKey
-      subjectTemplate: "Custom subject 3"
+      subjectTemplate: {en: "Custom subject 3"}
