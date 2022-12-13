@@ -1,6 +1,5 @@
 package com.icthh.xm.tmf.ms.communication.service.mail;
 
-import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
@@ -55,19 +54,11 @@ public class EmailTemplateService {
     }
 
     public TemplateDetails getTemplateDetailsByKey(String templateKey) {
-        EmailTemplateSpec emailTemplateSpec = getEmailTemplateSpecByKey(templateKey);
+        EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpecByKey(templateKey);
         String templatePath = emailTemplateSpec.getTemplatePath();
         String tenantKey = tenantContextHolder.getTenantKey();
         String templateContent = tenantEmailTemplateService.getEmailTemplate(tenantKey, templatePath, DEFAULT_LANGUAGE);
         return createTemplateDetails(templateContent, emailTemplateSpec);
-    }
-
-    private EmailTemplateSpec getEmailTemplateSpecByKey(String templateKey) {
-        return emailSpecService.getEmailSpec().getEmails()
-            .stream()
-            .filter((spec) -> spec.getTemplateKey().equals(templateKey))
-            .findFirst()
-            .orElseThrow(() -> new EntityNotFoundException("Email template specification not found"));
     }
 
     private TemplateDetails createTemplateDetails(String templateContent, EmailTemplateSpec emailTemplateSpec) {
