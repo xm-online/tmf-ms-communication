@@ -1,4 +1,4 @@
 ---
 emails:
     - templateKey: firstTemplateKey
-      subjectTemplate: "Custom subject 1"
+      subjectTemplate: {en: "Custom subject 1"}
