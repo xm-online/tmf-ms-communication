@@ -129,9 +129,9 @@ public class EmailTemplateControllerTest {
     public void getTemplateDetailsByKey() {
         TemplateDetails templateDetails = createTemplateDetails();
 
-        when(emailTemplateService.getTemplateDetailsByKey(eq(DEFAULT_TEMPLATE_KEY))).thenReturn(templateDetails);
+        when(emailTemplateService.getTemplateDetailsByKey(eq(DEFAULT_TEMPLATE_KEY), eq(DEFAULT_LANGUAGE))).thenReturn(templateDetails);
 
-        mockMvc.perform(get(API_BASE + "/" + DEFAULT_TEMPLATE_KEY))
+        mockMvc.perform(get(API_BASE + "/" + DEFAULT_TEMPLATE_KEY + "/" + DEFAULT_LANGUAGE))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.subjectTemplate").value(templateDetails.getSubjectTemplate()))
             .andExpect(jsonPath("$.content").value(templateDetails.getContent()))
@@ -147,6 +147,7 @@ public class EmailTemplateControllerTest {
         templateDetails.setContextSpec("{}");
         templateDetails.setContextForm("{}");
         templateDetails.setContextExample("{}");
+        templateDetails.setLangs(List.of("en", "uk"));
         return templateDetails;
     }
 

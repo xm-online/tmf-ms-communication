@@ -39,6 +39,7 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_LANGUAGE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -129,13 +130,13 @@ public class EmailTemplateServiceUnitTest {
         customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         tenantEmailTemplateService.onRefresh(CUSTOM_EMAIL_TEMPLATES_PATH, templateBody);
 
-        TemplateDetails actual = subject.getTemplateDetailsByKey("firstTemplateKey");
+        TemplateDetails actual = subject.getTemplateDetailsByKey("firstTemplateKey", DEFAULT_LANGUAGE);
 
         assertThat(actual.getContent()).isEqualTo(templateBody);
         assertThat(actual.getContextForm()).isEqualTo(expectedEmailTemplate.getContextForm());
         assertThat(actual.getContextSpec()).isEqualTo(expectedEmailTemplate.getContextSpec());
         assertThat(actual.getContextExample()).isEqualTo(expectedEmailTemplate.getContextExample());
-        assertThat(actual.getSubjectTemplate()).isEqualTo(expectedCustomEmailTemplate.getSubjectTemplate());
+        assertThat(actual.getSubjectTemplate()).isEqualTo(expectedCustomEmailTemplate.getSubjectTemplate().get(DEFAULT_LANGUAGE));
     }
 
     @Test
@@ -147,13 +148,13 @@ public class EmailTemplateServiceUnitTest {
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
         tenantEmailTemplateService.onRefresh(EMAIL_TEMPLATE_PATH, templateBody);
 
-        TemplateDetails actual = subject.getTemplateDetailsByKey("secondTemplateKey");
+        TemplateDetails actual = subject.getTemplateDetailsByKey("secondTemplateKey", DEFAULT_LANGUAGE);
 
         assertThat(actual.getContent()).isEqualTo(templateBody);
         assertThat(actual.getContextForm()).isEqualTo(expected.getContextForm());
         assertThat(actual.getContextSpec()).isEqualTo(expected.getContextSpec());
         assertThat(actual.getContextExample()).isEqualTo(expected.getContextExample());
-        assertThat(actual.getSubjectTemplate()).isEqualTo(expected.getSubjectTemplate());
+        assertThat(actual.getSubjectTemplate()).isEqualTo(expected.getSubjectTemplate().get(DEFAULT_LANGUAGE));
     }
 
     @Test(expected = EntityNotFoundException.class)
@@ -161,8 +162,17 @@ public class EmailTemplateServiceUnitTest {
         String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
 
-        subject.getTemplateDetailsByKey("notValidKey");
+        subject.getTemplateDetailsByKey("notValidKey", DEFAULT_LANGUAGE);
     }
+
+    @Test(expected = EntityNotFoundException.class)
+    public void getTemplateDetailsByKeyThrowEntityNotFoundWhenLangKeyNotExists() {
+        String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
+        emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
+
+        subject.getTemplateDetailsByKey("notValidKey", "ua");
+    }
+
 
     private RenderTemplateRequest createEmailTemplateDto(String content, Map model) {
         RenderTemplateRequest renderTemplateRequest = new RenderTemplateRequest();

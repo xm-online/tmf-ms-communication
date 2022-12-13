@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.service.mail;
 
+import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
@@ -18,9 +19,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
-import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_LANGUAGE;
+import static java.lang.String.format;
+import static java.util.Optional.of;
 
 @Slf4j
 @Service
@@ -53,17 +56,30 @@ public class EmailTemplateService {
         }
     }
 
-    public TemplateDetails getTemplateDetailsByKey(String templateKey) {
+    public TemplateDetails getTemplateDetailsByKey(String templateKey, String langKey) {
+        List<String> langs = emailSpecService.getEmailSpec().getLangs();
         EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpecByKey(templateKey);
+        String subjectTemplate = getSubjectTemplateByLang(emailTemplateSpec, langKey);
         String templatePath = emailTemplateSpec.getTemplatePath();
         String tenantKey = tenantContextHolder.getTenantKey();
-        String templateContent = tenantEmailTemplateService.getEmailTemplate(tenantKey, templatePath, DEFAULT_LANGUAGE);
-        return createTemplateDetails(templateContent, emailTemplateSpec);
+        String templateContent = tenantEmailTemplateService.getEmailTemplate(tenantKey, templatePath, langKey);
+
+        return createTemplateDetails(templateContent, emailTemplateSpec, langs, subjectTemplate);
     }
 
-    private TemplateDetails createTemplateDetails(String templateContent, EmailTemplateSpec emailTemplateSpec) {
+    private TemplateDetails createTemplateDetails(String templateContent, EmailTemplateSpec emailTemplateSpec,
+                                                  List<String> langs, String subjectTemplate) {
         TemplateDetails templateDetails = templateDetailsMapper.emailTemplateToDetails(emailTemplateSpec);
         templateDetails.setContent(templateContent);
+        templateDetails.setSubjectTemplate(subjectTemplate);
+        templateDetails.setLangs(langs);
         return templateDetails;
+    }
+
+    private String getSubjectTemplateByLang(EmailTemplateSpec emailTemplateSpec, String langKey) {
+        return of(emailTemplateSpec)
+            .map(EmailTemplateSpec::getSubjectTemplate)
+            .map(it -> it.get(langKey))
+            .orElseThrow(() -> new EntityNotFoundException(format("Email template was not found with language: %s", langKey)));
     }
 }

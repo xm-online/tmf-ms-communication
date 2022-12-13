@@ -39,8 +39,8 @@ public class EmailTemplateController {
     }
 
     @Timed
-    @GetMapping("/{templateKey}")
-    public TemplateDetails getTemplateByKey(@PathVariable String templateKey) {
-        return emailTemplateService.getTemplateDetailsByKey(templateKey);
+    @GetMapping("/{templateKey}/{langKey}")
+    public TemplateDetails getTemplateByKey(@PathVariable String templateKey, @PathVariable String langKey) {
+        return emailTemplateService.getTemplateDetailsByKey(templateKey, langKey);
     }
 }

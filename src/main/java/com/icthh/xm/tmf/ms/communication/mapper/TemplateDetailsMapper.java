@@ -8,6 +8,6 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface TemplateDetailsMapper {
 
-    @Mapping(target = "content", ignore = true)
+    @Mapping(target = "subjectTemplate", ignore = true)
     TemplateDetails emailTemplateToDetails(EmailTemplateSpec emailTemplateSpec);
 }
