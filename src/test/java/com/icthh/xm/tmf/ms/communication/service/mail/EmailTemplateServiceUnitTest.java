@@ -35,12 +35,14 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -55,7 +57,6 @@ import static org.junit.Assert.assertTrue;
 public class EmailTemplateServiceUnitTest {
 
     private static final String TENANT_KEY = "TEST";
-    private static final String UPDATED_TEMPLATE_NAME = "updated template name";
     private static final String UPDATED_SUBJECT_NAME = "updated subject name";
     private static final String EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/email-spec.yml";
     private static final String CUSTOM_EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/custom-email-spec.yml";
@@ -128,10 +129,14 @@ public class EmailTemplateServiceUnitTest {
 
         UpdateTemplateRequest updateTemplateRequest = createUpdateRequestTemplate();
 
+        when(commonConfigRepository.getConfig(eq(null), any(Collection.class))).thenReturn(null);
+
         subject.updateTemplate("firstTemplateKey", "en", updateTemplateRequest);
 
+        verify(commonConfigRepository, times(2)).getConfig(eq(null), any(Collection.class));
+
         ArgumentCaptor<Configuration> configCaptor = ArgumentCaptor.forClass(Configuration.class);
-        verify(commonConfigRepository, times(2)).updateConfigFullPath(configCaptor.capture(), eq(""));
+        verify(commonConfigRepository, times(2)).updateConfigFullPath(configCaptor.capture(), eq(null));
         List<Configuration> configs = configCaptor.getAllValues();
 
         assertTrue(isExpectedSpec(configs.get(0)));

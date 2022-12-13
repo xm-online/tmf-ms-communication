@@ -10,7 +10,6 @@ import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
 import com.icthh.xm.tmf.ms.communication.domain.dto.UpdateTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.spec.CustomEmailSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.CustomEmailTemplateSpec;
-import com.icthh.xm.tmf.ms.communication.domain.spec.EmailSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.service.CustomEmailSpecService;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
@@ -24,13 +23,18 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
-import javax.persistence.EntityNotFoundException;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import static com.icthh.xm.tmf.ms.communication.config.Constants.CONFIG_PATH_TEMPLATE;
 import static com.icthh.xm.tmf.ms.communication.config.Constants.CUSTOM_EMAIL_PATH;
 import static com.icthh.xm.tmf.ms.communication.config.Constants.CUSTOM_EMAIL_SPEC;
+import static java.util.Optional.ofNullable;
 
 @Slf4j
 @Service
@@ -72,14 +76,36 @@ public class EmailTemplateService {
         String tenantKey = tenantContextHolder.getTenantKey();
         String configPath = String.format(CONFIG_PATH_TEMPLATE, tenantKey);
 
-        String emailsSpecYml = yamlMapper.writeValueAsString(updatedCustomEmailSpec);
+        String emailsSpecYml = yamlMapper.writerWithDefaultPrettyPrinter().writeValueAsString(updatedCustomEmailSpec);
         Configuration configuration = Configuration.of().path(configPath + CUSTOM_EMAIL_SPEC).content(emailsSpecYml).build();
-        commonConfigRepository.updateConfigFullPath(configuration, DigestUtils.sha1Hex(emailsSpecYml));
+        updateConfig(configuration);
 
         String templatePath = emailTemplateSpec.getTemplatePath();
         String templateFileName = String.format("/%s.ftl", langKey);
         configuration = Configuration.of().path(configPath + CUSTOM_EMAIL_PATH + templatePath + templateFileName).content(updateTemplateRequest.getContent()).build();
-        commonConfigRepository.updateConfigFullPath(configuration, DigestUtils.sha1Hex(updateTemplateRequest.getContent()));
+        updateConfig(configuration);
+    }
+
+    private void updateConfig(Configuration configuration) {
+        String oldConfigHash = configToSha1Hex(getOldConfig(configuration.getPath()));
+
+        if (DigestUtils.sha1Hex(configuration.getContent()).equals(oldConfigHash)) {
+            log.info("Email template configuration not changed");
+            return;
+        }
+        commonConfigRepository.updateConfigFullPath(configuration, oldConfigHash);
+    }
+
+    private String configToSha1Hex(Optional<Configuration> configuration) {
+        return configuration.map(Configuration::getContent).map(DigestUtils::sha1Hex).orElse(null);
+    }
+
+    private Optional<Configuration> getOldConfig(String configPath) {
+        List<String> paths = Collections.singletonList(configPath);
+        Map<String, Configuration> configs = commonConfigRepository.getConfig(null, paths);
+        configs = configs == null ? new HashMap<>() : configs;
+
+        return ofNullable(configs.get(configPath));
     }
 
 }
