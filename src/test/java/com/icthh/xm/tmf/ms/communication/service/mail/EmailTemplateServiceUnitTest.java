@@ -94,10 +94,10 @@ public class EmailTemplateServiceUnitTest {
         when(applicationProperties.getEmailSpecificationPathPattern()).thenReturn(EMAIL_SPECIFICATION_PATH_PATTERN);
         when(applicationProperties.getCustomEmailSpecificationPathPattern()).thenReturn(CUSTOM_EMAIL_SPECIFICATION_PATH_PATTERN);
 
-        CustomEmailSpecService customEmailSpecService = new CustomEmailSpecService(applicationProperties);
+        CustomEmailSpecService customEmailSpecService = new CustomEmailSpecService(applicationProperties, tenantContextHolder);
         emailSpecService = new EmailSpecService(applicationProperties, customEmailSpecService, tenantContextHolder);
 
-        subject = new EmailTemplateService(freeMarkerConfiguration, emailSpecService, commonConfigRepository, tenantContextHolder);
+        subject = new EmailTemplateService(freeMarkerConfiguration, emailSpecService, customEmailSpecService, commonConfigRepository, tenantContextHolder);
     }
 
     @Test
@@ -123,12 +123,12 @@ public class EmailTemplateServiceUnitTest {
 
     @Test
     public void testUpdateTemplate() {
-        String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
+        String emailSpecificationConfig = loadFile("config/specs/email-spec-updated.yml");
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
 
         UpdateTemplateRequest updateTemplateRequest = createUpdateRequestTemplate();
 
-        subject.updateTemplate("firstTemplateKey", updateTemplateRequest);
+        subject.updateTemplate("firstTemplateKey", "en", updateTemplateRequest);
 
         ArgumentCaptor<Configuration> configCaptor = ArgumentCaptor.forClass(Configuration.class);
         verify(commonConfigRepository, times(2)).updateConfigFullPath(configCaptor.capture(), eq(""));
@@ -162,7 +162,6 @@ public class EmailTemplateServiceUnitTest {
 
     private UpdateTemplateRequest createUpdateRequestTemplate() {
         UpdateTemplateRequest updateTemplateRequest = new UpdateTemplateRequest();
-        updateTemplateRequest.setTemplateName(UPDATED_TEMPLATE_NAME);
         updateTemplateRequest.setTemplateSubject(UPDATED_SUBJECT_NAME);
         updateTemplateRequest.setContent(loadFile("templates/updatedTemplate.ftl"));
 
@@ -174,12 +173,11 @@ public class EmailTemplateServiceUnitTest {
         EmailTemplateSpec emailTemplateSpec = emailSpec.getEmails().stream()
             .filter((spec) -> spec.getTemplateKey().equals("firstTemplateKey")).findFirst().get();
         return configuration.getPath().equals(CUSTOM_EMAIL_SPECIFICATION_PATH)
-            && emailTemplateSpec.getName().equals(UPDATED_TEMPLATE_NAME)
             && emailTemplateSpec.getSubjectTemplate().equals(UPDATED_SUBJECT_NAME);
     }
 
     private boolean isExpectedEmail(Configuration configuration) {
-        return configuration.getPath().equals(CUSTOM_EMAIL_TEMPLATES_PATH + "uaa/emails/en/firstTemplateKey.ftl")
+        return configuration.getPath().equals(CUSTOM_EMAIL_TEMPLATES_PATH + "uaa/activate/en.ftl")
             && configuration.getContent().equals(loadFile("templates/updatedTemplate.ftl"));
     }
 

@@ -53,6 +53,8 @@ public class EmailTemplateControllerTest {
     private static final String DEFAULT_RENDERED_RESPONSE = "xm@test.com";
     private static final String DEFAULT_CONTENT = "${subject}@${domainName}.com";
     private static final String API_BASE = "/api/templates";
+    private static final String TEMPLATE_KEY = "templateKey1";
+    private static final String LANG_KEY = "en";
 
     private MockMvc mockMvc;
 
@@ -158,14 +160,12 @@ public class EmailTemplateControllerTest {
     public void testUpdateTemplate() {
         UpdateTemplateRequest updateTemplateRequest = createUpdateRequestTemplate();
 
-        String templateKey = "templateKey1";
-
-        mockMvc.perform(put(API_BASE + "/" + templateKey)
+        mockMvc.perform(put(API_BASE + "/" + TEMPLATE_KEY + "/" + LANG_KEY)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(TestUtil.convertObjectToJsonBytes(updateTemplateRequest)))
             .andExpect(status().isOk());
 
-        verify(emailTemplateService).updateTemplate(eq(templateKey), refEq(updateTemplateRequest));
+        verify(emailTemplateService).updateTemplate(eq(TEMPLATE_KEY), eq(LANG_KEY), refEq(updateTemplateRequest));
         verifyNoMoreInteractions(emailTemplateService);
     }
 
@@ -188,7 +188,6 @@ public class EmailTemplateControllerTest {
 
     private UpdateTemplateRequest createUpdateRequestTemplate() {
         UpdateTemplateRequest updateTemplateRequest = new UpdateTemplateRequest();
-        updateTemplateRequest.setTemplateName("template 1");
         updateTemplateRequest.setTemplateSubject("template subject");
         updateTemplateRequest.setContent("some content");
 

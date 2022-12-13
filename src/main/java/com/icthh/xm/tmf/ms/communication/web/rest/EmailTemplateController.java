@@ -43,11 +43,11 @@ public class EmailTemplateController {
     }
 
     @Timed
-    @PutMapping("/{templateKey}")
+    @PutMapping("/{templateKey}/{langKey}")
     @PreAuthorize("hasPermission({'updateTemplateRequest': #updateTemplateRequest}, 'EMAIL.TEMPLATE.UPDATE')")
     @PrivilegeDescription("Privilege to update email template")
-    public void updateTemplate(@Valid @RequestBody UpdateTemplateRequest updateTemplateRequest, @PathVariable String templateKey) {
-        emailTemplateService.updateTemplate(templateKey, updateTemplateRequest);
+    public void updateTemplate(@Valid @RequestBody UpdateTemplateRequest updateTemplateRequest, @PathVariable String templateKey, @PathVariable String langKey) {
+        emailTemplateService.updateTemplate(templateKey, langKey, updateTemplateRequest);
     }
 
 }

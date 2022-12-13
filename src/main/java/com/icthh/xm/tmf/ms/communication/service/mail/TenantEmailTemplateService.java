@@ -26,8 +26,8 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
     private static final String FILE_PATTERN = "/%s.ftl";
     private static final String DEFAULT_LANG_KEY = "en";
     private final AntPathMatcher matcher = new AntPathMatcher();
-    private final ConcurrentHashMap<String, String> emailTemplates = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<String, String> customEmailTemplates = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, String> emailTemplates = new ConcurrentHashMap<>();//TODO: type -> Map
+    private final ConcurrentHashMap<String, String> customEmailTemplates = new ConcurrentHashMap<>();//TODO: type -> Map
     private final String pathPattern;
     private final String customEmailPathPattern;
     private final StringTemplateLoader templateLoader;

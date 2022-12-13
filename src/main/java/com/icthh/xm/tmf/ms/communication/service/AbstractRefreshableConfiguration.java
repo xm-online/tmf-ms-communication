@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.AntPathMatcher;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,8 +39,12 @@ public abstract class AbstractRefreshableConfiguration<T> implements Refreshable
         }
     }
 
-    public Map<String, T> getConfigurations() {
+    protected Map<String, T> getConfigurations() {
         return Collections.unmodifiableMap(configurations);
+    }
+
+    public T getConfiguration(String tenantKey) {
+        return configurations.get(tenantKey);
     }
 
     @Override

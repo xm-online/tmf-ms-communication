@@ -57,7 +57,7 @@ public class EmailSpecificationServiceTest {
         applicationProperties.setEmailSpecificationPathPattern(EMAIL_SPECIFICATION_PATH_PATTERN);
         applicationProperties.setCustomEmailSpecificationPathPattern(CUSTOM_EMAIL_SPECIFICATION_PATH_PATTERN);
 
-        customEmailSpecService = new CustomEmailSpecService(applicationProperties);
+        customEmailSpecService = new CustomEmailSpecService(applicationProperties, tenantContextHolder);
         emailSpecService = new EmailSpecService(applicationProperties, customEmailSpecService, tenantContextHolder);
     }
 
