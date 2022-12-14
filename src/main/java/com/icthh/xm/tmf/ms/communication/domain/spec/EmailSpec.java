@@ -16,15 +16,16 @@ import static java.util.stream.Collectors.toMap;
 @NoArgsConstructor
 public class EmailSpec {
     private List<EmailTemplateSpec> emails;
+    private List<String> langs;
 
     public EmailSpec override(@Nullable CustomEmailSpec emailSpec) {
         if (emailSpec == null) {
-            return new EmailSpec(emails);
+            return new EmailSpec(emails, langs);
         }
 
         Map<String, CustomEmailTemplateSpec> customEmails = emailSpec.getEmails().stream()
                 .collect(toMap(CustomEmailTemplateSpec::getTemplateKey, identity()));
         var emails = this.emails.stream().map(it -> it.override(customEmails.get(it.getTemplateKey()))).collect(toList());
-        return new EmailSpec(emails);
+        return new EmailSpec(emails, langs);
     }
 }

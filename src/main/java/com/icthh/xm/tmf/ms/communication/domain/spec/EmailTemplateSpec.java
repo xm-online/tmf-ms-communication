@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import javax.annotation.Nullable;
+import java.util.Map;
 import java.util.Optional;
 
 @Data
@@ -14,14 +15,14 @@ import java.util.Optional;
 public class EmailTemplateSpec {
     private String templateKey;
     private String name;
-    private String subjectTemplate;
+    private Map<String,String> subjectTemplate;
     private String templatePath;
     private String contextExample;
     private String contextSpec;
     private String contextForm;
 
     public EmailTemplateSpec override(@Nullable CustomEmailTemplateSpec customEmailTemplateSpec) {
-        String subject = Optional.ofNullable(customEmailTemplateSpec)
+        Map<String, String> subject = Optional.ofNullable(customEmailTemplateSpec)
                 .map(CustomEmailTemplateSpec::getSubjectTemplate)
                 .orElse(subjectTemplate);
 

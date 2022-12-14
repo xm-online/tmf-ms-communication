@@ -1,8 +1,11 @@
 ---
+langs:
+    - en
+    - uk
 emails:
     - templateKey: firstTemplateKey
       name: "First template"
-      subjectTemplate: "Default subject 1"
+      subjectTemplate: {en: "Default subject 1", uk: "Тема за замовчуванням 1"}
       templatePath: uaa/emails/en/firstTemplateKey.ftl
       contextExample: |
           {
@@ -23,7 +26,7 @@ emails:
           }
     - templateKey: secondTemplateKey
       name: "Second template"
-      subjectTemplate: "Default subject 2"
+      subjectTemplate: {en: "Default subject 2", uk: "Тема за замовчуванням 2"}
       templatePath: uaa/emails/en/secondTemplateKey.ftl
       contextExample: |
           {
