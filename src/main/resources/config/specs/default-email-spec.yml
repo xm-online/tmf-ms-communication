@@ -1,9 +1,11 @@
 ---
+langs:
+    - en
 emails:
     - templateKey: activationEmail
       name: "Activation email"
-      defaultSubjectTemplate: "Account activation"
-      templatePath: uaa/activation/en.ftl
+      subjectTemplate: {en: "Account activation"}
+      templatePath: uaa/activation
       contextExample: |
           {
               "user": {
@@ -39,8 +41,8 @@ emails:
           }
     - templateKey: accountCreationEmail
       name: "Account creation email"
-      defaultSubjectTemplate: "Account creation"
-      templatePath: uaa/creation/en.ftl
+      subjectTemplate: {en: "Account creation"}
+      templatePath: uaa/creation
       contextExample: |
           {
               "user": {
@@ -76,8 +78,8 @@ emails:
           }
     - templateKey: passwordResetEmail
       name: "Password reset email"
-      defaultSubjectTemplate: "uaa password reset"
-      templatePath: uaa/passwordReset/en.ftl
+      subjectTemplate: {en: "uaa password reset"}
+      templatePath: uaa/passwordReset
       contextExample: |
           {
               "user": {
