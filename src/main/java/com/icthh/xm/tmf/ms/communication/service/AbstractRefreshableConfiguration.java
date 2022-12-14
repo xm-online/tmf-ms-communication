@@ -10,6 +10,7 @@ import org.springframework.util.AntPathMatcher;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -43,8 +44,8 @@ public abstract class AbstractRefreshableConfiguration<T> implements Refreshable
         return Collections.unmodifiableMap(configurations);
     }
 
-    public T getConfiguration(String tenantKey) {
-        return configurations.get(tenantKey);
+    public Optional<T> getConfiguration(String tenantKey) {
+        return Optional.ofNullable(configurations.get(tenantKey));
     }
 
     @Override

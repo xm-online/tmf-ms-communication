@@ -28,17 +28,14 @@ public class CustomEmailSpecService extends AbstractRefreshableConfiguration<Cus
     }
 
     public CustomEmailSpec updateCustomEmailSpec(CustomEmailTemplateSpec customEmailTemplateSpec) {
-        CustomEmailSpec customEmailSpec = getConfiguration(tenantContextHolder.getTenantKey());
-        if (customEmailSpec == null) {
-            customEmailSpec = new CustomEmailSpec(List.of(customEmailTemplateSpec));
-        } else {
-            CustomEmailSpec finalCustomEmailSpec = customEmailSpec;
-            findCustomEmailTemplateSpec(finalCustomEmailSpec, customEmailTemplateSpec.getTemplateKey())
-                .ifPresentOrElse((spec) -> spec.setSubjectTemplate(customEmailTemplateSpec.getSubjectTemplate()),
-                                 () -> finalCustomEmailSpec.getEmails().add(customEmailTemplateSpec));
-        }
-
-        return customEmailSpec;
+        return getConfiguration(tenantContextHolder.getTenantKey())
+            .map((customSpec) -> {
+                findCustomEmailTemplateSpec(customSpec, customEmailTemplateSpec.getTemplateKey())
+                    .ifPresentOrElse((foundSpec) -> foundSpec.setSubjectTemplate(customEmailTemplateSpec.getSubjectTemplate()),
+                                     () -> customSpec.getEmails().add(customEmailTemplateSpec));
+                return customSpec;
+            })
+            .orElseGet(() -> new CustomEmailSpec(List.of(customEmailTemplateSpec)));
     }
 
     private Optional<CustomEmailTemplateSpec> findCustomEmailTemplateSpec(CustomEmailSpec customEmailSpec, String templateKey) {

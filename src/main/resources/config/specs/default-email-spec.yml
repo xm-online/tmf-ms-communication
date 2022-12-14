@@ -1,8 +1,10 @@
 ---
+langs:
+    - en
 emails:
     - templateKey: activationEmail
       name: "Activation email"
-      subjectTemplate: "Account activation"
+      subjectTemplate: {en: "Account activation"}
       templatePath: uaa/activation
       contextExample: |
           {
@@ -39,7 +41,7 @@ emails:
           }
     - templateKey: accountCreationEmail
       name: "Account creation email"
-      subjectTemplate: "Account creation"
+      subjectTemplate: {en: "Account creation"}
       templatePath: uaa/creation
       contextExample: |
           {
@@ -76,7 +78,7 @@ emails:
           }
     - templateKey: passwordResetEmail
       name: "Password reset email"
-      subjectTemplate: "uaa password reset"
+      subjectTemplate: {en: "uaa password reset"}
       templatePath: uaa/passwordReset
       contextExample: |
           {

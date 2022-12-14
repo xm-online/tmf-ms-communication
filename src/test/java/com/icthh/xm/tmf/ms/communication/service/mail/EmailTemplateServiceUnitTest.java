@@ -60,8 +60,6 @@ public class EmailTemplateServiceUnitTest {
     private static final String UPDATED_SUBJECT_NAME = "updated subject name";
     private static final String EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/email-spec.yml";
     private static final String CUSTOM_EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/custom-email-spec.yml";
-    private static final String EMAIL_SPECIFICATION_PATH_PATTERN = "/config/tenants/{tenantName}/communication/email-spec.yml";
-    private static final String CUSTOM_EMAIL_SPECIFICATION_PATH_PATTERN = "/config/tenants/{tenantName}/communication/custom-email-spec.yml";
     private static final String CUSTOM_EMAIL_TEMPLATES_PATH = "/config/tenants/TEST/communication/custom-emails/";
 
     private TenantContextHolder tenantContextHolder;
@@ -75,9 +73,6 @@ public class EmailTemplateServiceUnitTest {
     @Mock
     private CommonConfigRepository commonConfigRepository;
 
-    @Mock
-    private ApplicationProperties applicationProperties;
-
     @MockBean
     private SmppService smppService;
 
@@ -86,14 +81,14 @@ public class EmailTemplateServiceUnitTest {
     @Autowired
     private freemarker.template.Configuration freeMarkerConfiguration;
 
+    @Autowired
+    private ApplicationProperties applicationProperties;
+
 
     @Before
     public void init() {
         tenantContextHolder = mock(TenantContextHolder.class);
         mockTenant(TENANT_KEY);
-
-        when(applicationProperties.getEmailSpecificationPathPattern()).thenReturn(EMAIL_SPECIFICATION_PATH_PATTERN);
-        when(applicationProperties.getCustomEmailSpecificationPathPattern()).thenReturn(CUSTOM_EMAIL_SPECIFICATION_PATH_PATTERN);
 
         CustomEmailSpecService customEmailSpecService = new CustomEmailSpecService(applicationProperties, tenantContextHolder);
         emailSpecService = new EmailSpecService(applicationProperties, customEmailSpecService, tenantContextHolder);
@@ -178,7 +173,7 @@ public class EmailTemplateServiceUnitTest {
         EmailTemplateSpec emailTemplateSpec = emailSpec.getEmails().stream()
             .filter((spec) -> spec.getTemplateKey().equals("firstTemplateKey")).findFirst().get();
         return configuration.getPath().equals(CUSTOM_EMAIL_SPECIFICATION_PATH)
-            && emailTemplateSpec.getSubjectTemplate().equals(UPDATED_SUBJECT_NAME);
+            && emailTemplateSpec.getSubjectTemplate().get("en").equals(UPDATED_SUBJECT_NAME);
     }
 
     private boolean isExpectedEmail(Configuration configuration) {
