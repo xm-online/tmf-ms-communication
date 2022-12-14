@@ -5,11 +5,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
 import com.icthh.xm.commons.config.domain.Configuration;
 import com.icthh.xm.commons.tenant.TenantContext;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
-import com.icthh.xm.commons.tenant.TenantContext;
-import com.icthh.xm.commons.config.domain.Configuration;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.CommunicationApp;
@@ -24,17 +20,9 @@ import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
 import com.icthh.xm.tmf.ms.communication.domain.dto.TemplateDetails;
 import com.icthh.xm.tmf.ms.communication.domain.spec.CustomEmailSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.CustomEmailTemplateSpec;
-import com.icthh.xm.tmf.ms.communication.domain.spec.EmailSpec;
-import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.mapper.TemplateDetailsMapper;
-import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
-import com.icthh.xm.tmf.ms.communication.service.CustomEmailSpecService;
-import com.icthh.xm.tmf.ms.communication.domain.dto.UpdateTemplateRequest;
-import com.icthh.xm.tmf.ms.communication.domain.spec.EmailSpec;
-import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException;
-import freemarker.template.Configuration;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
@@ -42,7 +30,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -53,8 +40,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.InputStream;
-import java.util.Collection;
-import java.util.List;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -70,16 +55,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @RunWith(SpringRunner.class)
 @EnableAutoConfiguration(exclude = MessageCollectorAutoConfiguration.class)
@@ -118,6 +94,12 @@ public class EmailTemplateServiceUnitTest {
 
     @Autowired
     private TenantEmailTemplateService tenantEmailTemplateService;
+
+    @MockBean
+    private SmppService smppService;
+
+    @MockBean
+    private RestTemplate restTemplate;
 
 
     @Before
@@ -269,8 +251,7 @@ public class EmailTemplateServiceUnitTest {
 
     @SneakyThrows
     private <T> T readConfiguration(String config, Class<T> type) {
-        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        return mapper.readValue(config, type);
+        return yamlMapper.readValue(config, type);
     }
 
     private UpdateTemplateRequest createUpdateRequestTemplate() {
@@ -282,7 +263,7 @@ public class EmailTemplateServiceUnitTest {
     }
 
     private boolean isExpectedSpec(Configuration configuration) {
-        EmailSpec emailSpec = readEmailSpec(configuration.getContent());
+        EmailSpec emailSpec = readConfiguration(configuration.getContent(), EmailSpec.class);
         EmailTemplateSpec emailTemplateSpec = emailSpec.getEmails().stream()
             .filter((spec) -> spec.getTemplateKey().equals("firstTemplateKey")).findFirst().get();
         return configuration.getPath().equals(CUSTOM_EMAIL_SPECIFICATION_PATH)
@@ -290,12 +271,8 @@ public class EmailTemplateServiceUnitTest {
     }
 
     private boolean isExpectedEmail(Configuration configuration) {
-        return configuration.getPath().equals(CUSTOM_EMAIL_TEMPLATES_PATH + "uaa/activate/en.ftl")
+        return configuration.getPath().equals(CUSTOM_EMAILS_TEMPLATES_PATH + "uaa/activate/en.ftl")
             && configuration.getContent().equals(loadFile("templates/updatedTemplate.ftl"));
     }
 
-    @SneakyThrows
-    private EmailSpec readEmailSpec(String spec) {
-        return yamlMapper.readValue(spec, EmailSpec.class);
-    }
 }

@@ -175,17 +175,6 @@ public class EmailTemplateControllerTest {
             .andExpect(jsonPath("$.contextForm").value(templateDetails.getContextForm()));
     }
 
-    private TemplateDetails createTemplateDetails() {
-        TemplateDetails templateDetails = new TemplateDetails();
-        templateDetails.setContent(DEFAULT_CONTENT);
-        templateDetails.setSubjectTemplate("Subject 1");
-        templateDetails.setContextSpec("{}");
-        templateDetails.setContextForm("{}");
-        templateDetails.setContextExample("{}");
-        templateDetails.setLangs(List.of("en", "uk"));
-        return templateDetails;
-    }
-
     @Test
     @SneakyThrows
     public void testUpdateTemplate() {
@@ -198,6 +187,17 @@ public class EmailTemplateControllerTest {
 
         verify(emailTemplateService).updateTemplate(eq(TEMPLATE_KEY), eq(DEFAULT_LANGUAGE), refEq(updateTemplateRequest));
         verifyNoMoreInteractions(emailTemplateService);
+    }
+
+    private TemplateDetails createTemplateDetails() {
+        TemplateDetails templateDetails = new TemplateDetails();
+        templateDetails.setContent(DEFAULT_CONTENT);
+        templateDetails.setSubjectTemplate("Subject 1");
+        templateDetails.setContextSpec("{}");
+        templateDetails.setContextForm("{}");
+        templateDetails.setContextExample("{}");
+        templateDetails.setLangs(List.of("en", "uk"));
+        return templateDetails;
     }
 
     private RenderTemplateRequest createEmailTemplateDto() {

@@ -88,7 +88,7 @@ public class EmailTemplateService {
 
     @SneakyThrows
     public void updateTemplate(String templateKey, String langKey, UpdateTemplateRequest updateTemplateRequest) {
-        EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpecByTemplateKey(templateKey);
+        EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpecByKey(templateKey);
 
         String tenantKey = tenantContextHolder.getTenantKey();
         String configPath = String.format(CONFIG_PATH_TEMPLATE, tenantKey);
