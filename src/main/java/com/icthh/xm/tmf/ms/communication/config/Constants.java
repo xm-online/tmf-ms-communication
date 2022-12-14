@@ -21,7 +21,6 @@ public final class Constants {
     public static final String CONFIG_PATH_TEMPLATE = "/config/tenants/%s/communication/";
     public static final String CUSTOM_EMAIL_SPEC = "custom-email-spec.yml";
     public static final String CUSTOM_EMAIL_PATH = "custom-emails/";
-    public static final String EMAIL_ = "custom-emails/";
 
     private Constants() {
     }
