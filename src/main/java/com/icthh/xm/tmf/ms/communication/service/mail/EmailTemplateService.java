@@ -70,7 +70,9 @@ public class EmailTemplateService {
     public void updateTemplate(String templateKey, String langKey, UpdateTemplateRequest updateTemplateRequest) {
         EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpecByTemplateKey(templateKey);
 
-        CustomEmailTemplateSpec customEmailTemplateSpec = new CustomEmailTemplateSpec(templateKey, updateTemplateRequest.getTemplateSubject());
+        CustomEmailTemplateSpec customEmailTemplateSpec = new CustomEmailTemplateSpec();
+        customEmailTemplateSpec.setTemplateKey(templateKey);
+        customEmailTemplateSpec.setSubjectTemplate(updateTemplateRequest.getTemplateSubject());
         CustomEmailSpec updatedCustomEmailSpec = customEmailSpecService.updateCustomEmailSpec(customEmailTemplateSpec);
 
         String tenantKey = tenantContextHolder.getTenantKey();
