@@ -2,6 +2,7 @@ package com.icthh.xm.tmf.ms.communication.web.rest;
 
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
+import com.icthh.xm.tmf.ms.communication.domain.dto.TemplateDetails;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
@@ -42,6 +43,7 @@ public class EmailTemplateControllerTest {
     private static final String DEFAULT_RENDERED_RESPONSE = "xm@test.com";
     private static final String DEFAULT_CONTENT = "${subject}@${domainName}.com";
     private static final String API_BASE = "/api/templates";
+    private static final String DEFAULT_TEMPLATE_KEY = "templateKey";
 
     private MockMvc mockMvc;
 
@@ -120,6 +122,33 @@ public class EmailTemplateControllerTest {
 
         verify(emailSpecService).getEmailSpec();
         verifyNoMoreInteractions(emailSpecService);
+    }
+
+    @Test
+    @SneakyThrows
+    public void getTemplateDetailsByKey() {
+        TemplateDetails templateDetails = createTemplateDetails();
+
+        when(emailTemplateService.getTemplateDetailsByKey(eq(DEFAULT_TEMPLATE_KEY), eq(DEFAULT_LANGUAGE))).thenReturn(templateDetails);
+
+        mockMvc.perform(get(API_BASE + "/" + DEFAULT_TEMPLATE_KEY + "/" + DEFAULT_LANGUAGE))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.subjectTemplate").value(templateDetails.getSubjectTemplate()))
+            .andExpect(jsonPath("$.content").value(templateDetails.getContent()))
+            .andExpect(jsonPath("$.contextExample").value(templateDetails.getContextExample()))
+            .andExpect(jsonPath("$.contextSpec").value(templateDetails.getContextSpec()))
+            .andExpect(jsonPath("$.contextForm").value(templateDetails.getContextForm()));
+    }
+
+    private TemplateDetails createTemplateDetails() {
+        TemplateDetails templateDetails = new TemplateDetails();
+        templateDetails.setContent(DEFAULT_CONTENT);
+        templateDetails.setSubjectTemplate("Subject 1");
+        templateDetails.setContextSpec("{}");
+        templateDetails.setContextForm("{}");
+        templateDetails.setContextExample("{}");
+        templateDetails.setLangs(List.of("en", "uk"));
+        return templateDetails;
     }
 
     private RenderTemplateRequest createEmailTemplateDto() {

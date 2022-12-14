@@ -1,10 +1,14 @@
 package com.icthh.xm.tmf.ms.communication.service.mail;
 
+import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
+import com.icthh.xm.tmf.ms.communication.domain.dto.TemplateDetails;
+import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
+import com.icthh.xm.tmf.ms.communication.mapper.TemplateDetailsMapper;
+import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
 import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException;
-import freemarker.core.Environment;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -15,9 +19,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
-import static java.lang.String.format;
+import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_LANGUAGE;
+import static java.util.Optional.of;
 
 @Slf4j
 @Service
@@ -25,6 +31,11 @@ import static java.lang.String.format;
 public class EmailTemplateService {
 
     private final Configuration freeMarkerConfiguration;
+    private final EmailSpecService emailSpecService;
+    private final TenantEmailTemplateService tenantEmailTemplateService;
+    private final TenantContextHolder tenantContextHolder;
+
+    private final TemplateDetailsMapper templateDetailsMapper;
 
     @SneakyThrows
     public RenderTemplateResponse renderEmailContent(RenderTemplateRequest renderTemplateRequest) {
@@ -43,5 +54,32 @@ public class EmailTemplateService {
                 renderTemplateRequest.getModel(), e);
             throw new RenderTemplateException(e.getMessage(), renderTemplateRequest.getContent(), renderTemplateRequest.getModel());
         }
+    }
+
+    public TemplateDetails getTemplateDetailsByKey(String templateKey, String langKey) {
+        List<String> langs = emailSpecService.getEmailSpec().getLangs();
+        EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpecByKey(templateKey);
+        String subjectTemplate = getSubjectTemplateByLang(emailTemplateSpec, langKey);
+        String templatePath = emailTemplateSpec.getTemplatePath();
+        String tenantKey = tenantContextHolder.getTenantKey();
+        String templateContent = tenantEmailTemplateService.getEmailTemplate(tenantKey, templatePath, langKey);
+
+        return createTemplateDetails(templateContent, emailTemplateSpec, langs, subjectTemplate);
+    }
+
+    private TemplateDetails createTemplateDetails(String templateContent, EmailTemplateSpec emailTemplateSpec,
+                                                  List<String> langs, String subjectTemplate) {
+        TemplateDetails templateDetails = templateDetailsMapper.emailTemplateToDetails(emailTemplateSpec);
+        templateDetails.setContent(templateContent);
+        templateDetails.setSubjectTemplate(subjectTemplate);
+        templateDetails.setLangs(langs);
+        return templateDetails;
+    }
+
+    private String getSubjectTemplateByLang(EmailTemplateSpec emailTemplateSpec, String langKey) {
+        return of(emailTemplateSpec)
+            .map(EmailTemplateSpec::getSubjectTemplate)
+            .map(it -> it.getOrDefault(langKey, it.get(DEFAULT_LANGUAGE)))
+            .orElseThrow(() -> new EntityNotFoundException("Email subject was not found"));
     }
 }

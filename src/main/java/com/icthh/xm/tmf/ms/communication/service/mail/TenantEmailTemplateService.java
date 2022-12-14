@@ -14,6 +14,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 
+import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_LANGUAGE;
+
 /**
  * Service for managing email template.
  */
@@ -24,7 +26,6 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
     private static final String LANG_KEY = "langKey";
     private static final String TENANT_KEY = "tenantKey";
     private static final String FILE_PATTERN = "/%s.ftl";
-    private static final String DEFAULT_LANG_KEY = "en";
     private final AntPathMatcher matcher = new AntPathMatcher();
     private final ConcurrentHashMap<String, String> emailTemplates = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, String> customEmailTemplates = new ConcurrentHashMap<>();
@@ -47,7 +48,7 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
     @LoggingAspectConfig(resultDetails = false)
     public Optional<String> getTemplateOverrideable(String tenantKey, String templatePath, String langKey) {
         if (StringUtils.isBlank(langKey)) {
-            langKey = DEFAULT_LANG_KEY;
+            langKey = DEFAULT_LANGUAGE;
         }
         String templateKey = EmailTemplateUtil.emailTemplateKey(TenantKey.valueOf(tenantKey), templatePath, langKey);
 

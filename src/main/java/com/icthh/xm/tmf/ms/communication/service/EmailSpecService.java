@@ -6,6 +6,7 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.spec.CustomEmailSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailSpec;
+import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -43,5 +44,13 @@ public class EmailSpecService extends AbstractRefreshableConfiguration<EmailSpec
     @Override
     public Class<EmailSpec> getConfigClass() {
         return EmailSpec.class;
+    }
+
+    public EmailTemplateSpec getEmailTemplateSpecByKey(String templateKey) {
+        return getEmailSpec().getEmails()
+            .stream()
+            .filter((spec) -> spec.getTemplateKey().equals(templateKey))
+            .findFirst()
+            .orElseThrow(() -> new EntityNotFoundException("Email template specification not found"));
     }
 }
