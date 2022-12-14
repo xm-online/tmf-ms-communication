@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
@@ -70,21 +71,31 @@ public class EmailTemplateService {
     public void updateTemplate(String templateKey, String langKey, UpdateTemplateRequest updateTemplateRequest) {
         EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpecByTemplateKey(templateKey);
 
-        CustomEmailTemplateSpec customEmailTemplateSpec = new CustomEmailTemplateSpec();
-        customEmailTemplateSpec.setTemplateKey(templateKey);
-        customEmailTemplateSpec.setSubjectTemplate(Map.of(langKey, updateTemplateRequest.getTemplateSubject()));
-        CustomEmailSpec updatedCustomEmailSpec = customEmailSpecService.updateCustomEmailSpec(customEmailTemplateSpec);
-
         String tenantKey = tenantContextHolder.getTenantKey();
         String configPath = String.format(CONFIG_PATH_TEMPLATE, tenantKey);
+
+        String subject = ofNullable(emailTemplateSpec.getSubjectTemplate().get(langKey)).orElse(StringUtils.EMPTY);
+        if (!subject.equals(updateTemplateRequest.getTemplateSubject())) {
+            updateTemplateSpecSubject(templateKey, langKey, updateTemplateRequest.getTemplateSubject(), configPath);
+        }
+
+        updateTemplateContent(emailTemplateSpec.getTemplatePath(), langKey, updateTemplateRequest.getContent(), configPath);
+    }
+    @SneakyThrows
+    private void updateTemplateSpecSubject(String templateKey, String langKey, String subject, String configPath) {
+        CustomEmailTemplateSpec customEmailTemplateSpec = new CustomEmailTemplateSpec();
+        customEmailTemplateSpec.setTemplateKey(templateKey);
+        customEmailTemplateSpec.setSubjectTemplate(Map.of(langKey, subject));
+        CustomEmailSpec updatedCustomEmailSpec = customEmailSpecService.updateCustomEmailSpec(customEmailTemplateSpec);
 
         String emailsSpecYml = yamlMapper.writerWithDefaultPrettyPrinter().writeValueAsString(updatedCustomEmailSpec);
         Configuration configuration = Configuration.of().path(configPath + CUSTOM_EMAIL_SPEC).content(emailsSpecYml).build();
         updateConfig(configuration);
+    }
 
-        String templatePath = emailTemplateSpec.getTemplatePath();
+    private void updateTemplateContent(String templatePath, String langKey, String content, String configPath) {
         String templateFileName = String.format("/%s.ftl", langKey);
-        configuration = Configuration.of().path(configPath + CUSTOM_EMAIL_PATH + templatePath + templateFileName).content(updateTemplateRequest.getContent()).build();
+        Configuration configuration = Configuration.of().path(configPath + CUSTOM_EMAIL_PATH + templatePath + templateFileName).content(content).build();
         updateConfig(configuration);
     }
 
@@ -99,7 +110,10 @@ public class EmailTemplateService {
     }
 
     private String configToSha1Hex(Optional<Configuration> configuration) {
-        return configuration.map(Configuration::getContent).map(DigestUtils::sha1Hex).orElse(null);
+        return configuration
+            .map(Configuration::getContent)
+            .map(DigestUtils::sha1Hex)
+            .orElse(null);
     }
 
     private Optional<Configuration> getOldConfig(String configPath) {

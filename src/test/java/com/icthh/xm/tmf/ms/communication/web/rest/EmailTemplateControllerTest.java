@@ -55,7 +55,6 @@ public class EmailTemplateControllerTest {
     private static final String DEFAULT_CONTENT = "${subject}@${domainName}.com";
     private static final String API_BASE = "/api/templates";
     private static final String TEMPLATE_KEY = "templateKey1";
-    private static final String LANG_KEY = "en";
 
     private MockMvc mockMvc;
 
@@ -163,12 +162,12 @@ public class EmailTemplateControllerTest {
     public void testUpdateTemplate() {
         UpdateTemplateRequest updateTemplateRequest = createUpdateRequestTemplate();
 
-        mockMvc.perform(put(API_BASE + "/" + TEMPLATE_KEY + "/" + LANG_KEY)
+        mockMvc.perform(put(API_BASE + "/" + TEMPLATE_KEY + "/" + DEFAULT_LANGUAGE)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(TestUtil.convertObjectToJsonBytes(updateTemplateRequest)))
             .andExpect(status().isOk());
 
-        verify(emailTemplateService).updateTemplate(eq(TEMPLATE_KEY), eq(LANG_KEY), refEq(updateTemplateRequest));
+        verify(emailTemplateService).updateTemplate(eq(TEMPLATE_KEY), eq(DEFAULT_LANGUAGE), refEq(updateTemplateRequest));
         verifyNoMoreInteractions(emailTemplateService);
     }
 

@@ -23,7 +23,6 @@ public final class Constants {
     public static final String CUSTOM_EMAIL_PATH = "custom-emails/";
     public static final String EMAIL_ = "custom-emails/";
 
-
     private Constants() {
     }
 }
