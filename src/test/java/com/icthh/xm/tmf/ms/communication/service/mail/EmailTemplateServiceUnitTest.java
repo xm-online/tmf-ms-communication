@@ -165,12 +165,23 @@ public class EmailTemplateServiceUnitTest {
         subject.getTemplateDetailsByKey("notValidKey", DEFAULT_LANGUAGE);
     }
 
-    @Test(expected = EntityNotFoundException.class)
-    public void getTemplateDetailsByKeyThrowEntityNotFoundWhenLangKeyNotExists() {
+    @Test
+    public void getTemplateDetailsByKeyReturnDefaultSubjectWhenLangKeyNotExists() {
+        String itTemplate = "/config/tenants/TEST/communication/emails/activation/secondTemplateKey/it.ftl";
         String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
-        emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
+        EmailTemplateSpec expected = readConfiguration(emailSpecificationConfig, EmailSpec.class).getEmails().get(1);
+        String templateBody = loadFile("templates/templateToRender.ftl");
 
-        subject.getTemplateDetailsByKey("notValidKey", "ua");
+        emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
+        tenantEmailTemplateService.onRefresh(itTemplate, templateBody);
+
+        TemplateDetails actual = subject.getTemplateDetailsByKey("secondTemplateKey", "it");
+
+        assertThat(actual.getContent()).isEqualTo(templateBody);
+        assertThat(actual.getContextForm()).isEqualTo(expected.getContextForm());
+        assertThat(actual.getContextSpec()).isEqualTo(expected.getContextSpec());
+        assertThat(actual.getContextExample()).isEqualTo(expected.getContextExample());
+        assertThat(actual.getSubjectTemplate()).isEqualTo(expected.getSubjectTemplate().get(DEFAULT_LANGUAGE));
     }
 
 

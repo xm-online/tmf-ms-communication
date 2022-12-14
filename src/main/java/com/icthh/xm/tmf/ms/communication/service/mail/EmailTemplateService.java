@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 
-import static java.lang.String.format;
+import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_LANGUAGE;
 import static java.util.Optional.of;
 
 @Slf4j
@@ -79,7 +79,7 @@ public class EmailTemplateService {
     private String getSubjectTemplateByLang(EmailTemplateSpec emailTemplateSpec, String langKey) {
         return of(emailTemplateSpec)
             .map(EmailTemplateSpec::getSubjectTemplate)
-            .map(it -> it.get(langKey))
-            .orElseThrow(() -> new EntityNotFoundException(format("Email template was not found with language: %s", langKey)));
+            .map(it -> it.getOrDefault(langKey, it.get(DEFAULT_LANGUAGE)))
+            .orElseThrow(() -> new EntityNotFoundException("Email subject was not found"));
     }
 }
