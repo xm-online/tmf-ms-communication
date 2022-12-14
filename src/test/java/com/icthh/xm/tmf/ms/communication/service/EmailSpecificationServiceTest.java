@@ -93,6 +93,20 @@ public class EmailSpecificationServiceTest {
         emailSpecService.getEmailSpec();
     }
 
+    @Test
+    public void getEmailTemplateSpec() {
+        String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
+        String customEmailSpecificationConfig = loadFile("config/specs/custom-email-spec.yml");
+        emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
+        customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
+        EmailTemplateSpec expectedemailTemplateSpec = getDefaultEmailTemplateSpecList(emailSpecificationConfig).get(0);
+        expectedemailTemplateSpec.setSubjectTemplate("Custom subject 1");
+
+        EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpec("TEST", "firstTemplateKey");
+
+        assertEquals(expectedemailTemplateSpec, emailTemplateSpec);
+    }
+
     public void mockTenant(String tenant) {
         TenantContext tenantContext = mock(TenantContext.class);
         when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(tenant)));

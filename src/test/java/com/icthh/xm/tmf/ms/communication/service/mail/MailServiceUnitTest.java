@@ -23,7 +23,11 @@ import com.icthh.xm.tmf.ms.communication.CommunicationApp;
 import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService;
 import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService.CommunicationTenantConfig.MailSetting;
 import com.icthh.xm.tmf.ms.communication.config.SecurityBeanOverrideConfiguration;
+import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
+import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -60,6 +64,7 @@ public class MailServiceUnitTest {
     private static final String FROM = "from";
     private static final String RID = "rid";
     public static final String TENANT_NAME = "RESINTTEST";
+    public static final String TEMPLATE_KEY = "templateKey";
 
     @Autowired
     private MailService mailService;
@@ -93,6 +98,8 @@ public class MailServiceUnitTest {
 
     @MockBean
     private RestTemplate restTemplate;
+    @MockBean
+    private EmailSpecService emailSpecService;
 
     @SneakyThrows
     @Before
@@ -153,8 +160,37 @@ public class MailServiceUnitTest {
         String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/" + TEMPLATE_NAME + "/en.ftl";
         String basePath = "/config/tenants/" + TENANT_NAME + "/communication/emails/" + TEMPLATE_NAME + "-BASE/en.ftl";
         String body = "<#import \"/" + TENANT_NAME + "/" + TEMPLATE_NAME + "-BASE/en\" as main>OTHER_<@main.body>_CUSTOM_</@main.body>";
+        String base = "<#macro body>BASE_START<#nested>BASE_END</#macro>";
+        templateService.onRefresh(mainPath, body);
+        templateService.onRefresh(basePath, base);
 
+        String templatePath = EmailTemplateUtil.emailTemplateKey(TenantKey.valueOf(TENANT_NAME), TEMPLATE_NAME, "en");
+        EmailTemplateSpec emailTemplateSpec = new EmailTemplateSpec(TEMPLATE_KEY, TEMPLATE_NAME, SUBJECT, templatePath, "", "", "");
+        when(emailSpecService.getEmailTemplateSpec(TENANT_NAME, TEMPLATE_KEY)).thenReturn(emailTemplateSpec);
 
+        MailService spiedMailService = spy(mailService);
+        spiedMailService.sendEmailByTemplate(TEMPLATE_KEY,
+            TenantKey.valueOf(TENANT_NAME),
+            ENGLISH, SUBJECT, EMAIL,
+            Map.of(
+                "variable1", "value1",
+                "variable2", "value2"
+            ),
+            RID, FROM,
+            Collections.emptyMap());
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(spiedMailService).sendEmail(
+            captor.capture(), // to
+            captor.capture(), // subject
+            eq("OTHER_BASE_START_CUSTOM_BASE_END"),
+            captor.capture(), // from
+            any(),
+            any()
+        );
+
+        List<String> allValues = captor.getAllValues();
+        assertThat(allValues).containsExactly(EMAIL, SUBJECT, FROM);
     }
 
     @Test

@@ -301,6 +301,7 @@ public class MailService {
 
     public void sendEmailByTemplate(String templateKey,
                                     TenantKey tenantKey,
+                                    Locale locale,
                                     String subject,
                                     String email,
                                     Map<String, Object> objectModel,
@@ -315,7 +316,6 @@ public class MailService {
 
             if (StringUtils.isBlank(subject)) {
                 subject = emailSpecService.getEmailTemplateSpec(tenantKey.getValue(), templateKey).getSubjectTemplate();
-                //getTemplateSpecSubject(tenantKey.getValue(), templateKey);
             }
 
             initAndSendEmail(tenantKey, content, subject, email, rid, from, attachments);
