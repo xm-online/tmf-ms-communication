@@ -1,6 +1,5 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
@@ -8,6 +7,7 @@ import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
+import com.icthh.xm.tmf.ms.communication.domain.spec.EmailSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_LANGUAGE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -63,12 +64,13 @@ public class EmailSpecificationServiceTest {
 
     @Test
     public void getEmailSpecList() {
+        Map<String, String> subjectMultiLang = Map.of(DEFAULT_LANGUAGE,  "Custom subject 1");
         String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
         String customEmailSpecificationConfig = loadFile("config/specs/custom-email-spec.yml");
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
         customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
-        expectedEmailSpecList.get(0).setSubjectTemplate("Custom subject 1");
+        expectedEmailSpecList.get(0).setSubjectTemplate(subjectMultiLang);
 
         List<EmailTemplateSpec> emailSpecList = emailSpecService.getEmailSpec().getEmails();
         assertEquals(expectedEmailSpecList, emailSpecList);
@@ -77,12 +79,13 @@ public class EmailSpecificationServiceTest {
     @Test
     @SneakyThrows
     public void getEmailSpecListWithoutDefault() {
+        Map<String, String> subjectMultiLang = Map.of(DEFAULT_LANGUAGE,  "Custom subject 1");
         String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
         String customEmailSpecificationConfig = loadFile("config/specs/custom-email-spec-2.yml");
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
         customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
-        expectedEmailSpecList.get(0).setSubjectTemplate("Custom subject 1");
+        expectedEmailSpecList.get(0).setSubjectTemplate(subjectMultiLang);
 
         List<EmailTemplateSpec> emailSpecList = emailSpecService.getEmailSpec().getEmails();
         assertEquals(expectedEmailSpecList, emailSpecList);
@@ -102,8 +105,8 @@ public class EmailSpecificationServiceTest {
 
     @SneakyThrows
     private List<EmailTemplateSpec> getDefaultEmailTemplateSpecList(String config) {
-        Map<String, List<EmailTemplateSpec>> defaultEmailSpec = mapper.readValue(config, new TypeReference<Map<String, List<EmailTemplateSpec>>>(){});
-        return defaultEmailSpec.get("emails");
+        EmailSpec defaultEmailSpec = mapper.readValue(config, EmailSpec.class);
+        return defaultEmailSpec.getEmails();
     }
 
     @SneakyThrows
