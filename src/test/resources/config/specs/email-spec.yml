@@ -6,7 +6,7 @@ emails:
     - templateKey: firstTemplateKey
       name: "First template"
       subjectTemplate: {en: "Default subject 1", uk: "Тема за замовчуванням 1"}
-      templatePath: uaa/emails/en/firstTemplateKey.ftl
+      templatePath: activation/firstTemplateKey
       contextExample: |
           {
               "name": "Default name"
@@ -27,7 +27,7 @@ emails:
     - templateKey: secondTemplateKey
       name: "Second template"
       subjectTemplate: {en: "Default subject 2", uk: "Тема за замовчуванням 2"}
-      templatePath: uaa/emails/en/secondTemplateKey.ftl
+      templatePath: activation/secondTemplateKey
       contextExample: |
           {
               "title": "Default title"

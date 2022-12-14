@@ -3,6 +3,7 @@ package com.icthh.xm.tmf.ms.communication.service.mail;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
+import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.config.domain.Configuration;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
@@ -13,6 +14,8 @@ import com.icthh.xm.tmf.ms.communication.domain.spec.CustomEmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.service.CustomEmailSpecService;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
+import com.icthh.xm.tmf.ms.communication.domain.dto.TemplateDetails;
+import com.icthh.xm.tmf.ms.communication.mapper.TemplateDetailsMapper;
 import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
@@ -36,6 +39,8 @@ import static com.icthh.xm.tmf.ms.communication.config.Constants.CONFIG_PATH_TEM
 import static com.icthh.xm.tmf.ms.communication.config.Constants.CUSTOM_EMAIL_PATH;
 import static com.icthh.xm.tmf.ms.communication.config.Constants.CUSTOM_EMAIL_SPEC;
 import static java.util.Optional.ofNullable;
+import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_LANGUAGE;
+import static java.util.Optional.of;
 
 @Slf4j
 @Service
@@ -44,10 +49,12 @@ public class EmailTemplateService {
 
     private final freemarker.template.Configuration freeMarkerConfiguration;
     private final EmailSpecService emailSpecService;
+    private final TenantEmailTemplateService tenantEmailTemplateService;
     private final CustomEmailSpecService customEmailSpecService;
     private final CommonConfigRepository  commonConfigRepository;
     private final TenantContextHolder tenantContextHolder;
     private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+    private final TemplateDetailsMapper templateDetailsMapper;
 
     @SneakyThrows
     public RenderTemplateResponse renderEmailContent(RenderTemplateRequest renderTemplateRequest) {
@@ -67,6 +74,18 @@ public class EmailTemplateService {
             throw new RenderTemplateException(e.getMessage(), renderTemplateRequest.getContent(), renderTemplateRequest.getModel());
         }
     }
+
+    public TemplateDetails getTemplateDetailsByKey(String templateKey, String langKey) {
+        List<String> langs = emailSpecService.getEmailSpec().getLangs();
+        EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpecByKey(templateKey);
+        String subjectTemplate = getSubjectTemplateByLang(emailTemplateSpec, langKey);
+        String templatePath = emailTemplateSpec.getTemplatePath();
+        String tenantKey = tenantContextHolder.getTenantKey();
+        String templateContent = tenantEmailTemplateService.getEmailTemplate(tenantKey, templatePath, langKey);
+
+        return createTemplateDetails(templateContent, emailTemplateSpec, langs, subjectTemplate);
+    }
+
     @SneakyThrows
     public void updateTemplate(String templateKey, String langKey, UpdateTemplateRequest updateTemplateRequest) {
         EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpecByTemplateKey(templateKey);
@@ -81,6 +100,23 @@ public class EmailTemplateService {
 
         updateTemplateContent(emailTemplateSpec.getTemplatePath(), langKey, updateTemplateRequest.getContent(), configPath);
     }
+
+    private TemplateDetails createTemplateDetails(String templateContent, EmailTemplateSpec emailTemplateSpec,
+                                                  List<String> langs, String subjectTemplate) {
+        TemplateDetails templateDetails = templateDetailsMapper.emailTemplateToDetails(emailTemplateSpec);
+        templateDetails.setContent(templateContent);
+        templateDetails.setSubjectTemplate(subjectTemplate);
+        templateDetails.setLangs(langs);
+        return templateDetails;
+    }
+
+    private String getSubjectTemplateByLang(EmailTemplateSpec emailTemplateSpec, String langKey) {
+        return of(emailTemplateSpec)
+            .map(EmailTemplateSpec::getSubjectTemplate)
+            .map(it -> it.getOrDefault(langKey, it.get(DEFAULT_LANGUAGE)))
+            .orElseThrow(() -> new EntityNotFoundException("Email subject was not found"));
+    }
+
     @SneakyThrows
     private void updateTemplateSpecSubject(String templateKey, String langKey, String subject, String configPath) {
         CustomEmailTemplateSpec customEmailTemplateSpec = new CustomEmailTemplateSpec();
@@ -123,5 +159,4 @@ public class EmailTemplateService {
 
         return ofNullable(configs.get(configPath));
     }
-
 }

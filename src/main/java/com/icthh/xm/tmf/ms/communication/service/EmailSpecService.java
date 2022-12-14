@@ -46,7 +46,7 @@ public class EmailSpecService extends AbstractRefreshableConfiguration<EmailSpec
         return EmailSpec.class;
     }
 
-    public EmailTemplateSpec getEmailTemplateSpecByTemplateKey(String templateKey) {
+    public EmailTemplateSpec getEmailTemplateSpecByKey(String templateKey) {
         return getEmailSpec().getEmails()
             .stream()
             .filter((spec) -> spec.getTemplateKey().equals(templateKey))
