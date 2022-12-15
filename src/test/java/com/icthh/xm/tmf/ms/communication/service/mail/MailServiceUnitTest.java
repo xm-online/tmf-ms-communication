@@ -65,6 +65,7 @@ public class MailServiceUnitTest {
     private static final String RID = "rid";
     public static final String TENANT_NAME = "RESINTTEST";
     public static final String TEMPLATE_KEY = "templateKey";
+    public static final Map<String, String> MULTILINGUAL_SUBJECT = Map.of("en", "subject", "uk", "тема");
 
     @Autowired
     private MailService mailService;
@@ -73,7 +74,7 @@ public class MailServiceUnitTest {
     private TenantEmailTemplateService templateService;
 
     @Autowired
-    private StringTemplateLoader templateLoader;
+    private MultiLangStringTemplateLoaderService multiLangStringTemplateLoaderService;
 
     @MockBean
     private JavaMailSender javaMailSender;
@@ -159,13 +160,13 @@ public class MailServiceUnitTest {
     public void testComplexTemplateEmailByTemplateKey() {
         String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/" + TEMPLATE_NAME + "/en.ftl";
         String basePath = "/config/tenants/" + TENANT_NAME + "/communication/emails/" + TEMPLATE_NAME + "-BASE/en.ftl";
-        String body = "<#import \"/" + TENANT_NAME + "/" + TEMPLATE_NAME + "-BASE/en\" as main>OTHER_<@main.body>_CUSTOM_</@main.body>";
+        String body = "<#import as main>OTHER_<@main.body>_CUSTOM_</@main.body>";
         String base = "<#macro body>BASE_START<#nested>BASE_END</#macro>";
         templateService.onRefresh(mainPath, body);
         templateService.onRefresh(basePath, base);
 
         String templatePath = EmailTemplateUtil.emailTemplateKey(TenantKey.valueOf(TENANT_NAME), TEMPLATE_NAME, "en");
-        EmailTemplateSpec emailTemplateSpec = new EmailTemplateSpec(TEMPLATE_KEY, TEMPLATE_NAME, SUBJECT, templatePath, "", "", "");
+        EmailTemplateSpec emailTemplateSpec = new EmailTemplateSpec(TEMPLATE_KEY, TEMPLATE_NAME, MULTILINGUAL_SUBJECT, templatePath, "", "", "");
         when(emailSpecService.getEmailTemplateSpec(TENANT_NAME, TEMPLATE_KEY)).thenReturn(emailTemplateSpec);
 
         MailService spiedMailService = spy(mailService);
@@ -206,8 +207,8 @@ public class MailServiceUnitTest {
         assertThat(templateService.getEmailTemplate("XM", "activation/subfolder", "en")).isEqualTo(config);
         assertThat(templateService.getEmailTemplate("XM", "register/subfolder", "en")).isEqualTo(configCustom);
         assertThat(templateService.getEmailTemplate("XM", "activation/subfolder", "")).isEqualTo(config);
-        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en")).isEqualTo(config);
-        assertThat(getContentFromTemplateLoader("XM/register/subfolder/en")).isEqualTo(configCustom);
+        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en", "en")).isEqualTo(config);
+        assertThat(getContentFromTemplateLoader("XM/register/subfolder/en", "en")).isEqualTo(configCustom);
     }
 
     @Test
@@ -253,24 +254,24 @@ public class MailServiceUnitTest {
         templateService.onRefresh(emailPath, config);
         templateService.onRefresh(customEmailPath, configCustom);
         templateService.onRefresh(emailPath, config);
-        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en")).isEqualTo(configCustom);
+        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en", "en")).isEqualTo(configCustom);
 
         templateService.onRefresh(customEmailPath, "");
-        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en")).isEqualTo(config);
+        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en", "en")).isEqualTo(config);
 
         templateService.onRefresh(customEmailPath, configCustom);
         templateService.onRefresh(emailPath, "");
-        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en")).isEqualTo(configCustom);
+        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en", "en")).isEqualTo(configCustom);
 
         templateService.onRefresh(emailPath, "");
         templateService.onRefresh(customEmailPath, "");
-        assertThrows(NullPointerException.class, () -> getContentFromTemplateLoader("XM/activation/subfolder/en"));
+        assertThrows(NullPointerException.class, () -> getContentFromTemplateLoader("XM/activation/subfolder/en", "en"));
 
     }
 
     @SneakyThrows
-    private String getContentFromTemplateLoader(String templateKey) {
-        Object templateSource = templateLoader.findTemplateSource(templateKey);
-        return IOUtils.toString(templateLoader.getReader(templateSource, ""));
+    private String getContentFromTemplateLoader(String templateKey, String lang) {
+        Object templateSource = multiLangStringTemplateLoaderService.getTemplateLoader(lang).findTemplateSource(templateKey);
+        return IOUtils.toString(multiLangStringTemplateLoaderService.getTemplateLoader(lang).getReader(templateSource, ""));
     }
 }

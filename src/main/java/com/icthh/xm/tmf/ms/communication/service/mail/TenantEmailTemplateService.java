@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 
+import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_LANGUAGE;
 import static java.util.Optional.ofNullable;
 
 /**
@@ -34,26 +35,21 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
     private final ConcurrentHashMap<String, String> customEmailTemplates = new ConcurrentHashMap<>();
     private final String pathPattern;
     private final String customEmailPathPattern;
-    private final StringTemplateLoader templateLoader;
+    private final MultiLangStringTemplateLoaderService multiLangStringTemplateLoaderService;
     private final EmailSpecService emailSpecService;
 
     public TenantEmailTemplateService(ApplicationProperties applicationProperties,
-                                      StringTemplateLoader templateLoader,
+                                      MultiLangStringTemplateLoaderService multiLangStringTemplateLoaderService,
                                       EmailSpecService emailSpecService) {
-        this.templateLoader = templateLoader;
+        this.multiLangStringTemplateLoaderService = multiLangStringTemplateLoaderService;
         this.pathPattern = applicationProperties.getEmailPathPattern();
         this.customEmailPathPattern = applicationProperties.getCustomEmailPathPattern();
         this.emailSpecService = emailSpecService;
     }
 
     @LoggingAspectConfig(resultDetails = false)
-    public String getEmailTemplate(String tenantKey, String templateName, String langKey) {
-        if (StringUtils.isBlank(langKey)) {
-            langKey = DEFAULT_LANG_KEY;
-        }
-
-        String templatePath = EmailTemplateUtil.emailTemplateKey(TenantKey.valueOf(tenantKey), templateName, langKey);
-        return getTemplateOverrideable(templatePath).orElseThrow(() -> new IllegalArgumentException("Email template was not found"));
+    public String getEmailTemplate(String tenantKey, String templatePath, String langKey) {
+        return getTemplateOverrideable(tenantKey, templatePath, langKey).orElseThrow(() -> new IllegalArgumentException("Email template was not found"));
     }
 
     @LoggingAspectConfig(resultDetails = false)
@@ -61,6 +57,16 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
         EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpec(tenantKey, templateKey);
         String templatePath = emailTemplateSpec.getTemplatePath();
         return getTemplateOverrideable(templatePath).orElseThrow(() -> new IllegalArgumentException("Email template was not found"));
+    }
+
+    @LoggingAspectConfig(resultDetails = false)
+    public Optional<String> getTemplateOverrideable(String tenantKey, String templatePath, String langKey) {
+        if (StringUtils.isBlank(langKey)) {
+            langKey = DEFAULT_LANGUAGE;
+        }
+        String templateKey = EmailTemplateUtil.emailTemplateKey(TenantKey.valueOf(tenantKey), templatePath, langKey);
+
+        return getTemplateOverrideable(templateKey);
     }
 
     @LoggingAspectConfig(resultDetails = false)
@@ -115,9 +121,9 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
                 langKey, tenantKeyValue);
         }
 
-        ofNullable(getEmailTemplate(tenantKeyValue, templatePath, langKey))
-            .ifPresentOrElse((cfg) -> templateLoader.putTemplate(templateKey, cfg),
-                                () -> templateLoader.removeTemplate(templateKey));
+        getTemplateOverrideable(tenantKeyValue, templatePath, langKey)
+            .ifPresentOrElse((cfg) -> multiLangStringTemplateLoaderService.putTemplate(templateKey, cfg, langKey),
+                                () -> multiLangStringTemplateLoaderService.removeTemplate(templateKey, langKey));
     }
 
 }

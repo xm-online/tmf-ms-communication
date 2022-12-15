@@ -39,6 +39,7 @@ public class EmailSpecificationServiceTest {
     private static final String CUSTOM_EMAIL_SPECIFICATION_PATH_PATTERN = "/config/tenants/{tenantName}/communication/custom-email-spec.yml";
     private static final String EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/email-spec.yml";
     private static final String CUSTOM_EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/custom-email-spec.yml";
+    public static final Map<String, String> MULTILINGUAL_SUBJECT = Map.of("en", "Custom subject 1", "uk", "Змінена тема 1");
 
     @Spy
     @InjectMocks
@@ -64,13 +65,12 @@ public class EmailSpecificationServiceTest {
 
     @Test
     public void getEmailSpecList() {
-        Map<String, String> subjectMultiLang = Map.of(DEFAULT_LANGUAGE,  "Custom subject 1");
         String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
         String customEmailSpecificationConfig = loadFile("config/specs/custom-email-spec.yml");
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
         customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
-        expectedEmailSpecList.get(0).setSubjectTemplate(subjectMultiLang);
+        expectedEmailSpecList.get(0).setSubjectTemplate(MULTILINGUAL_SUBJECT);
 
         List<EmailTemplateSpec> emailSpecList = emailSpecService.getEmailSpec().getEmails();
         assertEquals(expectedEmailSpecList, emailSpecList);
@@ -79,13 +79,12 @@ public class EmailSpecificationServiceTest {
     @Test
     @SneakyThrows
     public void getEmailSpecListWithoutDefault() {
-        Map<String, String> subjectMultiLang = Map.of(DEFAULT_LANGUAGE,  "Custom subject 1");
         String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
         String customEmailSpecificationConfig = loadFile("config/specs/custom-email-spec-2.yml");
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
         customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
-        expectedEmailSpecList.get(0).setSubjectTemplate(subjectMultiLang);
+        expectedEmailSpecList.get(0).setSubjectTemplate(MULTILINGUAL_SUBJECT);
 
         List<EmailTemplateSpec> emailSpecList = emailSpecService.getEmailSpec().getEmails();
         assertEquals(expectedEmailSpecList, emailSpecList);
@@ -102,12 +101,12 @@ public class EmailSpecificationServiceTest {
         String customEmailSpecificationConfig = loadFile("config/specs/custom-email-spec.yml");
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
         customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
-        EmailTemplateSpec expectedemailTemplateSpec = getDefaultEmailTemplateSpecList(emailSpecificationConfig).get(0);
-        expectedemailTemplateSpec.setSubjectTemplate("Custom subject 1");
+        EmailTemplateSpec expectedEmailTemplateSpec = getDefaultEmailTemplateSpecList(emailSpecificationConfig).get(0);
+        expectedEmailTemplateSpec.setSubjectTemplate(MULTILINGUAL_SUBJECT);
 
         EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpec("TEST", "firstTemplateKey");
 
-        assertEquals(expectedemailTemplateSpec, emailTemplateSpec);
+        assertEquals(expectedEmailTemplateSpec, emailTemplateSpec);
     }
 
     public void mockTenant(String tenant) {

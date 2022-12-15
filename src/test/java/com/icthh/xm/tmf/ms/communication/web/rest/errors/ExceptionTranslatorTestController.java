@@ -60,7 +60,7 @@ public class ExceptionTranslatorTestController {
 
     @PostMapping("/test/render-template-exception")
     public void renderTemplateException() {
-        throw new RenderTemplateException("render failed", "${{test", Map.of("test", "test"));
+        throw new RenderTemplateException("render failed", "${{test", Map.of("test", "test"), "en");
     }
 
     public static class TestDTO {

@@ -68,6 +68,7 @@ public class MailService {
     private final CommunicationTenantConfigService tenantConfigService;
     private final LocalizationMessageService localizationMessageService;
     private final EmailSpecService emailSpecService;
+    private final EmailTemplateService emailTemplateService;
 
     @Resource
     @Lazy
@@ -309,16 +310,18 @@ public class MailService {
                                     String from,
                                     Map<String, InputStreamSource> attachments) {
         String emailTemplate = tenantEmailTemplateService.getEmailTemplateByKey(tenantKey.getValue(), templateKey);
+        String processedContent = emailTemplateService.processEmailTemplate(emailTemplate, objectModel, locale.getLanguage());
 
         try {
-            Template mailTemplate = new Template(templateKey, emailTemplate, freeMarkerConfiguration);
-            String content = FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, objectModel);
-
             if (StringUtils.isBlank(subject)) {
-                subject = emailSpecService.getEmailTemplateSpec(tenantKey.getValue(), templateKey).getSubjectTemplate();
+                Map<String, String> langToSubjectMap = emailSpecService.getEmailTemplateSpec(tenantKey.getValue(), templateKey).getSubjectTemplate();
+                subject = langToSubjectMap.getOrDefault(locale.getLanguage(), langToSubjectMap.get("en"));
             }
 
-            initAndSendEmail(tenantKey, content, subject, email, rid, from, attachments);
+            Template subjectTemplate = new Template(templateKey, subject, freeMarkerConfiguration);
+            String renderedSubject = FreeMarkerTemplateUtils.processTemplateIntoString(subjectTemplate, objectModel);
+
+            initAndSendEmail(tenantKey, processedContent, renderedSubject, email, rid, from, attachments);
         } catch (TemplateException e) {
             throw new IllegalStateException("Mail template rendering failed");
         } catch (IOException e) {
