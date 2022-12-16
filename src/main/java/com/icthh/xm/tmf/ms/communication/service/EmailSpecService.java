@@ -40,19 +40,17 @@ public class EmailSpecService extends AbstractRefreshableConfiguration<EmailSpec
     }
 
     public Optional<EmailTemplateSpec> getEmailTemplateSpec(String tenantKey, String templateKey) {
-        if (getEmailSpec(tenantKey).isEmpty()) {
-            return Optional.empty();
-        }
-        List<EmailTemplateSpec> emailTemplateSpecList = getEmailSpec(tenantKey).get().getEmails();
-        return emailTemplateSpecList.stream().filter(it -> it.getTemplateKey().equals(templateKey)).findFirst();
+        return getEmailSpec(tenantKey)
+            .map(EmailSpec::getEmails)
+            .flatMap(emailTemplateSpecList ->
+                emailTemplateSpecList.stream().filter(it -> it.getTemplateKey().equals(templateKey)).findFirst());
     }
 
     public Optional<EmailTemplateSpec> getEmailTemplateSpecByPath(String tenantKey, String templatePath) {
-        if (getEmailSpec(tenantKey).isEmpty()) {
-            return Optional.empty();
-        }
-        List<EmailTemplateSpec> emailTemplateSpecList = getEmailSpec(tenantKey).get().getEmails();
-        return emailTemplateSpecList.stream().filter(it -> it.getTemplatePath().equals(templatePath)).findFirst();
+        return getEmailSpec(tenantKey)
+            .map(EmailSpec::getEmails)
+            .flatMap(emailTemplateSpecList ->
+                emailTemplateSpecList.stream().filter(it -> it.getTemplatePath().equals(templatePath)).findFirst());
     }
 
     @Override

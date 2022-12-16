@@ -56,14 +56,10 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
 
     @LoggingAspectConfig(resultDetails = false)
     public String getEmailTemplateByKey(TenantKey tenantKey, String templateKey, String locale) {
-        Optional<EmailTemplateSpec> emailTemplateSpec = emailSpecService.getEmailTemplateSpec(tenantKey.getValue(), templateKey);
-        if (emailTemplateSpec.isPresent()) {
-            String templatePath = emailTemplateSpec.get().getTemplatePath();
-            Optional<String> emailTemplateOptional =  getTemplateOverrideable(templatePath);
-
-            return emailTemplateOptional.orElseGet(() -> getEmailTemplate(tenantKey.getValue(), templateKey, locale));
-        }
-        return getEmailTemplate(tenantKey.getValue(), templateKey, locale);
+        return emailSpecService.getEmailTemplateSpec(tenantKey.getValue(), templateKey)
+            .map(EmailTemplateSpec::getTemplatePath)
+            .flatMap(this::getTemplateOverrideable)
+            .orElseGet(() -> getEmailTemplate(tenantKey.getValue(), templateKey, locale));
     }
 
     @LoggingAspectConfig(resultDetails = false)
