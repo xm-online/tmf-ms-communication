@@ -24,7 +24,7 @@ public class TenantResource implements TenantsApiDelegate {
     @Override
     @Transactional
     @PreAuthorize("hasPermission({'tenant':#tenant}, 'COMMUNICATION.TENANT.CREATE')")
-    @PrivilegeDescription("Privilege to add a new uaa tenant")
+    @PrivilegeDescription("Privilege to add a new communication tenant")
     public ResponseEntity<Void> addTenant(Tenant tenant) {
         tenantManager.createTenant(tenant);
         return ResponseEntity.ok().build();
@@ -32,7 +32,7 @@ public class TenantResource implements TenantsApiDelegate {
 
     @Override
     @PreAuthorize("hasPermission({'tenantKey':#tenantKey}, 'COMMUNICATION.TENANT.DELETE')")
-    @PrivilegeDescription("Privilege to delete uaa tenant by tenantKey")
+    @PrivilegeDescription("Privilege to delete communication tenant by tenantKey")
     public ResponseEntity<Void> deleteTenant(String tenantKey) {
         tenantManager.deleteTenant(tenantKey);
         return ResponseEntity.ok().build();
@@ -40,21 +40,21 @@ public class TenantResource implements TenantsApiDelegate {
 
     @Override
     @PostAuthorize("hasPermission(null, 'COMMUNICATION.TENANT.GET_LIST')")
-    @PrivilegeDescription("Privilege to get all uaa tenants")
+    @PrivilegeDescription("Privilege to get all communication tenants")
     public ResponseEntity<List<Tenant>> getAllTenantInfo() {
         return ResponseEntity.ok().build();
     }
 
     @Override
     @PostAuthorize("hasPermission({'returnObject': returnObject.body}, 'COMMUNICATION.TENANT.GET_LIST.ITEM')")
-    @PrivilegeDescription("Privilege to get uaa tenant")
+    @PrivilegeDescription("Privilege to get communication tenant")
     public ResponseEntity<Tenant> getTenant(String s) {
         return ResponseEntity.ok().build();
     }
 
     @Override
     @PreAuthorize("hasPermission({'tenant':#tenant, 'status':#status}, 'COMMUNICATION.TENANT.UPDATE')")
-    @PrivilegeDescription("Privilege to update uaa tenant")
+    @PrivilegeDescription("Privilege to update communication tenant")
     public ResponseEntity<Void> manageTenant(String tenant, String status) {
         tenantManager.manageTenant(tenant, status);
         return ResponseEntity.ok().build();

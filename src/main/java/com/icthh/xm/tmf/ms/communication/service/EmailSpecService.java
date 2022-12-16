@@ -64,4 +64,12 @@ public class EmailSpecService extends AbstractRefreshableConfiguration<EmailSpec
     public Class<EmailSpec> getConfigClass() {
         return EmailSpec.class;
     }
+
+    public EmailTemplateSpec getEmailTemplateSpecByKey(String templateKey) {
+        return getEmailSpec().getEmails()
+            .stream()
+            .filter((spec) -> spec.getTemplateKey().equals(templateKey))
+            .findFirst()
+            .orElseThrow(() -> new EntityNotFoundException("Email template specification not found"));
+    }
 }

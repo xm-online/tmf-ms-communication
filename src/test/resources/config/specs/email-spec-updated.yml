@@ -1,12 +1,11 @@
 ---
 langs:
     - en
-    - uk
 emails:
     - templateKey: firstTemplateKey
-      name: "First template"
-      subjectTemplate: {en: "Default subject 1", uk: "Тема за замовчуванням 1"}
-      templatePath: activation/firstTemplateKey
+      name: "Template name"
+      subjectTemplate: {en: "Subject name"}
+      templatePath: uaa/activate
       contextExample: |
           {
               "name": "Default name"
@@ -26,8 +25,8 @@ emails:
           }
     - templateKey: secondTemplateKey
       name: "Second template"
-      subjectTemplate: {en: "Default subject 2", uk: "Тема за замовчуванням 2"}
-      templatePath: activation/secondTemplateKey
+      subjectTemplate: {en: "Default subject 2"}
+      templatePath: uaa/reset
       contextExample: |
           {
               "title": "Default title"
@@ -45,7 +44,3 @@ emails:
                { "key": "title", "title": { "en": "Title" }, "type": "string" }
             ]
           }
-    - templateKey: macroTemplateKey
-      name: "Macro template key"
-      subjectTemplate: {en: "Macro subject", uk: "Тема макроса"}
-      templatePath: /config/tenants/RESINTTEST/communication/emails/templateName-BASE/en.ftl

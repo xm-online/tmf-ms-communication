@@ -18,6 +18,10 @@ public final class Constants {
     public static final String DEFAULT_EMAILS_PATH_PATTERN = "/config/emails/**/{langKey}.ftl";
     public static final String PATH_TO_EMAILS_IN_CONFIG = "/emails/";
 
+    public static final String CONFIG_PATH_TEMPLATE = "/config/tenants/%s/communication/";
+    public static final String CUSTOM_EMAIL_SPEC = "custom-email-spec.yml";
+    public static final String CUSTOM_EMAIL_PATH = "custom-emails/";
+
     private Constants() {
     }
 }
