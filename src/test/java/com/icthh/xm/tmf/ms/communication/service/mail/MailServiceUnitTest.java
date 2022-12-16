@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.service.mail;
 
+import static com.icthh.xm.tmf.ms.communication.service.mail.EmailTemplateServiceUnitTest.loadFile;
 import static java.util.Locale.ENGLISH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -20,14 +21,13 @@ import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.CommunicationApp;
+import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService;
 import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService.CommunicationTenantConfig.MailSetting;
 import com.icthh.xm.tmf.ms.communication.config.SecurityBeanOverrideConfiguration;
-import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -64,7 +64,12 @@ public class MailServiceUnitTest {
     private static final String FROM = "from";
     private static final String RID = "rid";
     public static final String TENANT_NAME = "RESINTTEST";
-    public static final String TEMPLATE_KEY = "templateKey";
+    public static final String TEMPLATE_KEY = "firstTemplateKey";
+    public static final String MACRO_TEMPLATE_KEY = "macroTemplateKey";
+    private static final String EMAIL_SPECIFICATION_PATH_PATTERN = "/config/tenants/{tenantName}/communication/email-spec.yml";
+    private static final String CUSTOM_EMAIL_SPECIFICATION_PATH_PATTERN = "/config/tenants/{tenantName}/communication/custom-email-spec.yml";
+    private static final String EMAIL_SPECIFICATION_PATH = "/config/tenants/RESINTTEST/communication/email-spec.yml";
+    private static final String CUSTOM_EMAIL_SPECIFICATION_PATH = "/config/tenants/RESINTTEST/communication/custom-email-spec.yml";
     public static final Map<String, String> MULTILINGUAL_SUBJECT = Map.of("en", "subject", "uk", "тема");
 
     @Autowired
@@ -74,7 +79,7 @@ public class MailServiceUnitTest {
     private TenantEmailTemplateService templateService;
 
     @Autowired
-    private MultiLangStringTemplateLoaderService multiLangStringTemplateLoaderService;
+    private StringTemplateLoader templateLoader;
 
     @MockBean
     private JavaMailSender javaMailSender;
@@ -99,7 +104,11 @@ public class MailServiceUnitTest {
 
     @MockBean
     private RestTemplate restTemplate;
-    @MockBean
+
+    @Autowired
+    private ApplicationProperties applicationProperties;
+
+    @Autowired
     private EmailSpecService emailSpecService;
 
     @SneakyThrows
@@ -120,6 +129,9 @@ public class MailServiceUnitTest {
             Map.of(ENGLISH.getLanguage(), "test@communication.com")
         );
         communicationTenantConfigService.getCommunicationTenantConfig().getMailSettings().add(mailSetting);
+
+        applicationProperties.setEmailSpecificationPathPattern(EMAIL_SPECIFICATION_PATH_PATTERN);
+        applicationProperties.setCustomEmailSpecificationPathPattern(CUSTOM_EMAIL_SPECIFICATION_PATH_PATTERN);
     }
 
     @Test
@@ -160,25 +172,26 @@ public class MailServiceUnitTest {
     public void testComplexTemplateEmailByTemplateKey() {
         String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/" + TEMPLATE_NAME + "/en.ftl";
         String basePath = "/config/tenants/" + TENANT_NAME + "/communication/emails/" + TEMPLATE_NAME + "-BASE/en.ftl";
-        String body = "<#import as main>OTHER_<@main.body>_CUSTOM_</@main.body>";
+        String body = "<#import \"" + MACRO_TEMPLATE_KEY + "\" as main>OTHER_<@main.body>_CUSTOM_</@main.body>";
         String base = "<#macro body>BASE_START<#nested>BASE_END</#macro>";
+
+        String emailSpecConfig = loadFile("config/specs/email-spec.yml");
+        emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecConfig);
+
         templateService.onRefresh(mainPath, body);
         templateService.onRefresh(basePath, base);
 
-        String templatePath = EmailTemplateUtil.emailTemplateKey(TenantKey.valueOf(TENANT_NAME), TEMPLATE_NAME, "en");
-        EmailTemplateSpec emailTemplateSpec = new EmailTemplateSpec(TEMPLATE_KEY, TEMPLATE_NAME, MULTILINGUAL_SUBJECT, templatePath, "", "", "");
-        when(emailSpecService.getEmailTemplateSpec(TENANT_NAME, TEMPLATE_KEY)).thenReturn(emailTemplateSpec);
-
         MailService spiedMailService = spy(mailService);
-        spiedMailService.sendEmailByTemplate(TEMPLATE_KEY,
-            TenantKey.valueOf(TENANT_NAME),
-            ENGLISH, SUBJECT, EMAIL,
+        spiedMailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME),
+            ENGLISH,
+            TEMPLATE_NAME,
+            SUBJECT,
+            EMAIL,
             Map.of(
                 "variable1", "value1",
                 "variable2", "value2"
             ),
-            RID, FROM,
-            Collections.emptyMap());
+            RID, FROM);
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(spiedMailService).sendEmail(
@@ -191,7 +204,7 @@ public class MailServiceUnitTest {
         );
 
         List<String> allValues = captor.getAllValues();
-        assertThat(allValues).containsExactly(EMAIL, SUBJECT, FROM);
+        assertThat(allValues).containsExactly(EMAIL, "Subject with value1", "test@communication.com");
     }
 
     @Test
@@ -207,8 +220,8 @@ public class MailServiceUnitTest {
         assertThat(templateService.getEmailTemplate("XM", "activation/subfolder", "en")).isEqualTo(config);
         assertThat(templateService.getEmailTemplate("XM", "register/subfolder", "en")).isEqualTo(configCustom);
         assertThat(templateService.getEmailTemplate("XM", "activation/subfolder", "")).isEqualTo(config);
-        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en", "en")).isEqualTo(config);
-        assertThat(getContentFromTemplateLoader("XM/register/subfolder/en", "en")).isEqualTo(configCustom);
+        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en")).isEqualTo(config);
+        assertThat(getContentFromTemplateLoader("XM/register/subfolder/en")).isEqualTo(configCustom);
     }
 
     @Test
@@ -254,24 +267,24 @@ public class MailServiceUnitTest {
         templateService.onRefresh(emailPath, config);
         templateService.onRefresh(customEmailPath, configCustom);
         templateService.onRefresh(emailPath, config);
-        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en", "en")).isEqualTo(configCustom);
+        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en")).isEqualTo(configCustom);
 
         templateService.onRefresh(customEmailPath, "");
-        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en", "en")).isEqualTo(config);
+        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en")).isEqualTo(config);
 
         templateService.onRefresh(customEmailPath, configCustom);
         templateService.onRefresh(emailPath, "");
-        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en", "en")).isEqualTo(configCustom);
+        assertThat(getContentFromTemplateLoader("XM/activation/subfolder/en")).isEqualTo(configCustom);
 
         templateService.onRefresh(emailPath, "");
         templateService.onRefresh(customEmailPath, "");
-        assertThrows(NullPointerException.class, () -> getContentFromTemplateLoader("XM/activation/subfolder/en", "en"));
+        assertThrows(NullPointerException.class, () -> getContentFromTemplateLoader("XM/activation/subfolder/en"));
 
     }
 
     @SneakyThrows
-    private String getContentFromTemplateLoader(String templateKey, String lang) {
-        Object templateSource = multiLangStringTemplateLoaderService.getTemplateLoader(lang).findTemplateSource(templateKey);
-        return IOUtils.toString(multiLangStringTemplateLoaderService.getTemplateLoader(lang).getReader(templateSource, ""));
+    private String getContentFromTemplateLoader(String templateKey) {
+        Object templateSource = templateLoader.findTemplateSource(templateKey);
+        return IOUtils.toString(templateLoader.getReader(templateSource, ""));
     }
 }

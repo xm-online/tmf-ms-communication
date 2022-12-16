@@ -6,7 +6,7 @@ emails:
     - templateKey: firstTemplateKey
       name: "First template"
       subjectTemplate: {en: "Default subject 1", uk: "Тема за замовчуванням 1"}
-      templatePath: uaa/emails/en/firstTemplateKey.ftl
+      templatePath: /config/tenants/RESINTTEST/communication/emails/templateName/en.ftl
       contextExample: |
           {
               "name": "Default name"
@@ -45,3 +45,7 @@ emails:
                { "key": "title", "title": { "en": "Title" }, "type": "string" }
             ]
           }
+    - templateKey: macroTemplateKey
+      name: "Macro template key"
+      subjectTemplate: {en: "Macro subject", uk: "Тема макроса"}
+      templatePath: /config/tenants/RESINTTEST/communication/emails/templateName-BASE/en.ftl

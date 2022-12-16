@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -23,25 +24,35 @@ public class EmailSpecService extends AbstractRefreshableConfiguration<EmailSpec
     @LoggingAspectConfig(resultDetails = false)
     public EmailSpec getEmailSpec() {
         String tenantKey = tenantContextHolder.getTenantKey();
-        return getEmailSpec(tenantKey);
+        return getEmailSpec(tenantKey).orElseThrow(() -> new EntityNotFoundException("Email specification not found"));
     }
 
     @LoggingAspectConfig(resultDetails = false)
-    public EmailSpec getEmailSpec(String tenantKey) {
+    public Optional<EmailSpec> getEmailSpec(String tenantKey) {
         String cfgTenantKey = tenantKey.toUpperCase();
         if (!getConfigurations().containsKey(cfgTenantKey)) {
-            throw new EntityNotFoundException("Email specification not found");
+            return Optional.empty();
         }
 
         EmailSpec emailSpec = getConfigurations().get(cfgTenantKey);
         CustomEmailSpec customEmailSpec = customEmailSpecService.getConfigurations().get(cfgTenantKey);
-        return emailSpec.override(customEmailSpec);
+        return Optional.of(emailSpec.override(customEmailSpec));
     }
 
-    public EmailTemplateSpec getEmailTemplateSpec(String tenantKey, String templateKey) {
-        List<EmailTemplateSpec> emailTemplateSpecList = getEmailSpec(tenantKey).getEmails();
-        return emailTemplateSpecList.stream().filter(it -> it.getTemplateKey().equals(templateKey)).findFirst()
-            .orElseThrow(() -> new EntityNotFoundException("Email specification not found"));
+    public Optional<EmailTemplateSpec> getEmailTemplateSpec(String tenantKey, String templateKey) {
+        if (getEmailSpec(tenantKey).isEmpty()) {
+            return Optional.empty();
+        }
+        List<EmailTemplateSpec> emailTemplateSpecList = getEmailSpec(tenantKey).get().getEmails();
+        return emailTemplateSpecList.stream().filter(it -> it.getTemplateKey().equals(templateKey)).findFirst();
+    }
+
+    public Optional<EmailTemplateSpec> getEmailTemplateSpecByPath(String tenantKey, String templatePath) {
+        if (getEmailSpec(tenantKey).isEmpty()) {
+            return Optional.empty();
+        }
+        List<EmailTemplateSpec> emailTemplateSpecList = getEmailSpec(tenantKey).get().getEmails();
+        return emailTemplateSpecList.stream().filter(it -> it.getTemplatePath().equals(templatePath)).findFirst();
     }
 
     @Override

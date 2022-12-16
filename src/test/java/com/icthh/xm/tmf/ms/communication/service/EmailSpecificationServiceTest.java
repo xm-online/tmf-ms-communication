@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_LANGUAGE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -104,7 +103,8 @@ public class EmailSpecificationServiceTest {
         EmailTemplateSpec expectedEmailTemplateSpec = getDefaultEmailTemplateSpecList(emailSpecificationConfig).get(0);
         expectedEmailTemplateSpec.setSubjectTemplate(MULTILINGUAL_SUBJECT);
 
-        EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpec("TEST", "firstTemplateKey");
+        EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpec("TEST", "firstTemplateKey")
+            .orElseThrow(() -> new EntityNotFoundException("Email template specification not found"));
 
         assertEquals(expectedEmailTemplateSpec, emailTemplateSpec);
     }

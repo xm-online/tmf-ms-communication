@@ -33,13 +33,17 @@ import static org.mockito.Mockito.*;
 @SpringBootTest(classes = {CommunicationApp.class, SecurityBeanOverrideConfiguration.class})
 public class EmailTemplateServiceUnitTest {
 
-    private static final String DEFAULT_LANG_KEY = "en";
+    private static final String TENANT_KEY = "RESINTTEST";
+    private static final String LANG_KEY = "en";
 
     @Autowired
     private EmailTemplateService subject;
 
+    @Autowired
+    private TenantContextHolder tenantContextHolder;
+
     @MockBean
-    private MultiLangStringTemplateLoaderService multiLangStringTemplateLoaderService;
+    private MultiTenantLangStringTemplateLoaderService multiTenantLangStringTemplateLoaderService;
 
     @MockBean
     private SmppService smppService;
@@ -47,18 +51,23 @@ public class EmailTemplateServiceUnitTest {
     @MockBean
     private RestTemplate restTemplate;
 
+    @Before
+    public void before() {
+        TenantContextUtils.setTenant(tenantContextHolder, "RESINTTEST");
+    }
+
     @Test
     public void renderEmailContent() {
         String content = loadFile("templates/templateToRender.ftl");
         Map<String, Object> model = Map.of("title", "Test", "baseUrl", "testUrl", "user",
             Map.of("firstName", "Name", "lastName", "Surname", "resetKey", "key"));
         String expectedContent = loadFile("templates/renderedTemplate.html");
-        RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto(content, model, DEFAULT_LANG_KEY);
+        RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto(content, model, LANG_KEY);
 
         String actual = subject.renderEmailContent(renderTemplateRequest).getContent();
 
-        verify(multiLangStringTemplateLoaderService).getTemplateLoader(DEFAULT_LANG_KEY);
-        verifyNoMoreInteractions(multiLangStringTemplateLoaderService);
+        verify(multiTenantLangStringTemplateLoaderService).getTemplateLoader(TENANT_KEY, LANG_KEY);
+        verifyNoMoreInteractions(multiTenantLangStringTemplateLoaderService);
 
         assertThat(actual).isNotNull();
         assertThat(actual).isEqualTo(expectedContent);
@@ -66,7 +75,7 @@ public class EmailTemplateServiceUnitTest {
 
     @Test(expected = RenderTemplateException.class)
     public void renderEmailContentReturnNullWhenContentNotValid(){
-        RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto("${subjectNotValid{", Map.of(), DEFAULT_LANG_KEY);
+        RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto("${subjectNotValid{", Map.of(), LANG_KEY);
 
         subject.renderEmailContent(renderTemplateRequest);
     }
@@ -83,22 +92,5 @@ public class EmailTemplateServiceUnitTest {
     public static String loadFile(String path) {
         InputStream cfgInputStream = new ClassPathResource(path).getInputStream();
         return IOUtils.toString(cfgInputStream, UTF_8);
-    }
-
-    @Test
-    public void processEmailTemplate() {
-        String content = loadFile("templates/templateToRender.ftl");
-        Map<String, Object> objectModel = Map.of("title", "Test", "baseUrl", "testUrl", "user",
-            Map.of("firstName", "Name", "lastName", "Surname", "resetKey", "key"));
-        String lang = "en";
-        String expectedContent = loadFile("templates/renderedTemplate.html");
-
-        String processedEmail = subject.processEmailTemplate(content, objectModel, lang);
-
-        verify(multiLangStringTemplateLoaderService).getTemplateLoader(DEFAULT_LANG_KEY);
-        verifyNoMoreInteractions(multiLangStringTemplateLoaderService);
-
-        assertThat(processedEmail).isNotNull();
-        assertThat(processedEmail).isEqualTo(expectedContent);
     }
 }

@@ -6,18 +6,18 @@ import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
-import freemarker.cache.StringTemplateLoader;
 
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+
+import freemarker.cache.StringTemplateLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.AntPathMatcher;
 
 import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_LANGUAGE;
-import static java.util.Optional.ofNullable;
 
 /**
  * Service for managing email template.
@@ -35,13 +35,16 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
     private final ConcurrentHashMap<String, String> customEmailTemplates = new ConcurrentHashMap<>();
     private final String pathPattern;
     private final String customEmailPathPattern;
-    private final MultiLangStringTemplateLoaderService multiLangStringTemplateLoaderService;
+    private final StringTemplateLoader templateLoader;
+    private final MultiTenantLangStringTemplateLoaderService multiTenantLangStringTemplateLoaderService;
     private final EmailSpecService emailSpecService;
 
     public TenantEmailTemplateService(ApplicationProperties applicationProperties,
-                                      MultiLangStringTemplateLoaderService multiLangStringTemplateLoaderService,
+                                      StringTemplateLoader templateLoader,
+                                      MultiTenantLangStringTemplateLoaderService multiTenantLangStringTemplateLoaderService,
                                       EmailSpecService emailSpecService) {
-        this.multiLangStringTemplateLoaderService = multiLangStringTemplateLoaderService;
+        this.templateLoader = templateLoader;
+        this.multiTenantLangStringTemplateLoaderService = multiTenantLangStringTemplateLoaderService;
         this.pathPattern = applicationProperties.getEmailPathPattern();
         this.customEmailPathPattern = applicationProperties.getCustomEmailPathPattern();
         this.emailSpecService = emailSpecService;
@@ -53,10 +56,15 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
     }
 
     @LoggingAspectConfig(resultDetails = false)
-    public String getEmailTemplateByKey(String tenantKey, String templateKey) {
-        EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpec(tenantKey, templateKey);
-        String templatePath = emailTemplateSpec.getTemplatePath();
-        return getTemplateOverrideable(templatePath).orElseThrow(() -> new IllegalArgumentException("Email template was not found"));
+    public String getEmailTemplateByKey(TenantKey tenantKey, String templateKey, String locale) {
+        Optional<EmailTemplateSpec> emailTemplateSpec = emailSpecService.getEmailTemplateSpec(tenantKey.getValue(), templateKey);
+        if (emailTemplateSpec.isPresent()) {
+            String templatePath = emailTemplateSpec.get().getTemplatePath();
+            Optional<String> emailTemplateOptional =  getTemplateOverrideable(templatePath);
+
+            return emailTemplateOptional.orElseGet(() -> getEmailTemplate(tenantKey.getValue(), templateKey, locale));
+        }
+        return getEmailTemplate(tenantKey.getValue(), templateKey, locale);
     }
 
     @LoggingAspectConfig(resultDetails = false)
@@ -109,21 +117,30 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
         templatePath = templatePath.substring(0, templatePath.lastIndexOf(templateFileName));
         String tenantKeyValue = pathVariables.get(TENANT_KEY);
 
-        String templateKey = EmailTemplateUtil.emailTemplateKey(TenantKey.valueOf(tenantKeyValue), templatePath, langKey);
+        String templatePathKey = EmailTemplateUtil.emailTemplateKey(TenantKey.valueOf(tenantKeyValue), templatePath, langKey);
+        Optional<EmailTemplateSpec> templateSpecKey = emailSpecService.getEmailTemplateSpecByPath(tenantKeyValue, key);
 
         if (StringUtils.isBlank(config)) {
-            emailTemplates.remove(templateKey);
+            emailTemplates.remove(templatePathKey);
             log.info("Email template '{}' with locale {} for tenant '{}' was removed", templatePath,
                 langKey, tenantKeyValue);
         } else {
-            emailTemplates.put(templateKey, config);
+            emailTemplates.put(templatePathKey, config);
             log.info("Email template '{}' with locale {} for tenant '{}' was updated", templatePath,
                 langKey, tenantKeyValue);
         }
 
         getTemplateOverrideable(tenantKeyValue, templatePath, langKey)
-            .ifPresentOrElse((cfg) -> multiLangStringTemplateLoaderService.putTemplate(templateKey, cfg, langKey),
-                                () -> multiLangStringTemplateLoaderService.removeTemplate(templateKey, langKey));
+            .ifPresentOrElse((cfg) -> {
+                    templateLoader.putTemplate(templatePathKey, cfg);
+                    templateSpecKey.ifPresent(emailTemplateSpec ->
+                        multiTenantLangStringTemplateLoaderService.putTemplate(emailTemplateSpec.getTemplateKey(), cfg, tenantKeyValue, langKey));
+                },
+                () -> {
+                    templateLoader.removeTemplate(templatePathKey);
+                    templateSpecKey.ifPresent(emailTemplateSpec ->
+                        multiTenantLangStringTemplateLoaderService.removeTemplate(emailTemplateSpec.getTemplateKey(), tenantKeyValue, langKey));
+            });
     }
 
 }

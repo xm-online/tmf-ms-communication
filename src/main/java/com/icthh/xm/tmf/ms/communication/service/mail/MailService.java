@@ -21,7 +21,6 @@ import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService;
 import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService.CommunicationTenantConfig.MailSetting;
-import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -33,12 +32,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import javax.annotation.Resource;
 import javax.mail.internet.MimeMessage;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.i18n.LocaleContext;
@@ -300,35 +299,6 @@ public class MailService {
             null);
     }
 
-    public void sendEmailByTemplate(String templateKey,
-                                    TenantKey tenantKey,
-                                    Locale locale,
-                                    String subject,
-                                    String email,
-                                    Map<String, Object> objectModel,
-                                    String rid,
-                                    String from,
-                                    Map<String, InputStreamSource> attachments) {
-        String emailTemplate = tenantEmailTemplateService.getEmailTemplateByKey(tenantKey.getValue(), templateKey);
-        String processedContent = emailTemplateService.processEmailTemplate(emailTemplate, objectModel, locale.getLanguage());
-
-        try {
-            if (StringUtils.isBlank(subject)) {
-                Map<String, String> langToSubjectMap = emailSpecService.getEmailTemplateSpec(tenantKey.getValue(), templateKey).getSubjectTemplate();
-                subject = langToSubjectMap.getOrDefault(locale.getLanguage(), langToSubjectMap.get("en"));
-            }
-
-            Template subjectTemplate = new Template(templateKey, subject, freeMarkerConfiguration);
-            String renderedSubject = FreeMarkerTemplateUtils.processTemplateIntoString(subjectTemplate, objectModel);
-
-            initAndSendEmail(tenantKey, processedContent, renderedSubject, email, rid, from, attachments);
-        } catch (TemplateException e) {
-            throw new IllegalStateException("Mail template rendering failed");
-        } catch (IOException e) {
-            throw new IllegalStateException("Error while reading mail template");
-        }
-    }
-
     private void initAndSendEmail(TenantKey tenantKey,
                                   Locale locale,
                                   String templateName,
@@ -346,19 +316,21 @@ public class MailService {
                 return;
             }
 
-            String templateKey = EmailTemplateUtil.emailTemplateKey(tenantKey, templateName, locale.getLanguage());
-            String emailTemplate = tenantEmailTemplateService.getEmailTemplate(tenantKey.getValue(), templateName, locale.getLanguage());
+            String emailTemplate = tenantEmailTemplateService.getEmailTemplateByKey(tenantKey, templateName, locale.getLanguage());
+            String processedContent = emailTemplateService.processEmailTemplate(tenantKey.getValue(), emailTemplate, objectModel, locale.getLanguage());
 
             try {
                 tenantContextHolder.getPrivilegedContext().setTenant(new PlainTenant(tenantKey));
 
-                Template mailTemplate = new Template(templateKey, emailTemplate, freeMarkerConfiguration);
-                String content = FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, objectModel);
                 MailParams mailParams = resolve(subject, from, templateName, locale, objectModel);
+
+                Template subjectTemplate = new Template(UUID.randomUUID().toString(), mailParams.getSubject(), freeMarkerConfiguration);
+                String renderedSubject = FreeMarkerTemplateUtils.processTemplateIntoString(subjectTemplate, objectModel);
+
                 sendEmail(
                     email,
-                    mailParams.getSubject(),
-                    content,
+                    renderedSubject,
+                    processedContent,
                     mailParams.getFrom(),
                     attachments,
                     mailProviderService.getJavaMailSender(tenantKey.getValue())
@@ -409,11 +381,6 @@ public class MailService {
         setLocaleContext(localeContext);
         return mailParams;
     }
-
-//    private String getTemplateSpecSubject(String tenantKey, String templateKey) {
-//        EmailTemplateSpec templateDetails = emailSpecService.getEmailTemplateSpec(tenantKey, templateKey);
-//        return templateDetails.getSubjectTemplate();
-//    }
 
     private String applyModel(String value, Map<String, Object> objectModel) {
         if (isBlank(value)) {
