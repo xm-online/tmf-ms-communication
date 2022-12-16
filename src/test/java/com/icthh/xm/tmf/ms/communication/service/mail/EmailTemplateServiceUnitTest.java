@@ -23,6 +23,7 @@ import com.icthh.xm.tmf.ms.communication.domain.spec.CustomEmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.mapper.TemplateDetailsMapper;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException;
+import freemarker.cache.StringTemplateLoader;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
@@ -100,6 +101,8 @@ public class EmailTemplateServiceUnitTest {
     @MockBean
     private MultiTenantLangStringTemplateLoaderService multiTenantLangStringTemplateLoaderService;
 
+    private StringTemplateLoader stringTemplateLoader;
+
     @MockBean
     private SmppService smppService;
 
@@ -121,7 +124,9 @@ public class EmailTemplateServiceUnitTest {
             customEmailSpecService,
             commonConfigRepository,
             tenantContextHolder,
-            templateDetailsMapper);
+            templateDetailsMapper,
+            stringTemplateLoader,
+            multiTenantLangStringTemplateLoaderService);
     }
 
     @Test

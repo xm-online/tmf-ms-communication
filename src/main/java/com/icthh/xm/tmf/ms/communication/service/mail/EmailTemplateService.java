@@ -20,7 +20,6 @@ import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException
 import freemarker.cache.MultiTemplateLoader;
 import freemarker.cache.StringTemplateLoader;
 import freemarker.cache.TemplateLoader;
-import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import lombok.RequiredArgsConstructor;
@@ -74,7 +73,7 @@ public class EmailTemplateService {
 
     public String processEmailTemplate(String tenantKey, String content, Map<String, Object> objectModel, String lang) {
         try {
-            Configuration configuration = (Configuration) freeMarkerConfiguration.clone();
+            freemarker.template.Configuration configuration = (freemarker.template.Configuration) freeMarkerConfiguration.clone();
             StringTemplateLoader templateLoaderByTenantAndLang = multiTenantLangStringTemplateLoaderService.getTemplateLoader(tenantKey, lang);
             MultiTemplateLoader multiTemplateLoader = new MultiTemplateLoader(
                 new TemplateLoader[]{templateLoaderByTenantAndLang, templateLoader}
