@@ -14,4 +14,5 @@ import java.util.Map;
 public class CustomEmailTemplateSpec {
     private String templateKey;
     private Map<String, String> subjectTemplate;
+    private Map<String, String> from;
 }
