@@ -7,7 +7,7 @@ import java.util.List;
 @Data
 public class TemplateDetails {
     private String subjectTemplate;
-    private String from;
+    private String emailFrom;
     private String content;
     private String contextSpec;
     private String contextForm;

@@ -16,7 +16,7 @@ public class EmailTemplateSpec {
     private String templateKey;
     private String name;
     private Map<String,String> subjectTemplate;
-    private Map<String, String> from;
+    private Map<String, String> emailFrom;
     private String templatePath;
     private String contextExample;
     private String contextSpec;
@@ -27,8 +27,8 @@ public class EmailTemplateSpec {
                 .map(CustomEmailTemplateSpec::getSubjectTemplate)
                 .orElse(subjectTemplate);
         Map<String, String> from = Optional.ofNullable(customEmailTemplateSpec)
-            .map(CustomEmailTemplateSpec::getFrom)
-            .orElse(this.from);
+            .map(CustomEmailTemplateSpec::getEmailFrom)
+            .orElse(emailFrom);
 
         return new EmailTemplateSpec(
                 templateKey,

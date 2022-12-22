@@ -270,7 +270,7 @@ public class EmailTemplateServiceUnitTest {
 
     private UpdateTemplateRequest createUpdateRequestTemplate() {
         UpdateTemplateRequest updateTemplateRequest = new UpdateTemplateRequest();
-        updateTemplateRequest.setTemplateSubject(UPDATED_SUBJECT_NAME);
+        updateTemplateRequest.setSubjectTemplate(UPDATED_SUBJECT_NAME);
         updateTemplateRequest.setContent(loadFile("templates/updatedTemplate.ftl"));
 
         return updateTemplateRequest;

@@ -219,7 +219,7 @@ public class EmailTemplateControllerTest {
 
     private UpdateTemplateRequest createUpdateRequestTemplate() {
         UpdateTemplateRequest updateTemplateRequest = new UpdateTemplateRequest();
-        updateTemplateRequest.setTemplateSubject("template subject");
+        updateTemplateRequest.setSubjectTemplate("template subject");
         updateTemplateRequest.setContent("some content");
 
         return updateTemplateRequest;

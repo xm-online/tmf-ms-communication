@@ -9,5 +9,6 @@ import org.mapstruct.Mapping;
 public interface TemplateDetailsMapper {
 
     @Mapping(target = "subjectTemplate", ignore = true)
+    @Mapping(target = "emailFrom", ignore = true)
     TemplateDetails emailTemplateToDetails(EmailTemplateSpec emailTemplateSpec);
 }
