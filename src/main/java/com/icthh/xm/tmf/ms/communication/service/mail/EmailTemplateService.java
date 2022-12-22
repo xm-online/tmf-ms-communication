@@ -17,6 +17,9 @@ import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
 import com.icthh.xm.tmf.ms.communication.domain.dto.TemplateDetails;
 import com.icthh.xm.tmf.ms.communication.mapper.TemplateDetailsMapper;
 import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException;
+import freemarker.cache.MultiTemplateLoader;
+import freemarker.cache.StringTemplateLoader;
+import freemarker.cache.TemplateLoader;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -55,23 +59,37 @@ public class EmailTemplateService {
     private final TenantContextHolder tenantContextHolder;
     private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
     private final TemplateDetailsMapper templateDetailsMapper;
+    private final StringTemplateLoader templateLoader;
+    private final MultiTenantLangStringTemplateLoaderService multiTenantLangStringTemplateLoaderService;
 
     @SneakyThrows
     public RenderTemplateResponse renderEmailContent(RenderTemplateRequest renderTemplateRequest) {
+        String tenantKey = tenantContextHolder.getTenantKey();
+        String renderedContent = processEmailTemplate(tenantKey, renderTemplateRequest.getContent(), renderTemplateRequest.getModel(), renderTemplateRequest.getLang());
+        RenderTemplateResponse renderTemplateResponse = new RenderTemplateResponse();
+        renderTemplateResponse.setContent(renderedContent);
+        return renderTemplateResponse;
+    }
+
+    public String processEmailTemplate(String tenantKey, String content, Map<String, Object> objectModel, String lang) {
         try {
-            Template mailTemplate = new Template(UUID.randomUUID().toString(), renderTemplateRequest.getContent(), freeMarkerConfiguration);
-            String renderedContent = FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, renderTemplateRequest.getModel());
-            RenderTemplateResponse renderTemplateResponse = new RenderTemplateResponse();
-            renderTemplateResponse.setContent(renderedContent);
-            return renderTemplateResponse;
+            freemarker.template.Configuration configuration = (freemarker.template.Configuration) freeMarkerConfiguration.clone();
+            StringTemplateLoader templateLoaderByTenantAndLang = multiTenantLangStringTemplateLoaderService.getTemplateLoader(tenantKey, lang);
+            MultiTemplateLoader multiTemplateLoader = new MultiTemplateLoader(
+                new TemplateLoader[]{templateLoaderByTenantAndLang, templateLoader}
+            );
+            configuration.setTemplateLoader(multiTemplateLoader);
+
+            Template mailTemplate = new Template(UUID.randomUUID().toString(), content, configuration);
+            return FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, objectModel);
         } catch (TemplateException e) {
-            log.error("Template could not be rendered with content: {} and model: {}.", renderTemplateRequest.getContent(),
-                renderTemplateRequest.getModel(), e);
-            throw new RenderTemplateException(e.getMessageWithoutStackTop(), renderTemplateRequest.getContent(), renderTemplateRequest.getModel());
+            log.error("Template could not be rendered with content: {} and model: {} for language: {}.", content,
+                objectModel, lang, e);
+            throw new RenderTemplateException(e.getMessageWithoutStackTop(), content, objectModel, lang);
         } catch (IOException e) {
-            log.error("Template could not be rendered with content: {} and model: {}.", renderTemplateRequest.getContent(),
-                renderTemplateRequest.getModel(), e);
-            throw new RenderTemplateException(e.getMessage(), renderTemplateRequest.getContent(), renderTemplateRequest.getModel());
+            log.error("Template could not be rendered with content: {} and model: {} for language: {}.", content,
+                objectModel, lang, e);
+            throw new RenderTemplateException(e.getMessage(), content, objectModel, lang);
         }
     }
 

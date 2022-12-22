@@ -23,6 +23,7 @@ import com.icthh.xm.tmf.ms.communication.domain.spec.CustomEmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.mapper.TemplateDetailsMapper;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException;
+import freemarker.cache.StringTemplateLoader;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
@@ -83,6 +84,8 @@ public class EmailTemplateServiceUnitTest {
     @Mock
     private CommonConfigRepository commonConfigRepository;
 
+    private static final String LANG_KEY = "en";
+
     @Autowired
     private freemarker.template.Configuration freeMarkerConfiguration;
 
@@ -94,6 +97,11 @@ public class EmailTemplateServiceUnitTest {
 
     @Autowired
     private TenantEmailTemplateService tenantEmailTemplateService;
+
+    @MockBean
+    private MultiTenantLangStringTemplateLoaderService multiTenantLangStringTemplateLoaderService;
+
+    private StringTemplateLoader stringTemplateLoader;
 
     @MockBean
     private SmppService smppService;
@@ -116,7 +124,9 @@ public class EmailTemplateServiceUnitTest {
             customEmailSpecService,
             commonConfigRepository,
             tenantContextHolder,
-            templateDetailsMapper);
+            templateDetailsMapper,
+            stringTemplateLoader,
+            multiTenantLangStringTemplateLoaderService);
     }
 
     @Test
@@ -125,9 +135,12 @@ public class EmailTemplateServiceUnitTest {
         Map<String, Object> model = Map.of("title", "Test", "baseUrl", "testUrl", "user",
             Map.of("firstName", "Name", "lastName", "Surname", "resetKey", "key"));
         String expectedContent = loadFile("templates/renderedTemplate.html");
-        RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto(content, model);
+        RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto(content, model, LANG_KEY);
 
         String actual = subject.renderEmailContent(renderTemplateRequest).getContent();
+
+        verify(multiTenantLangStringTemplateLoaderService).getTemplateLoader(TENANT_KEY, LANG_KEY);
+        verifyNoMoreInteractions(multiTenantLangStringTemplateLoaderService);
 
         assertThat(actual).isNotNull();
         assertThat(actual).isEqualTo(expectedContent);
@@ -135,9 +148,17 @@ public class EmailTemplateServiceUnitTest {
 
     @Test(expected = RenderTemplateException.class)
     public void renderEmailContentReturnNullWhenContentNotValid() {
-        RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto("${subjectNotValid{", Map.of());
+        RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto("${subjectNotValid{", Map.of(), LANG_KEY);
 
         subject.renderEmailContent(renderTemplateRequest);
+    }
+
+    private RenderTemplateRequest createEmailTemplateDto(String content, Map model, String lang) {
+        RenderTemplateRequest renderTemplateRequest = new RenderTemplateRequest();
+        renderTemplateRequest.setContent(content);
+        renderTemplateRequest.setModel(model);
+        renderTemplateRequest.setLang(lang);
+        return renderTemplateRequest;
     }
 
     @Test
@@ -227,13 +248,6 @@ public class EmailTemplateServiceUnitTest {
         assertTrue(isExpectedEmail(configs.get(1)));
 
         verifyNoMoreInteractions(commonConfigRepository);
-    }
-
-    private RenderTemplateRequest createEmailTemplateDto(String content, Map model) {
-        RenderTemplateRequest renderTemplateRequest = new RenderTemplateRequest();
-        renderTemplateRequest.setContent(content);
-        renderTemplateRequest.setModel(model);
-        return renderTemplateRequest;
     }
 
     private void mockTenant(String tenant) {

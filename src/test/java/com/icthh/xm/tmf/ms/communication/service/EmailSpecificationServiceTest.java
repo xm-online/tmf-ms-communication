@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_LANGUAGE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -39,6 +38,7 @@ public class EmailSpecificationServiceTest {
     private static final String CUSTOM_EMAIL_SPECIFICATION_PATH_PATTERN = "/config/tenants/{tenantName}/communication/custom-email-spec.yml";
     private static final String EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/email-spec.yml";
     private static final String CUSTOM_EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/custom-email-spec.yml";
+    public static final Map<String, String> MULTILINGUAL_SUBJECT = Map.of("en", "Custom subject 1", "uk", "Змінена тема 1");
 
     @Spy
     @InjectMocks
@@ -64,13 +64,12 @@ public class EmailSpecificationServiceTest {
 
     @Test
     public void getEmailSpecList() {
-        Map<String, String> subjectMultiLang = Map.of(DEFAULT_LANGUAGE,  "Custom subject 1");
         String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
         String customEmailSpecificationConfig = loadFile("config/specs/custom-email-spec.yml");
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
         customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
-        expectedEmailSpecList.get(0).setSubjectTemplate(subjectMultiLang);
+        expectedEmailSpecList.get(0).setSubjectTemplate(MULTILINGUAL_SUBJECT);
 
         List<EmailTemplateSpec> emailSpecList = emailSpecService.getEmailSpec().getEmails();
         assertEquals(expectedEmailSpecList, emailSpecList);
@@ -79,13 +78,12 @@ public class EmailSpecificationServiceTest {
     @Test
     @SneakyThrows
     public void getEmailSpecListWithoutDefault() {
-        Map<String, String> subjectMultiLang = Map.of(DEFAULT_LANGUAGE,  "Custom subject 1");
         String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
         String customEmailSpecificationConfig = loadFile("config/specs/custom-email-spec-2.yml");
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
         customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
-        expectedEmailSpecList.get(0).setSubjectTemplate(subjectMultiLang);
+        expectedEmailSpecList.get(0).setSubjectTemplate(MULTILINGUAL_SUBJECT);
 
         List<EmailTemplateSpec> emailSpecList = emailSpecService.getEmailSpec().getEmails();
         assertEquals(expectedEmailSpecList, emailSpecList);
@@ -94,6 +92,21 @@ public class EmailSpecificationServiceTest {
     @Test(expected = EntityNotFoundException.class)
     public void getEmailSpecListNotFound() {
         emailSpecService.getEmailSpec();
+    }
+
+    @Test
+    public void getEmailTemplateSpec() {
+        String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
+        String customEmailSpecificationConfig = loadFile("config/specs/custom-email-spec.yml");
+        emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
+        customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
+        EmailTemplateSpec expectedEmailTemplateSpec = getDefaultEmailTemplateSpecList(emailSpecificationConfig).get(0);
+        expectedEmailTemplateSpec.setSubjectTemplate(MULTILINGUAL_SUBJECT);
+
+        EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpec("TEST", "firstTemplateKey")
+            .orElseThrow(() -> new EntityNotFoundException("Email template specification not found"));
+
+        assertEquals(expectedEmailTemplateSpec, emailTemplateSpec);
     }
 
     public void mockTenant(String tenant) {

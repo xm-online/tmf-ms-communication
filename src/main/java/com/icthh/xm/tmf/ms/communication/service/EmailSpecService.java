@@ -10,6 +10,9 @@ import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+import java.util.Optional;
+
 @Component
 @RequiredArgsConstructor
 public class EmailSpecService extends AbstractRefreshableConfiguration<EmailSpec> {
@@ -21,19 +24,33 @@ public class EmailSpecService extends AbstractRefreshableConfiguration<EmailSpec
     @LoggingAspectConfig(resultDetails = false)
     public EmailSpec getEmailSpec() {
         String tenantKey = tenantContextHolder.getTenantKey();
-        return getEmailSpec(tenantKey);
+        return getEmailSpec(tenantKey).orElseThrow(() -> new EntityNotFoundException("Email specification not found"));
     }
 
     @LoggingAspectConfig(resultDetails = false)
-    public EmailSpec getEmailSpec(String tenantKey) {
+    public Optional<EmailSpec> getEmailSpec(String tenantKey) {
         String cfgTenantKey = tenantKey.toUpperCase();
         if (!getConfigurations().containsKey(cfgTenantKey)) {
-            throw new EntityNotFoundException("Email specification not found");
+            return Optional.empty();
         }
 
         EmailSpec emailSpec = getConfigurations().get(cfgTenantKey);
         CustomEmailSpec customEmailSpec = customEmailSpecService.getConfigurations().get(cfgTenantKey);
-        return emailSpec.override(customEmailSpec);
+        return Optional.of(emailSpec.override(customEmailSpec));
+    }
+
+    public Optional<EmailTemplateSpec> getEmailTemplateSpec(String tenantKey, String templateKey) {
+        return getEmailSpec(tenantKey)
+            .map(EmailSpec::getEmails)
+            .flatMap(emailTemplateSpecList ->
+                emailTemplateSpecList.stream().filter(it -> it.getTemplateKey().equals(templateKey)).findFirst());
+    }
+
+    public Optional<EmailTemplateSpec> getEmailTemplateSpecByPath(String tenantKey, String templatePath) {
+        return getEmailSpec(tenantKey)
+            .map(EmailSpec::getEmails)
+            .flatMap(emailTemplateSpecList ->
+                emailTemplateSpecList.stream().filter(it -> it.getTemplatePath().equals(templatePath)).findFirst());
     }
 
     @Override
@@ -47,10 +64,8 @@ public class EmailSpecService extends AbstractRefreshableConfiguration<EmailSpec
     }
 
     public EmailTemplateSpec getEmailTemplateSpecByKey(String templateKey) {
-        return getEmailSpec().getEmails()
-            .stream()
-            .filter((spec) -> spec.getTemplateKey().equals(templateKey))
-            .findFirst()
+        String tenantKey = tenantContextHolder.getTenantKey();
+        return getEmailTemplateSpec(tenantKey, templateKey)
             .orElseThrow(() -> new EntityNotFoundException("Email template specification not found"));
     }
 }
