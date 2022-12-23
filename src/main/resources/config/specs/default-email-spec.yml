@@ -5,6 +5,7 @@ emails:
     - templateKey: activationEmail
       name: "Activation email"
       subjectTemplate: {en: "Account activation"}
+      emailFrom: {en: "my-company@mail.com"}
       templatePath: uaa/activation
       contextExample: |
           {
@@ -42,6 +43,7 @@ emails:
     - templateKey: accountCreationEmail
       name: "Account creation email"
       subjectTemplate: {en: "Account creation"}
+      emailFrom: {en: "my-company@mail.com"}
       templatePath: uaa/creation
       contextExample: |
           {
@@ -79,6 +81,7 @@ emails:
     - templateKey: passwordResetEmail
       name: "Password reset email"
       subjectTemplate: {en: "uaa password reset"}
+      emailFrom: {en: "my-company@mail.com"}
       templatePath: uaa/passwordReset
       contextExample: |
           {
