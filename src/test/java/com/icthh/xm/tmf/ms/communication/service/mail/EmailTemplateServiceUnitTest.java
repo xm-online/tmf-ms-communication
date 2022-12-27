@@ -65,6 +65,7 @@ public class EmailTemplateServiceUnitTest {
 
     private static final String TENANT_KEY = "TEST";
     private static final String UPDATED_SUBJECT_NAME = "updated subject name";
+    private static final String UPDATED_EMAIL_FROM = "updated email from";
     private static final String EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/email-spec.yml";
     private static final String CUSTOM_EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/custom-email-spec.yml";
     private static final String CUSTOM_EMAILS_TEMPLATES_PATH = "/config/tenants/TEST/communication/custom-emails/";
@@ -180,6 +181,7 @@ public class EmailTemplateServiceUnitTest {
         assertThat(actual.getContextSpec()).isEqualTo(expectedEmailTemplate.getContextSpec());
         assertThat(actual.getContextExample()).isEqualTo(expectedEmailTemplate.getContextExample());
         assertThat(actual.getSubjectTemplate()).isEqualTo(expectedCustomEmailTemplate.getSubjectTemplate().get(DEFAULT_LANGUAGE));
+        assertThat(actual.getEmailFrom()).isEqualTo(expectedCustomEmailTemplate.getEmailFrom().get(DEFAULT_LANGUAGE));
     }
 
     @Test
@@ -198,6 +200,7 @@ public class EmailTemplateServiceUnitTest {
         assertThat(actual.getContextSpec()).isEqualTo(expected.getContextSpec());
         assertThat(actual.getContextExample()).isEqualTo(expected.getContextExample());
         assertThat(actual.getSubjectTemplate()).isEqualTo(expected.getSubjectTemplate().get(DEFAULT_LANGUAGE));
+        assertThat(actual.getEmailFrom()).isEqualTo(expected.getEmailFrom().get(DEFAULT_LANGUAGE));
     }
 
     @Test(expected = EntityNotFoundException.class)
@@ -225,6 +228,7 @@ public class EmailTemplateServiceUnitTest {
         assertThat(actual.getContextSpec()).isEqualTo(expected.getContextSpec());
         assertThat(actual.getContextExample()).isEqualTo(expected.getContextExample());
         assertThat(actual.getSubjectTemplate()).isEqualTo(expected.getSubjectTemplate().get(DEFAULT_LANGUAGE));
+        assertThat(actual.getEmailFrom()).isEqualTo(expected.getEmailFrom().get(DEFAULT_LANGUAGE));
     }
 
     @Test
@@ -271,6 +275,7 @@ public class EmailTemplateServiceUnitTest {
     private UpdateTemplateRequest createUpdateRequestTemplate() {
         UpdateTemplateRequest updateTemplateRequest = new UpdateTemplateRequest();
         updateTemplateRequest.setSubjectTemplate(UPDATED_SUBJECT_NAME);
+        updateTemplateRequest.setEmailFrom(UPDATED_EMAIL_FROM);
         updateTemplateRequest.setContent(loadFile("templates/updatedTemplate.ftl"));
 
         return updateTemplateRequest;
@@ -281,7 +286,8 @@ public class EmailTemplateServiceUnitTest {
         EmailTemplateSpec emailTemplateSpec = emailSpec.getEmails().stream()
             .filter((spec) -> spec.getTemplateKey().equals("firstTemplateKey")).findFirst().get();
         return configuration.getPath().equals(CUSTOM_EMAIL_SPECIFICATION_PATH)
-            && emailTemplateSpec.getSubjectTemplate().get("en").equals(UPDATED_SUBJECT_NAME);
+            && emailTemplateSpec.getSubjectTemplate().get("en").equals(UPDATED_SUBJECT_NAME)
+            && emailTemplateSpec.getEmailFrom().get("en").equals(UPDATED_EMAIL_FROM);
     }
 
     private boolean isExpectedEmail(Configuration configuration) {
