@@ -39,6 +39,7 @@ public class EmailSpecificationServiceTest {
     private static final String EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/email-spec.yml";
     private static final String CUSTOM_EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/custom-email-spec.yml";
     public static final Map<String, String> MULTILINGUAL_SUBJECT = Map.of("en", "Custom subject 1", "uk", "Змінена тема 1");
+    public static final Map<String, String> MULTILINGUAL_EMAIL_FROM = Map.of("en", "Custom email from 1", "uk", "Змінене поле від 1");
 
     @Spy
     @InjectMocks
@@ -70,6 +71,7 @@ public class EmailSpecificationServiceTest {
         customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
         expectedEmailSpecList.get(0).setSubjectTemplate(MULTILINGUAL_SUBJECT);
+        expectedEmailSpecList.get(0).setEmailFrom(MULTILINGUAL_EMAIL_FROM);
 
         List<EmailTemplateSpec> emailSpecList = emailSpecService.getEmailSpec().getEmails();
         assertEquals(expectedEmailSpecList, emailSpecList);
@@ -84,6 +86,7 @@ public class EmailSpecificationServiceTest {
         customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
         expectedEmailSpecList.get(0).setSubjectTemplate(MULTILINGUAL_SUBJECT);
+        expectedEmailSpecList.get(0).setEmailFrom(MULTILINGUAL_EMAIL_FROM);
 
         List<EmailTemplateSpec> emailSpecList = emailSpecService.getEmailSpec().getEmails();
         assertEquals(expectedEmailSpecList, emailSpecList);
@@ -102,6 +105,7 @@ public class EmailSpecificationServiceTest {
         customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         EmailTemplateSpec expectedEmailTemplateSpec = getDefaultEmailTemplateSpecList(emailSpecificationConfig).get(0);
         expectedEmailTemplateSpec.setSubjectTemplate(MULTILINGUAL_SUBJECT);
+        expectedEmailTemplateSpec.setEmailFrom(MULTILINGUAL_EMAIL_FROM);
 
         EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpec("TEST", "firstTemplateKey")
             .orElseThrow(() -> new EntityNotFoundException("Email template specification not found"));

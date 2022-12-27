@@ -2,5 +2,7 @@
 emails:
     - templateKey: firstTemplateKey
       subjectTemplate: {en: "Custom subject 1", uk: "Змінена тема 1"}
+      emailFrom: {en: "Custom email from 1", uk: "Змінене поле від 1"}
     - templateKey: thirdTemplateKey
       subjectTemplate: {en: "Custom subject 3", uk: "Змінена тема 3"}
+      emailFrom: {en: "Email from 3", uk: "Змінене поле від 3"}
