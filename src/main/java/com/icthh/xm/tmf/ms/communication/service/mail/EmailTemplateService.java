@@ -35,9 +35,9 @@ import java.util.Map;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 
 import static com.icthh.xm.tmf.ms.communication.config.Constants.CONFIG_PATH_TEMPLATE;
 import static com.icthh.xm.tmf.ms.communication.config.Constants.CUSTOM_EMAIL_PATH;
@@ -97,11 +97,12 @@ public class EmailTemplateService {
         List<String> langs = emailSpecService.getEmailSpec().getLangs();
         EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpecByKey(templateKey);
         String subjectTemplate = getSubjectTemplateByLang(emailTemplateSpec, langKey);
+        String emailFrom = getEmailFromByLang(emailTemplateSpec, langKey);
         String templatePath = emailTemplateSpec.getTemplatePath();
         String tenantKey = tenantContextHolder.getTenantKey();
         String templateContent = tenantEmailTemplateService.getEmailTemplate(tenantKey, templatePath, langKey);
 
-        return createTemplateDetails(templateContent, emailTemplateSpec, langs, subjectTemplate);
+        return createTemplateDetails(templateContent, emailTemplateSpec, langs, subjectTemplate, emailFrom);
     }
 
     @SneakyThrows
@@ -112,34 +113,46 @@ public class EmailTemplateService {
         String configPath = String.format(CONFIG_PATH_TEMPLATE, tenantKey);
 
         String subject = ofNullable(emailTemplateSpec.getSubjectTemplate().get(langKey)).orElse(StringUtils.EMPTY);
-        if (!subject.equals(updateTemplateRequest.getTemplateSubject())) {
-            updateTemplateSpecSubject(templateKey, langKey, updateTemplateRequest.getTemplateSubject(), configPath);
+        String from = ofNullable(emailTemplateSpec.getEmailFrom().get(langKey)).orElse(StringUtils.EMPTY);
+        if (!subject.equals(updateTemplateRequest.getSubjectTemplate()) || !from.equals(updateTemplateRequest.getEmailFrom())) {
+            updateTemplateSpecProps(templateKey, langKey, updateTemplateRequest.getSubjectTemplate(), updateTemplateRequest.getEmailFrom(), configPath);
         }
 
         updateTemplateContent(emailTemplateSpec.getTemplatePath(), langKey, updateTemplateRequest.getContent(), configPath);
     }
 
     private TemplateDetails createTemplateDetails(String templateContent, EmailTemplateSpec emailTemplateSpec,
-                                                  List<String> langs, String subjectTemplate) {
+                                                  List<String> langs, String subjectTemplate, String emailFrom) {
         TemplateDetails templateDetails = templateDetailsMapper.emailTemplateToDetails(emailTemplateSpec);
         templateDetails.setContent(templateContent);
         templateDetails.setSubjectTemplate(subjectTemplate);
+        templateDetails.setEmailFrom(emailFrom);
         templateDetails.setLangs(langs);
         return templateDetails;
     }
 
     private String getSubjectTemplateByLang(EmailTemplateSpec emailTemplateSpec, String langKey) {
-        return of(emailTemplateSpec)
-            .map(EmailTemplateSpec::getSubjectTemplate)
-            .map(it -> it.getOrDefault(langKey, it.get(DEFAULT_LANGUAGE)))
+        return getTemplatePropertyByLang(emailTemplateSpec, langKey, EmailTemplateSpec::getSubjectTemplate)
             .orElseThrow(() -> new EntityNotFoundException("Email subject was not found"));
     }
 
+    private String getEmailFromByLang(EmailTemplateSpec emailTemplateSpec, String langKey) {
+        return getTemplatePropertyByLang(emailTemplateSpec, langKey, EmailTemplateSpec::getEmailFrom)
+            .orElseThrow(() -> new EntityNotFoundException("Email from was not found"));
+    }
+
+    private Optional<String> getTemplatePropertyByLang(EmailTemplateSpec emailTemplateSpec, String langKey, Function<EmailTemplateSpec, Map<String, String>> fieldMapper) {
+        return of(emailTemplateSpec)
+            .map(fieldMapper)
+            .map(it -> it.getOrDefault(langKey, it.get(DEFAULT_LANGUAGE)));
+    }
+
     @SneakyThrows
-    private void updateTemplateSpecSubject(String templateKey, String langKey, String subject, String configPath) {
+    private void updateTemplateSpecProps(String templateKey, String langKey, String subject, String from, String configPath) {
         CustomEmailTemplateSpec customEmailTemplateSpec = new CustomEmailTemplateSpec();
         customEmailTemplateSpec.setTemplateKey(templateKey);
         customEmailTemplateSpec.setSubjectTemplate(Map.of(langKey, subject));
+        customEmailTemplateSpec.setEmailFrom(Map.of(langKey, from));
         CustomEmailSpec updatedCustomEmailSpec = customEmailSpecService.updateCustomEmailSpec(customEmailTemplateSpec);
 
         String emailsSpecYml = yamlMapper.writerWithDefaultPrettyPrinter().writeValueAsString(updatedCustomEmailSpec);

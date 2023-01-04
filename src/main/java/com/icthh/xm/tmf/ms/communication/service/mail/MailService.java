@@ -383,14 +383,32 @@ public class MailService {
                 emailTemplateSpec.getTemplateKey(), emailTemplateSpec.getSubjectTemplate());
 
             if (StringUtils.isBlank(mailParams.getSubject())) {
-                Map<String, String> langToSubjectMap = emailTemplateSpec.getSubjectTemplate();
-                String i18nSubject = langToSubjectMap.getOrDefault(lang, langToSubjectMap.get(DEFAULT_LANGUAGE));
-                i18nSubject = applyModel(i18nSubject, objectModel);
-                mailParams.setSubject(i18nSubject);
+                setMailSubject(emailTemplateSpec, mailParams, lang, objectModel);
+            }
+
+            if (StringUtils.isBlank(mailParams.getFrom())) {
+                setMailFrom(emailTemplateSpec, mailParams, lang, objectModel);
             }
         }
 
         return mailParams;
+    }
+
+    private void setMailSubject(EmailTemplateSpec emailTemplateSpec, MailParams mailParams, String lang, Map<String, Object> objectModel) {
+        Map<String, String> langToSubjectMap = emailTemplateSpec.getSubjectTemplate();
+        String i18nSubject = langMapToLocalizedParam(langToSubjectMap, lang, objectModel);
+        mailParams.setSubject(i18nSubject);
+    }
+
+    private void setMailFrom(EmailTemplateSpec emailTemplateSpec, MailParams mailParams, String lang, Map<String, Object> objectModel) {
+        Map<String, String> langToEmailFromMap = emailTemplateSpec.getEmailFrom();
+        String i18nFrom = langMapToLocalizedParam(langToEmailFromMap, lang, objectModel);
+        mailParams.setFrom(i18nFrom);
+    }
+
+    private String langMapToLocalizedParam(Map<String, String> langMap, String lang,  Map<String, Object> objectModel) {
+        String i18nParam = langMap.getOrDefault(lang, langMap.get(DEFAULT_LANGUAGE));
+        return applyModel(i18nParam, objectModel);
     }
 
     private String applyModel(String value, Map<String, Object> objectModel) {

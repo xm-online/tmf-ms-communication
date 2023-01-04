@@ -6,6 +6,7 @@ emails:
     - templateKey: firstTemplateKey
       name: "First template"
       subjectTemplate: {en: "Default subject 1", uk: "Тема за замовчуванням 1"}
+      emailFrom: {en: "Default email from 1", uk: "Поле від за замовчуванням 1"}
       templatePath: activation/firstTemplateKey
       contextExample: |
           {
@@ -27,6 +28,7 @@ emails:
     - templateKey: secondTemplateKey
       name: "Second template"
       subjectTemplate: {en: "Default subject 2", uk: "Тема за замовчуванням 2"}
+      emailFrom: {en: "Default email from 2", uk: "Поле від за замовчуванням 2"}
       templatePath: activation/secondTemplateKey
       contextExample: |
           {
@@ -48,4 +50,5 @@ emails:
     - templateKey: macroTemplateKey
       name: "Macro template key"
       subjectTemplate: {en: "Macro subject", uk: "Тема макроса"}
+      emailFrom: {en: "Macro email from", uk: "Поле від макроса"}
       templatePath: /config/tenants/RESINTTEST/communication/emails/templateName-BASE/en.ftl
