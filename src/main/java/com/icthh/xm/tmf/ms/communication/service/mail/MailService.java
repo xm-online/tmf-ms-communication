@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.service.mail;
 
+import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_LANGUAGE;
 import static com.icthh.xm.tmf.ms.communication.config.Constants.TRANSLATION_KEY;
 import static java.util.Locale.ENGLISH;
 import static java.util.Objects.nonNull;
@@ -383,7 +384,7 @@ public class MailService {
 
             if (StringUtils.isBlank(mailParams.getSubject())) {
                 Map<String, String> langToSubjectMap = emailTemplateSpec.getSubjectTemplate();
-                String i18nSubject = langToSubjectMap.getOrDefault(lang,langToSubjectMap.get("en"));
+                String i18nSubject = langToSubjectMap.getOrDefault(lang, langToSubjectMap.get(DEFAULT_LANGUAGE));
                 i18nSubject = applyModel(i18nSubject, objectModel);
                 mailParams.setSubject(i18nSubject);
             }

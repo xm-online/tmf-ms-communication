@@ -84,8 +84,6 @@ public class EmailTemplateServiceUnitTest {
     @Mock
     private CommonConfigRepository commonConfigRepository;
 
-    private static final String LANG_KEY = "en";
-
     @Autowired
     private freemarker.template.Configuration freeMarkerConfiguration;
 
@@ -135,11 +133,11 @@ public class EmailTemplateServiceUnitTest {
         Map<String, Object> model = Map.of("title", "Test", "baseUrl", "testUrl", "user",
             Map.of("firstName", "Name", "lastName", "Surname", "resetKey", "key"));
         String expectedContent = loadFile("templates/renderedTemplate.html");
-        RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto(content, model, LANG_KEY);
+        RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto(content, model, DEFAULT_LANGUAGE);
 
         String actual = subject.renderEmailContent(renderTemplateRequest).getContent();
 
-        verify(multiTenantLangStringTemplateLoaderService).getTemplateLoader(TENANT_KEY, LANG_KEY);
+        verify(multiTenantLangStringTemplateLoaderService).getTemplateLoader(TENANT_KEY, DEFAULT_LANGUAGE);
         verifyNoMoreInteractions(multiTenantLangStringTemplateLoaderService);
 
         assertThat(actual).isNotNull();
@@ -148,7 +146,7 @@ public class EmailTemplateServiceUnitTest {
 
     @Test(expected = RenderTemplateException.class)
     public void renderEmailContentReturnNullWhenContentNotValid() {
-        RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto("${subjectNotValid{", Map.of(), LANG_KEY);
+        RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto("${subjectNotValid{", Map.of(), DEFAULT_LANGUAGE);
 
         subject.renderEmailContent(renderTemplateRequest);
     }

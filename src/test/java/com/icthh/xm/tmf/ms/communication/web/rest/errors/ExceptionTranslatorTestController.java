@@ -10,6 +10,8 @@ import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_LANGUAGE;
+
 @RestController
 public class ExceptionTranslatorTestController {
 
@@ -60,7 +62,7 @@ public class ExceptionTranslatorTestController {
 
     @PostMapping("/test/render-template-exception")
     public void renderTemplateException() {
-        throw new RenderTemplateException("render failed", "${{test", Map.of("test", "test"), "en");
+        throw new RenderTemplateException("render failed", "${{test", Map.of("test", "test"), DEFAULT_LANGUAGE);
     }
 
     public static class TestDTO {
