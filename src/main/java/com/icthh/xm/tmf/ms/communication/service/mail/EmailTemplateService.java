@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.service.mail;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
@@ -54,6 +55,7 @@ public class EmailTemplateService {
     private final CommonConfigRepository  commonConfigRepository;
     private final TenantContextHolder tenantContextHolder;
     private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+    private final ObjectMapper jsonMapper = new ObjectMapper();
     private final TemplateDetailsMapper templateDetailsMapper;
 
     @SneakyThrows
@@ -83,7 +85,7 @@ public class EmailTemplateService {
         String tenantKey = tenantContextHolder.getTenantKey();
         String templateContent = tenantEmailTemplateService.getEmailTemplate(tenantKey, templatePath, langKey);
 
-        return createTemplateDetails(templateContent, emailTemplateSpec, langs, subjectTemplate);
+        return createTemplateDetails(templateContent, emailTemplateSpec, langs, subjectTemplate, langKey);
     }
 
     @SneakyThrows
@@ -102,11 +104,20 @@ public class EmailTemplateService {
     }
 
     private TemplateDetails createTemplateDetails(String templateContent, EmailTemplateSpec emailTemplateSpec,
-                                                  List<String> langs, String subjectTemplate) {
+                                                  List<String> langs, String subjectTemplate, String langKey) {
         TemplateDetails templateDetails = templateDetailsMapper.emailTemplateToDetails(emailTemplateSpec);
         templateDetails.setContent(templateContent);
         templateDetails.setSubjectTemplate(subjectTemplate);
         templateDetails.setLangs(langs);
+
+        List<String> dependsOnTemplateKeys = emailTemplateSpec.getDependsOnTemplateKeys();
+        dependsOnTemplateKeys.forEach(it -> {
+            TemplateDetails parentTemplateDetails = getTemplateDetailsByKey(it, langKey);
+            templateDetails.setContextExample(mergeJsons(parentTemplateDetails.getContextExample(), templateDetails.getContextExample()));
+            templateDetails.setContextSpec(mergeJsons(parentTemplateDetails.getContextSpec(), templateDetails.getContextSpec()));
+            templateDetails.setContextForm(mergeJsons(parentTemplateDetails.getContextForm(), templateDetails.getContextForm()));
+        });
+
         return templateDetails;
     }
 
@@ -158,5 +169,13 @@ public class EmailTemplateService {
         configs = configs == null ? new HashMap<>() : configs;
 
         return ofNullable(configs.get(configPath));
+    }
+
+    @SneakyThrows
+    private String mergeJsons(String targetJson, String sourceJson) {
+        JsonNode targetNode = jsonMapper.readValue(targetJson, JsonNode.class);
+        targetNode = jsonMapper.readerForUpdating(targetNode).readValue(sourceJson);
+
+        return jsonMapper.writeValueAsString(targetNode);
     }
 }

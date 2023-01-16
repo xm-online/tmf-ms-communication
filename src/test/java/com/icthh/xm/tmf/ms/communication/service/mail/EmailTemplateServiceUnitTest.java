@@ -24,6 +24,7 @@ import com.icthh.xm.tmf.ms.communication.mapper.TemplateDetailsMapper;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,6 +61,7 @@ import static org.mockito.Mockito.mock;
 @RunWith(SpringRunner.class)
 @EnableAutoConfiguration(exclude = MessageCollectorAutoConfiguration.class)
 @SpringBootTest(classes = {CommunicationApp.class, SecurityBeanOverrideConfiguration.class})
+@Slf4j
 public class EmailTemplateServiceUnitTest {
 
     private static final String TENANT_KEY = "TEST";
@@ -69,7 +71,7 @@ public class EmailTemplateServiceUnitTest {
     private static final String CUSTOM_EMAILS_TEMPLATES_PATH = "/config/tenants/TEST/communication/custom-emails/";
     private static final String CUSTOM_EMAIL_TEMPLATES_PATH = "/config/tenants/TEST/communication/custom-emails/activation/firstTemplateKey/en.ftl";
     private static final String EMAIL_TEMPLATE_PATH = "/config/tenants/TEST/communication/emails/activation/secondTemplateKey/en.ftl";
-
+    private static final String BASE_EMAIL_TEMPLATE_PATH = "/config/tenants/TEST/communication/emails/activation/base/en.ftl";
     private TenantContextHolder tenantContextHolder;
 
     private EmailSpecService emailSpecService;
@@ -198,6 +200,26 @@ public class EmailTemplateServiceUnitTest {
         tenantEmailTemplateService.onRefresh(itTemplate, templateBody);
 
         TemplateDetails actual = subject.getTemplateDetailsByKey("secondTemplateKey", "it");
+
+        assertThat(actual.getContent()).isEqualTo(templateBody);
+        assertThat(actual.getContextForm()).isEqualTo(expected.getContextForm());
+        assertThat(actual.getContextSpec()).isEqualTo(expected.getContextSpec());
+        assertThat(actual.getContextExample()).isEqualTo(expected.getContextExample());
+        assertThat(actual.getSubjectTemplate()).isEqualTo(expected.getSubjectTemplate().get(DEFAULT_LANGUAGE));
+    }
+
+    @Test
+    public void getTemplateDetailsByKeyWithDepends() {
+        String emailSpecificationConfig = loadFile("config/specs/email-spec-depends.yml");
+        EmailTemplateSpec expected = readConfiguration(emailSpecificationConfig, EmailSpec.class).getEmails().get(2);
+        String templateBody = loadFile("templates/templateToRender.ftl");
+
+        emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
+        tenantEmailTemplateService.onRefresh(BASE_EMAIL_TEMPLATE_PATH, templateBody);
+        tenantEmailTemplateService.onRefresh(EMAIL_TEMPLATE_PATH, templateBody);
+
+        TemplateDetails actual = subject.getTemplateDetailsByKey("secondTemplateKey", DEFAULT_LANGUAGE);
+
 
         assertThat(actual.getContent()).isEqualTo(templateBody);
         assertThat(actual.getContextForm()).isEqualTo(expected.getContextForm());

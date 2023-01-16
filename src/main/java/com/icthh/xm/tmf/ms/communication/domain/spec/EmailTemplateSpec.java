@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -20,6 +21,7 @@ public class EmailTemplateSpec {
     private String contextExample;
     private String contextSpec;
     private String contextForm;
+    private List<String> dependsOnTemplateKeys;
 
     public EmailTemplateSpec override(@Nullable CustomEmailTemplateSpec customEmailTemplateSpec) {
         Map<String, String> subject = Optional.ofNullable(customEmailTemplateSpec)
@@ -33,7 +35,8 @@ public class EmailTemplateSpec {
                 templatePath,
                 contextExample,
                 contextSpec,
-                contextForm
+                contextForm,
+                dependsOnTemplateKeys
         );
     }
 }

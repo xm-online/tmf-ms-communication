@@ -136,8 +136,8 @@ public class EmailTemplateControllerTest {
         Map<String, String> firstSubject = Map.of(DEFAULT_LANGUAGE,"Subject 1");
         Map<String, String> secondSubject = Map.of(DEFAULT_LANGUAGE,"Subject 2");
         List<EmailTemplateSpec> emailTemplateSpecList = List.of(
-            new EmailTemplateSpec("firstKey", "Name 1", firstSubject, "firstKey.ftl", "{}", "{}", "{}"),
-            new EmailTemplateSpec("secondKey", "Name 2", secondSubject, "secondKey.ftl", "{}", "{}", "{}")
+            new EmailTemplateSpec("firstKey", "Name 1", firstSubject, "firstKey.ftl", "{}", "{}", "{}", List.of()),
+            new EmailTemplateSpec("secondKey", "Name 2", secondSubject, "secondKey.ftl", "{}", "{}", "{}", List.of())
         );
         EmailSpec emailSpec = new EmailSpec();
         emailSpec.setEmails(emailTemplateSpecList);
