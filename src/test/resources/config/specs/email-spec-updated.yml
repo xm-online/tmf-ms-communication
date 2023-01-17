@@ -6,6 +6,7 @@ emails:
       name: "Template name"
       subjectTemplate: {en: "Subject name"}
       templatePath: uaa/activate
+      dependsOnTemplateKeys: []
       contextExample: |
           {
               "name": "Default name"
@@ -27,6 +28,7 @@ emails:
       name: "Second template"
       subjectTemplate: {en: "Default subject 2"}
       templatePath: uaa/reset
+      dependsOnTemplateKeys: []
       contextExample: |
           {
               "title": "Default title"

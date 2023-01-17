@@ -3,31 +3,11 @@ langs:
     - en
     - uk
 emails:
-    -   templateKey: firstTemplateKey
-        name: "First template"
-        subjectTemplate: { en: "Default subject 1", uk: "Тема за замовчуванням 1" }
-        templatePath: activation/firstTemplateKey
-        contextExample: |
-            {
-                "name": "Default name"
-            }
-        contextSpec: |
-            {
-                "type": "object",
-                "properties": {
-                    "name": { "type": "string" }
-                }
-            }
-        contextForm: |
-            {
-              "form": [
-                 { "key": "name", "title": { "en": "Name" }, "type": "string" }
-              ]
-            }
     - templateKey: firstTemplateKey
       name: "First template"
       subjectTemplate: {en: "Default subject 1", uk: "Тема за замовчуванням 1"}
       templatePath: activation/firstTemplateKey
+      dependsOnTemplateKeys: []
       contextExample: |
           {
               "name": "Default name"
@@ -49,6 +29,7 @@ emails:
       name: "Second template"
       subjectTemplate: {en: "Default subject 2", uk: "Тема за замовчуванням 2"}
       templatePath: activation/secondTemplateKey
+      dependsOnTemplateKeys: []
       contextExample: |
           {
               "title": "Default title"

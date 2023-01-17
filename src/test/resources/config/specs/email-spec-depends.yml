@@ -53,7 +53,7 @@ emails:
       subjectTemplate: {en: "Default subject 2", uk: "Тема за замовчуванням 2"}
       templatePath: activation/secondTemplateKey
       dependsOnTemplateKeys:
-          - baseKey
+          - firstTemplateKey
       contextExample: |
           {
               "title": "Default title"

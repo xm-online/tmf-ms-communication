@@ -6,6 +6,7 @@ emails:
       name: "Activation email"
       subjectTemplate: {en: "Account activation"}
       templatePath: uaa/activation
+      dependsOnTemplateKeys: []
       contextExample: |
           {
               "user": {
@@ -43,6 +44,7 @@ emails:
       name: "Account creation email"
       subjectTemplate: {en: "Account creation"}
       templatePath: uaa/creation
+      dependsOnTemplateKeys: []
       contextExample: |
           {
               "user": {
@@ -80,6 +82,7 @@ emails:
       name: "Password reset email"
       subjectTemplate: {en: "uaa password reset"}
       templatePath: uaa/passwordReset
+      dependsOnTemplateKeys: []
       contextExample: |
           {
               "user": {
