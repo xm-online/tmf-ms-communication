@@ -1,0 +1,6 @@
+---
+kafkaQueueParams:
+    retriesCount: 3
+    backOffPeriod: 10000
+    deadLetterQueue: test
+    isolationLevel: read_committed

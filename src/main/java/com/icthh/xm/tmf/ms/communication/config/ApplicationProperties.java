@@ -39,6 +39,8 @@ public class ApplicationProperties {
     private Messaging messaging = new Messaging();
     private BusinessRule businessRule = new BusinessRule();
     private String exceptionTranslator;
+    private String topicSpecificationPathPattern;
+    private String emailQueueNameTemplate;
 
     @Getter
     @Setter
@@ -117,5 +119,11 @@ public class ApplicationProperties {
         private int maxAttempts;
         private long delay;
         private int multiplier;
+    }
+
+    @Getter
+    @Setter
+    public static class TopicSpec {
+        private boolean enabled;
     }
 }
