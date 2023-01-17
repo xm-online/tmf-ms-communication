@@ -1,0 +1,9 @@
+{
+    "type": "object",
+    "properties":
+        {
+            "baseName": { "type": "string" },
+            "name": { "type": "string" },
+            "title": { "type": "string" }
+        }
+}

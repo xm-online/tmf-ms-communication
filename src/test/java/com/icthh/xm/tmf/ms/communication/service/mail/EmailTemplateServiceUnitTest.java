@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.service.mail;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
@@ -68,8 +69,9 @@ public class EmailTemplateServiceUnitTest {
     private static final String CUSTOM_EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/custom-email-spec.yml";
     private static final String CUSTOM_EMAILS_TEMPLATES_PATH = "/config/tenants/TEST/communication/custom-emails/";
     private static final String CUSTOM_EMAIL_TEMPLATES_PATH = "/config/tenants/TEST/communication/custom-emails/activation/firstTemplateKey/en.ftl";
-    private static final String EMAIL_TEMPLATE_PATH = "/config/tenants/TEST/communication/emails/activation/secondTemplateKey/en.ftl";
-
+    private static final String FIRST_EMAIL_TEMPLATE_PATH = "/config/tenants/TEST/communication/emails/activation/firstTemplateKey/en.ftl";
+    private static final String SECOND_EMAIL_TEMPLATE_PATH = "/config/tenants/TEST/communication/emails/activation/secondTemplateKey/en.ftl";
+    private static final String BASE_EMAIL_TEMPLATE_PATH = "/config/tenants/TEST/communication/emails/activation/base/en.ftl";
     private TenantContextHolder tenantContextHolder;
 
     private EmailSpecService emailSpecService;
@@ -95,6 +97,9 @@ public class EmailTemplateServiceUnitTest {
     @Autowired
     private TenantEmailTemplateService tenantEmailTemplateService;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @MockBean
     private SmppService smppService;
 
@@ -116,6 +121,7 @@ public class EmailTemplateServiceUnitTest {
             customEmailSpecService,
             commonConfigRepository,
             tenantContextHolder,
+            objectMapper,
             templateDetailsMapper);
     }
 
@@ -168,7 +174,7 @@ public class EmailTemplateServiceUnitTest {
         String templateBody = loadFile("templates/templateToRender.ftl");
 
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
-        tenantEmailTemplateService.onRefresh(EMAIL_TEMPLATE_PATH, templateBody);
+        tenantEmailTemplateService.onRefresh(SECOND_EMAIL_TEMPLATE_PATH, templateBody);
 
         TemplateDetails actual = subject.getTemplateDetailsByKey("secondTemplateKey", DEFAULT_LANGUAGE);
 
@@ -204,6 +210,26 @@ public class EmailTemplateServiceUnitTest {
         assertThat(actual.getContextSpec()).isEqualTo(expected.getContextSpec());
         assertThat(actual.getContextExample()).isEqualTo(expected.getContextExample());
         assertThat(actual.getSubjectTemplate()).isEqualTo(expected.getSubjectTemplate().get(DEFAULT_LANGUAGE));
+    }
+
+    @Test
+    public void getTemplateDetailsByKeyWithDepends() {
+        String emailSpecificationConfig = loadFile("config/specs/email-spec-depends.yml");
+        String contextExampleExpected = loadFile("config/specs/context-example-depends-expected.json");
+        String contextSpecExpected = loadFile("config/specs/context-spec-depends-expected.json");
+        String contextFormExpected = loadFile("config/specs/context-form-depends-expected.json");
+        String templateBody = loadFile("templates/templateToRender.ftl");
+
+        emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
+        tenantEmailTemplateService.onRefresh(BASE_EMAIL_TEMPLATE_PATH, templateBody);
+        tenantEmailTemplateService.onRefresh(FIRST_EMAIL_TEMPLATE_PATH, templateBody);
+        tenantEmailTemplateService.onRefresh(SECOND_EMAIL_TEMPLATE_PATH, templateBody);
+
+        TemplateDetails actual = subject.getTemplateDetailsByKey("secondTemplateKey", DEFAULT_LANGUAGE);
+
+        assertThat(toJsonNode(actual.getContextExample())).isEqualTo(toJsonNode(contextExampleExpected));
+        assertThat(toJsonNode(actual.getContextSpec())).isEqualTo(toJsonNode(contextSpecExpected));
+        assertThat(toJsonNode(actual.getContextForm())).isEqualTo(toJsonNode(contextFormExpected));
     }
 
     @Test
@@ -273,6 +299,11 @@ public class EmailTemplateServiceUnitTest {
     private boolean isExpectedEmail(Configuration configuration) {
         return configuration.getPath().equals(CUSTOM_EMAILS_TEMPLATES_PATH + "uaa/activate/en.ftl")
             && configuration.getContent().equals(loadFile("templates/updatedTemplate.ftl"));
+    }
+
+    @SneakyThrows
+    private JsonNode toJsonNode(String json) {
+        return objectMapper.readValue(json, JsonNode.class);
     }
 
 }
