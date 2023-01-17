@@ -14,6 +14,7 @@ buildscript {
 
 plugins {
     id "java"
+    id "groovy"
     id "maven-publish"
     id "idea"
     id "jacoco"
@@ -67,6 +68,28 @@ idea {
     }
 }
 
+String[] testCategories = ['com.icthh.xm.tmf.ms.communication.AbstractSpringBootTest',
+                           'com.icthh.xm.tmf.ms.communication.AbstractUnitTest',
+                           'com.icthh.xm.tmf.ms.communication.AbstractWebMvcTest']
+
+Closure testLoggingConf = {
+    exceptionFormat = 'full'
+    events "passed", "skipped", "failed"//, "standardError" //, "standardOut"
+}
+
+sourceSets {
+    test {
+        groovy {
+            srcDirs += ['src/test/lep']
+        }
+    }
+    main {
+        groovy {
+            srcDirs += ['src/main/lep']
+        }
+    }
+}
+
 eclipse {
     sourceSets {
         main {
@@ -113,17 +136,41 @@ springBoot {
 }
 
 test {
-    useJUnitPlatform()
-    exclude "**/*IT*", "**/*IntTest*"
 
-    testLogging {
-        exceptionFormat = 'full'
-        events 'PASSED', 'FAILED', 'SKIPPED'
+    doFirst {
+        println '!!! ATTENTION: start execution of non-categorized tests. it may impact test performance !!!'
     }
+
+    exclude '**/CucumberTest*'
+    dependsOn 'clean', 'runCategorizedTests'
+    classes.mustRunAfter 'clean'
+    systemProperty "spring.profiles.active", "test"
+    mkdir("src/test/features")
+    include '**/*UnitTest*'
+    include '**/*IntTest*'
+
+    // to run all test that was not categorized
+    useJUnit {
+        excludeCategories(testCategories)
+    }
+
     // uncomment if the tests reports are not generated
     // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
     // ignoreFailures true
     reports.html.enabled = true
+    testLogging testLoggingConf
+
+    doLast {
+        println '!!! ATTENTION: check if there are non-categorized tests !!!'
+    }
+
+}
+
+task runCategorizedTests(type: Test) {
+    useJUnit {
+        includeCategories(testCategories)
+    }
+    testLogging testLoggingConf
 }
 
 task cucumberTest(type: Test) {
@@ -256,8 +303,6 @@ dependencies {
     testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:${archunit_junit5_version}"
     testImplementation "org.assertj:assertj-core"
     testImplementation "junit:junit"
-    testImplementation "org.mockito:mockito-core:3.8.0"
-    testImplementation "org.mockito:mockito-inline:3.8.0"
     testImplementation "org.hamcrest:hamcrest-library"
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 
@@ -303,9 +348,24 @@ dependencies {
 
     testCompileOnly "org.projectlombok:lombok:${lombok_version}"
     testAnnotationProcessor "org.projectlombok:lombok:${lombok_version}"
-    testImplementation "com.github.stefanbirkner:system-rules:${system_rules_version}"
-    testImplementation "org.testcontainers:testcontainers:${testcontainers_version}"
-    testImplementation "org.springframework.cloud:spring-cloud-stream-test-support"
+    testImplementation "com.jayway.jsonpath:json-path"
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
+        exclude module: "junit"
+        exclude group: "com.vaadin.external.google", module: "android-json"
+    }
+    testImplementation "org.springframework.boot:spring-boot-test"
+    testImplementation "org.junit.jupiter:junit-jupiter-engine"
+    testImplementation "org.junit.vintage:junit-vintage-engine"
+    testImplementation "com.tngtech.archunit:archunit-junit5-api:${archunit_junit5_version}"
+    testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:${archunit_junit5_version}"
+    testImplementation "org.assertj:assertj-core"
+    testImplementation "junit:junit"
+    testImplementation "org.mockito:mockito-core:3.8.0"
+    testImplementation "org.mockito:mockito-inline:3.8.0"
+    testImplementation "org.hamcrest:hamcrest-library"
+    testImplementation "com.h2database:h2"
+    testImplementation "org.testcontainers:testcontainers:1.10.1"
+    testImplementation 'org.springframework.cloud:spring-cloud-stream-test-support'
 
     implementation 'com.google.firebase:firebase-admin:7.0.0'
     implementation "org.freemarker:freemarker:${freemarker_version}"
