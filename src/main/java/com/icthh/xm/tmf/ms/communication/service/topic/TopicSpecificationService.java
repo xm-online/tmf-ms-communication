@@ -12,12 +12,12 @@ import com.icthh.xm.tmf.ms.communication.mapper.TopicConfigMapper;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @Service
@@ -25,16 +25,16 @@ public class TopicSpecificationService implements DynamicConsumerConfiguration {
 
     private final Map<String, DynamicConsumer> dynamicConsumersByTenant = new ConcurrentHashMap<>();
     private final ObjectMapper ymlMapper = new ObjectMapper(new YAMLFactory());
-    private final TopicMessageHandler topicMessageHandler;
     private final TopicConfigMapper topicConfigMapper;
     private final String topicNameTemplate;
+    private final TopicMessageHandlerFactory topicMessageHandlerFactory;
 
-    public TopicSpecificationService (ApplicationProperties applicationProperties,
-                                      TopicMessageHandler topicMessageHandler,
-                                      TopicConfigMapper topicConfigMapper) {
+    public TopicSpecificationService(ApplicationProperties applicationProperties,
+                                     TopicConfigMapper topicConfigMapper,
+                                     TopicMessageHandlerFactory topicMessageHandlerFactory) {
         this.topicNameTemplate = applicationProperties.getEmailQueueNameTemplate();
-        this.topicMessageHandler = topicMessageHandler;
         this.topicConfigMapper = topicConfigMapper;
+        this.topicMessageHandlerFactory = topicMessageHandlerFactory;
     }
 
     public void processTopicSpecifications(String tenantKey, String config) {
@@ -52,7 +52,10 @@ public class TopicSpecificationService implements DynamicConsumerConfiguration {
     @Override
     public List<DynamicConsumer> getDynamicConsumers(String tenantKey) {
         DynamicConsumer dynamicConsumer = dynamicConsumersByTenant.get(tenantKey);
-        return Collections.singletonList(dynamicConsumer);
+        if (dynamicConsumer == null) {
+            return emptyList();
+        }
+        return singletonList(dynamicConsumer);
     }
 
     @SneakyThrows
@@ -61,6 +64,7 @@ public class TopicSpecificationService implements DynamicConsumerConfiguration {
     }
 
     private DynamicConsumer buildDynamicConsumer(TopicConfig topicConfig) {
+        TopicMessageHandler topicMessageHandler = topicMessageHandlerFactory.createTopicMessageHandler();
         DynamicConsumer dynamicConsumer = new DynamicConsumer();
         dynamicConsumer.setConfig(topicConfig);
         dynamicConsumer.setMessageHandler(topicMessageHandler);
@@ -70,7 +74,7 @@ public class TopicSpecificationService implements DynamicConsumerConfiguration {
     private TopicConfig buildTopicConfig(String tenantKey, TopicKafkaQueueParamsSpec kafkaQueueParams) {
         TopicConfig topicConfig = topicConfigMapper.topicKafkaQueueParamsToConfig(kafkaQueueParams);
         String topicName = String.format(topicNameTemplate, tenantKey);
-        topicConfig.setKey(UUID.randomUUID().toString());
+        topicConfig.setKey(topicName);
         topicConfig.setTopicName(topicName);
         return topicConfig;
     }

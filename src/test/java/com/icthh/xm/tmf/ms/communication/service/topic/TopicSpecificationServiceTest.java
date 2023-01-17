@@ -41,7 +41,7 @@ public class TopicSpecificationServiceTest {
     private ApplicationProperties applicationProperties;
 
     @Autowired
-    private TopicMessageHandler topicMessageHandler;
+    private TopicMessageHandlerFactory topicMessageHandlerFactory;
 
     @Autowired
     private TopicConfigMapper topicConfigMapper;
@@ -54,7 +54,7 @@ public class TopicSpecificationServiceTest {
 
     @Before
     public void setup() {
-        subject = new TopicSpecificationService(applicationProperties, topicMessageHandler, topicConfigMapper);
+        subject = new TopicSpecificationService(applicationProperties, topicConfigMapper, topicMessageHandlerFactory);
     }
 
     @Test
@@ -75,7 +75,15 @@ public class TopicSpecificationServiceTest {
         assertThat(dynamicConsumer.getConfig().getIsolationLevel()).isEqualTo("read_committed");
         assertThat(dynamicConsumer.getConfig().getDeadLetterQueue()).isEqualTo("test");
         assertThat(dynamicConsumer.getMessageHandler()).isNotNull();
-        assertThat(dynamicConsumer.getMessageHandler()).isEqualTo(topicMessageHandler);
+    }
+
+    @Test
+    public void processTopicSpecificationWhenConfigEmpty() {
+        subject.processTopicSpecifications(TENANT, "");
+
+        List<DynamicConsumer> actual = subject.getDynamicConsumers(TENANT);
+
+        assertThat(actual).isEmpty();
     }
 
     @SneakyThrows

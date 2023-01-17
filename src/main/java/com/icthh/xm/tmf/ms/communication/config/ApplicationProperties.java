@@ -41,6 +41,7 @@ public class ApplicationProperties {
     private String exceptionTranslator;
     private String topicSpecificationPathPattern;
     private String emailQueueNameTemplate;
+    private TopicSpec topicSpec;
 
     @Getter
     @Setter
