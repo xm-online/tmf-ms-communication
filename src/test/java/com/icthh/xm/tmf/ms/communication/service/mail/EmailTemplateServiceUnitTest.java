@@ -25,7 +25,6 @@ import com.icthh.xm.tmf.ms.communication.mapper.TemplateDetailsMapper;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -62,7 +61,6 @@ import static org.mockito.Mockito.mock;
 @RunWith(SpringRunner.class)
 @EnableAutoConfiguration(exclude = MessageCollectorAutoConfiguration.class)
 @SpringBootTest(classes = {CommunicationApp.class, SecurityBeanOverrideConfiguration.class})
-@Slf4j
 public class EmailTemplateServiceUnitTest {
 
     private static final String TENANT_KEY = "TEST";
@@ -84,8 +82,6 @@ public class EmailTemplateServiceUnitTest {
 
     private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
 
-    private final ObjectMapper jsonMapper = new ObjectMapper();
-
     @Mock
     private CommonConfigRepository commonConfigRepository;
 
@@ -100,6 +96,9 @@ public class EmailTemplateServiceUnitTest {
 
     @Autowired
     private TenantEmailTemplateService tenantEmailTemplateService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockBean
     private SmppService smppService;
@@ -122,6 +121,7 @@ public class EmailTemplateServiceUnitTest {
             customEmailSpecService,
             commonConfigRepository,
             tenantContextHolder,
+            objectMapper,
             templateDetailsMapper);
     }
 
@@ -303,7 +303,7 @@ public class EmailTemplateServiceUnitTest {
 
     @SneakyThrows
     private JsonNode toJsonNode(String json) {
-        return jsonMapper.readValue(json, JsonNode.class);
+        return objectMapper.readValue(json, JsonNode.class);
     }
 
 }

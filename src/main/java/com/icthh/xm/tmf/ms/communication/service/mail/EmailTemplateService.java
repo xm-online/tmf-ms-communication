@@ -55,7 +55,7 @@ public class EmailTemplateService {
     private final CommonConfigRepository  commonConfigRepository;
     private final TenantContextHolder tenantContextHolder;
     private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
-    private final ObjectMapper jsonMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
     private final TemplateDetailsMapper templateDetailsMapper;
 
     @SneakyThrows
@@ -111,12 +111,14 @@ public class EmailTemplateService {
         templateDetails.setLangs(langs);
 
         List<String> dependsOnTemplateKeys = emailTemplateSpec.getDependsOnTemplateKeys();
-        dependsOnTemplateKeys.forEach(it -> {
-            TemplateDetails parentTemplateDetails = getTemplateDetailsByKey(it, langKey);
-            templateDetails.setContextExample(mergeJsons(parentTemplateDetails.getContextExample(), templateDetails.getContextExample()));
-            templateDetails.setContextSpec(mergeJsons(parentTemplateDetails.getContextSpec(), templateDetails.getContextSpec()));
-            templateDetails.setContextForm(mergeJsons(parentTemplateDetails.getContextForm(), templateDetails.getContextForm()));
-        });
+        if (dependsOnTemplateKeys != null) {
+            dependsOnTemplateKeys.forEach(it -> {
+                TemplateDetails parentTemplateDetails = getTemplateDetailsByKey(it, langKey);
+                templateDetails.setContextExample(mergeJsons(parentTemplateDetails.getContextExample(), templateDetails.getContextExample()));
+                templateDetails.setContextSpec(mergeJsons(parentTemplateDetails.getContextSpec(), templateDetails.getContextSpec()));
+                templateDetails.setContextForm(mergeJsons(parentTemplateDetails.getContextForm(), templateDetails.getContextForm()));
+            });
+        }
 
         return templateDetails;
     }
@@ -173,9 +175,9 @@ public class EmailTemplateService {
 
     @SneakyThrows
     private String mergeJsons(String targetJson, String sourceJson) {
-        JsonNode targetNode = jsonMapper.readValue(targetJson, JsonNode.class);
-        targetNode = jsonMapper.readerForUpdating(targetNode).readValue(sourceJson);
+        JsonNode targetNode = objectMapper.readValue(targetJson, JsonNode.class);
+        targetNode = objectMapper.readerForUpdating(targetNode).readValue(sourceJson);
 
-        return jsonMapper.writeValueAsString(targetNode);
+        return objectMapper.writeValueAsString(targetNode);
     }
 }
