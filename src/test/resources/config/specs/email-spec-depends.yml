@@ -6,6 +6,7 @@ emails:
     - templateKey: baseKey
       name: "Base template"
       subjectTemplate: { en: "Default base subject 1", uk: "Базова тема за замовчуванням 1" }
+      emailFrom: { en: "Default email from 1", uk: "Поле від за замовчуванням 1" }
       templatePath: activation/base
       dependsOnTemplateKeys: []
       contextExample: |
@@ -28,6 +29,7 @@ emails:
     - templateKey: firstTemplateKey
       name: "First template"
       subjectTemplate: {en: "Default subject 1", uk: "Тема за замовчуванням 1"}
+      emailFrom: {en: "Default email from 1", uk: "Поле від за замовчуванням 1"}
       templatePath: activation/firstTemplateKey
       dependsOnTemplateKeys:
           - baseKey
@@ -51,6 +53,7 @@ emails:
     - templateKey: secondTemplateKey
       name: "Second template"
       subjectTemplate: {en: "Default subject 2", uk: "Тема за замовчуванням 2"}
+      emailFrom: {en: "Default email from 2", uk: "Поле від за замовчуванням 2"}
       templatePath: activation/secondTemplateKey
       dependsOnTemplateKeys:
           - firstTemplateKey
