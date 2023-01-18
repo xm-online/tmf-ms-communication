@@ -182,7 +182,7 @@ public class MailServiceUnitTest {
         templateService.onRefresh(mainPath, body);
         templateService.onRefresh(basePath, base);
 
-        MailService spiedMailService = spy(mailService);
+        MailService spiedMailService = spy((MailService)AopTestUtils.getUltimateTargetObject(mailService));
         spiedMailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME),
             ENGLISH,
             TEMPLATE_NAME,
