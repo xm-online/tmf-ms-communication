@@ -1,0 +1,20 @@
+{
+    "form":
+        [
+            {
+                "key": "baseName",
+                "title": { "en": "Base name" },
+                "type": "string"
+            },
+            {
+                "key":"name",
+                "title": { "en": "Name" },
+                "type": "string"
+            },
+            {
+                "key": "title",
+                "title": { "en": "Title" },
+                "type": "string"
+            }
+        ]
+}
