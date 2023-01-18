@@ -45,6 +45,7 @@ import org.springframework.cloud.stream.test.binder.MessageCollectorAutoConfigur
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.util.AopTestUtils;
 import org.springframework.web.client.RestTemplate;
 import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
 
@@ -122,7 +123,7 @@ public class MailServiceUnitTest {
         String base = "<#macro body>BASE_START<#nested>BASE_END</#macro>";
         templateService.onRefresh(mainPath, body);
         templateService.onRefresh(basePath, base);
-        MailService spiedMailService = spy(mailService);
+        MailService spiedMailService = spy((MailService)AopTestUtils.getUltimateTargetObject(mailService));
         spiedMailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME),
             ENGLISH,
             TEMPLATE_NAME,

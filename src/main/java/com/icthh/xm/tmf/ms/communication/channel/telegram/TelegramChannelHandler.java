@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.channel.telegram;
 
+import com.icthh.xm.commons.logging.trace.SleuthWrapper;
 import com.icthh.xm.commons.topic.config.MessageListenerContainerBuilder;
 import com.icthh.xm.commons.topic.domain.ConsumerHolder;
 import com.icthh.xm.commons.topic.domain.TopicConfig;
@@ -38,6 +39,7 @@ public class TelegramChannelHandler implements ChannelHandler {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final KafkaProperties kafkaProperties;
     private final TelegramService telegramService;
+    private final SleuthWrapper sleuthWrapper;
 
     @Getter
     private Map<String, Map<String, ConsumerHolder>> tenantTelegramConsumers = new ConcurrentHashMap<>();
@@ -85,7 +87,7 @@ public class TelegramChannelHandler implements ChannelHandler {
     protected AbstractMessageListenerContainer buildListenerContainer(String tenantKey, TopicConfig topicConfig) {
         KafkaToTelegramMessageHandler messageHandler = new KafkaToTelegramMessageHandler(telegramService);
         return new MessageListenerContainerBuilder(kafkaProperties, kafkaTemplate)
-            .build(tenantKey, topicConfig, messageHandler);
+            .build(tenantKey, topicConfig, messageHandler, sleuthWrapper);
     }
 
     private void stopAllTenantConsumers(String tenantKey) {

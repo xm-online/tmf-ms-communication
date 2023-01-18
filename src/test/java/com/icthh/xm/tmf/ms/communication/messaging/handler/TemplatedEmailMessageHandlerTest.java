@@ -121,6 +121,43 @@ public class TemplatedEmailMessageHandlerTest {
         }
     }
 
+    @Test
+    public void testHandleMessageShouldSendEmailWithTemplateModel() {
+        CommunicationMessageCreate messageCreate = new CommunicationMessageCreate();
+        messageCreate.setContent("content");
+        messageCreate.setSubject("subject");
+        messageCreate.setReceiver(List.of(new Receiver().email("email")));
+        messageCreate.setSender(new Sender().id("sender"));
+        messageCreate.setSender(new Sender().id("sender"));
+        messageCreate.setType("TemplatedEmail");
+        List<CommunicationRequestCharacteristic> characteristics = createBaseTemplateCharacteristicList();
+        characteristics.add(createBaseTemplateCharacteristic("templateModel", "{ \"value\": 15 }"));
+        messageCreate.setCharacteristic(characteristics);
+
+        TenantContext tenantContextMock = mock(TenantContext.class);
+        when(tenantContextMock.getTenantKey()).thenReturn(Optional.of(new TenantKey("xm")));
+
+        when(tenantContextHolder.getContext()).thenReturn(tenantContextMock);
+        when(mapper.messageCreateToMessage(messageCreate)).thenReturn(new CommunicationMessage());
+
+        try (MockedStatic<MdcUtils> utilities = Mockito.mockStatic(MdcUtils.class)) {
+            utilities.when(MdcUtils::generateRid).thenReturn("rid");
+
+            templatedEmailMessageHandler.handle(messageCreate);
+
+            verify(mailService).sendEmailFromTemplateWithAttachments(
+                TenantContextUtils.getRequiredTenantKey(tenantContextHolder.getContext()),
+                Locale.ENGLISH,
+                "templateName",
+                "subject",
+                "email",
+                Map.of("value", 15),
+                "rid",
+                "sender",
+                Map.of());
+        }
+    }
+
     private List<CommunicationRequestCharacteristic> createBaseTemplateCharacteristicList() {
         List<CommunicationRequestCharacteristic> characteristics = new ArrayList<>();
 

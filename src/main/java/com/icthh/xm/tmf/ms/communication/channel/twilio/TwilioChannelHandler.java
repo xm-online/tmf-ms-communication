@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.channel.twilio;
 
+import com.icthh.xm.commons.logging.trace.SleuthWrapper;
 import com.icthh.xm.commons.topic.config.MessageListenerContainerBuilder;
 import com.icthh.xm.commons.topic.domain.ConsumerHolder;
 import com.icthh.xm.commons.topic.domain.TopicConfig;
@@ -37,6 +38,7 @@ public class TwilioChannelHandler implements ChannelHandler {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final KafkaProperties kafkaProperties;
     private final TwilioService twilioService;
+    private final SleuthWrapper sleuthWrapper;
 
     @Getter
     private Map<String, Map<String, ConsumerHolder>> tenantTwilioConsumers = new ConcurrentHashMap<>();
@@ -82,7 +84,7 @@ public class TwilioChannelHandler implements ChannelHandler {
     protected AbstractMessageListenerContainer buildListenerContainer(String tenantKey, TopicConfig topicConfig) {
         KafkaToTwilioMessageHandler messageHandler = new KafkaToTwilioMessageHandler(twilioService);
         return new MessageListenerContainerBuilder(kafkaProperties, kafkaTemplate)
-            .build(tenantKey, topicConfig, messageHandler);
+            .build(tenantKey, topicConfig, messageHandler, sleuthWrapper);
     }
 
     private void stopAllTenantConsumers(String tenantKey) {

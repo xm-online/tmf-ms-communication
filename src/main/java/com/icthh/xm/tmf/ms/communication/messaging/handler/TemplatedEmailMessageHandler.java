@@ -2,6 +2,8 @@ package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
 import static java.util.stream.Collectors.toMap;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.util.MdcUtils;
@@ -23,6 +25,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
@@ -39,6 +42,7 @@ public class TemplatedEmailMessageHandler implements BasicMessageHandler {
 
     private static final String TEMPLATE_NAME = "templateName";
     private static final String LANGUAGE = "language";
+    private static final String TEMPLATE_MODEL = "templateModel";
 
     private final MailService mailService;
     private final CommunicationMessageMapper mapper;
@@ -59,6 +63,7 @@ public class TemplatedEmailMessageHandler implements BasicMessageHandler {
             .collect(Collectors.toList());
 
         Map<String, Object> objectModel = toObjectModel(messageCreate.getCharacteristic());
+        Map<String, Object> templateModel = getTemplateModel(objectModel);
         String language = String.valueOf(objectModel.get(LANGUAGE));
         String templateName = String.valueOf(objectModel.get(TEMPLATE_NAME));
         Locale locale = new Locale(language);
@@ -66,7 +71,7 @@ public class TemplatedEmailMessageHandler implements BasicMessageHandler {
         String subject = messageCreate.getSubject();
 
         for (String email : emails) {
-            sendWithAttachments(objectModel, templateName, locale, sender, subject, email, messageCreate.getAttachment());
+            sendWithAttachments(templateModel, templateName, locale, sender, subject, email, messageCreate.getAttachment());
         }
         return mapper.messageCreateToMessage(messageCreate);
     }
@@ -109,5 +114,15 @@ public class TemplatedEmailMessageHandler implements BasicMessageHandler {
     private Map<String, Object> toObjectModel(List<CommunicationRequestCharacteristic> characteristics) {
         return characteristics.stream()
             .collect(toMap(CommunicationRequestCharacteristic::getName, CommunicationRequestCharacteristic::getValue));
+    }
+
+    @SneakyThrows
+    private Map<String, Object> getTemplateModel(Map<String, Object> objectModel) {
+        Object templateModel = objectModel.get(TEMPLATE_MODEL);
+
+        if (templateModel == null) {
+            return objectModel;
+        }
+        return new ObjectMapper().readValue(String.valueOf(templateModel), new TypeReference<Map<String, Object>>() {});
     }
 }
