@@ -13,8 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class TopicMessageHandler implements MessageHandler {
 
-    private static final String EMAIL_TYPE = "Email";
-
     private final ExecuteTenantContextUtils executeTenantContextUtils;
     private final TemplatedEmailMessageHandler emailMessageHandler;
     private final ObjectMapper objectMapper;
@@ -22,7 +20,6 @@ public class TopicMessageHandler implements MessageHandler {
     @Override
     public void onMessage(String message, String tenant, TopicConfig topicConfig) {
         CommunicationMessageCreate communicationMessage = toObject(message);
-        communicationMessage.setType(EMAIL_TYPE);
         executeTenantContextUtils.runInTenantContext(tenant, () -> emailMessageHandler.handle(communicationMessage));
     }
 
