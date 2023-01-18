@@ -195,6 +195,8 @@ application:
     channel-specification-path-pattern: /config/tenants/{tenantName}/communication/communication.yml
     email-specification-path-pattern: /config/tenants/{tenantName}/communication/email-spec.yml
     custom-email-specification-path-pattern: /config/tenants/{tenantName}/communication/custom-email-spec.yml
+    topic-specification-path-pattern: /config/tenants/{tenantName}/communication/topic-spec.yml
+    email-queue-name-template: communication_%s_queue
     messaging:
         send-queue-name-template: communication_%s_%s_send
         recive-queue-name-template: communication_%s_%s_recive
@@ -247,3 +249,6 @@ application:
 
     businessRule:
         enableBusinessTimeRule: false
+
+    topicSpec:
+        enabled: true
