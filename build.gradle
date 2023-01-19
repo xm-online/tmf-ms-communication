@@ -141,13 +141,12 @@ test {
         println '!!! ATTENTION: start execution of non-categorized tests. it may impact test performance !!!'
     }
 
-    exclude '**/CucumberTest*'
+    exclude '**/CucumberTest*', '**/*IT*', '**/*IntTest*'
     dependsOn 'clean', 'runCategorizedTests'
     classes.mustRunAfter 'clean'
     systemProperty "spring.profiles.active", "test"
     mkdir("src/test/features")
     include '**/*UnitTest*'
-    include '**/*IntTest*'
 
     // to run all test that was not categorized
     useJUnit {
