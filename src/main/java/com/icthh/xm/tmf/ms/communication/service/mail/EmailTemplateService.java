@@ -67,13 +67,13 @@ public class EmailTemplateService {
     @SneakyThrows
     public RenderTemplateResponse renderEmailContent(RenderTemplateRequest renderTemplateRequest) {
         String tenantKey = tenantContextHolder.getTenantKey();
-        String renderedContent = processEmailTemplate(tenantKey, renderTemplateRequest.getContent(), renderTemplateRequest.getModel(), renderTemplateRequest.getLang());
+        String renderedContent = processEmailTemplate(tenantKey, renderTemplateRequest.getContent(), renderTemplateRequest.getModel(), renderTemplateRequest.getLang(), UUID.randomUUID().toString());
         RenderTemplateResponse renderTemplateResponse = new RenderTemplateResponse();
         renderTemplateResponse.setContent(renderedContent);
         return renderTemplateResponse;
     }
 
-    public String processEmailTemplate(String tenantKey, String content, Map<String, Object> objectModel, String lang) {
+    public String processEmailTemplate(String tenantKey, String content, Map<String, Object> objectModel, String lang, String templatePath) {
         try {
             freemarker.template.Configuration configuration = (freemarker.template.Configuration) freeMarkerConfiguration.clone();
             StringTemplateLoader templateLoaderByTenantAndLang = multiTenantLangStringTemplateLoaderService.getTemplateLoader(tenantKey, lang);
@@ -82,7 +82,8 @@ public class EmailTemplateService {
             );
             configuration.setTemplateLoader(multiTemplateLoader);
 
-            Template mailTemplate = new Template(UUID.randomUUID().toString(), content, configuration);
+            Template mailTemplate = new Template(templatePath, content, configuration);
+
             return FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, objectModel);
         } catch (TemplateException e) {
             log.error("Template could not be rendered with content: {} and model: {} for language: {}.", content,
