@@ -9,5 +9,7 @@ public class UpdateTemplateRequest {
     @NotBlank
     private String content;
     @NotBlank
-    private String templateSubject;
+    private String subjectTemplate;
+    @NotBlank
+    private String emailFrom;
 }

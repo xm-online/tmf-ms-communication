@@ -1,4 +1,5 @@
 ---
 emails:
     - templateKey: firstTemplateKey
-      subjectTemplate: {en: "Custom subject 1"}
+      subjectTemplate: {en: "Custom subject 1", uk: "Змінена тема 1"}
+      emailFrom: {en: "Custom email from 1", uk: "Змінене поле від 1"}

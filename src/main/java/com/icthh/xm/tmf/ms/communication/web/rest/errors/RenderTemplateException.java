@@ -12,4 +12,5 @@ public class RenderTemplateException extends AbstractThrowableProblem {
     private final String message;
     private final String content;
     private final Map model;
+    private final String lang;
 }

@@ -7,6 +7,7 @@ import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.config.domain.Configuration;
+import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
 import com.icthh.xm.tmf.ms.communication.domain.dto.UpdateTemplateRequest;
@@ -18,6 +19,9 @@ import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
 import com.icthh.xm.tmf.ms.communication.domain.dto.TemplateDetails;
 import com.icthh.xm.tmf.ms.communication.mapper.TemplateDetailsMapper;
 import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException;
+import freemarker.cache.MultiTemplateLoader;
+import freemarker.cache.StringTemplateLoader;
+import freemarker.cache.TemplateLoader;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import lombok.RequiredArgsConstructor;
@@ -29,12 +33,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 
 import static com.icthh.xm.tmf.ms.communication.config.Constants.CONFIG_PATH_TEMPLATE;
 import static com.icthh.xm.tmf.ms.communication.config.Constants.CUSTOM_EMAIL_PATH;
@@ -57,23 +62,38 @@ public class EmailTemplateService {
     private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
     private final ObjectMapper objectMapper;
     private final TemplateDetailsMapper templateDetailsMapper;
+    private final StringTemplateLoader templateLoader;
+    private final MultiTenantLangStringTemplateLoaderService multiTenantLangStringTemplateLoaderService;
 
     @SneakyThrows
     public RenderTemplateResponse renderEmailContent(RenderTemplateRequest renderTemplateRequest) {
+        String tenantKey = tenantContextHolder.getTenantKey();
+        String renderedContent = processEmailTemplate(tenantKey, renderTemplateRequest.getContent(), renderTemplateRequest.getModel(), renderTemplateRequest.getLang(), renderTemplateRequest.getTemplatePath());
+        RenderTemplateResponse renderTemplateResponse = new RenderTemplateResponse();
+        renderTemplateResponse.setContent(renderedContent);
+        return renderTemplateResponse;
+    }
+
+    public String processEmailTemplate(String tenantKey, String content, Map<String, Object> objectModel, String lang, String templatePath) {
         try {
-            Template mailTemplate = new Template(UUID.randomUUID().toString(), renderTemplateRequest.getContent(), freeMarkerConfiguration);
-            String renderedContent = FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, renderTemplateRequest.getModel());
-            RenderTemplateResponse renderTemplateResponse = new RenderTemplateResponse();
-            renderTemplateResponse.setContent(renderedContent);
-            return renderTemplateResponse;
+            freemarker.template.Configuration configuration = (freemarker.template.Configuration) freeMarkerConfiguration.clone();
+            StringTemplateLoader templateLoaderByTenantAndLang = multiTenantLangStringTemplateLoaderService.getTemplateLoader(tenantKey, lang);
+            MultiTemplateLoader multiTemplateLoader = new MultiTemplateLoader(
+                new TemplateLoader[]{templateLoaderByTenantAndLang, templateLoader}
+            );
+            configuration.setTemplateLoader(multiTemplateLoader);
+
+            Template mailTemplate = new Template(templatePath, content, configuration);
+
+            return FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, objectModel);
         } catch (TemplateException e) {
-            log.error("Template could not be rendered with content: {} and model: {}.", renderTemplateRequest.getContent(),
-                renderTemplateRequest.getModel(), e);
-            throw new RenderTemplateException(e.getMessageWithoutStackTop(), renderTemplateRequest.getContent(), renderTemplateRequest.getModel());
+            log.error("Template could not be rendered with content: {} and model: {} for language: {}.", content,
+                objectModel, lang, e);
+            throw new RenderTemplateException(e.getMessageWithoutStackTop(), content, objectModel, lang);
         } catch (IOException e) {
-            log.error("Template could not be rendered with content: {} and model: {}.", renderTemplateRequest.getContent(),
-                renderTemplateRequest.getModel(), e);
-            throw new RenderTemplateException(e.getMessage(), renderTemplateRequest.getContent(), renderTemplateRequest.getModel());
+            log.error("Template could not be rendered with content: {} and model: {} for language: {}.", content,
+                objectModel, lang, e);
+            throw new RenderTemplateException(e.getMessage(), content, objectModel, lang);
         }
     }
 
@@ -81,11 +101,13 @@ public class EmailTemplateService {
         List<String> langs = emailSpecService.getEmailSpec().getLangs();
         EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpecByKey(templateKey);
         String subjectTemplate = getSubjectTemplateByLang(emailTemplateSpec, langKey);
+        String emailFrom = getEmailFromByLang(emailTemplateSpec, langKey);
         String templatePath = emailTemplateSpec.getTemplatePath();
         String tenantKey = tenantContextHolder.getTenantKey();
         String templateContent = tenantEmailTemplateService.getEmailTemplate(tenantKey, templatePath, langKey);
+        templatePath = EmailTemplateUtil.emailTemplateKey(new TenantKey(tenantKey), templatePath, langKey);
 
-        return createTemplateDetails(templateContent, emailTemplateSpec, langs, subjectTemplate, langKey);
+        return createTemplateDetails(templateContent, emailTemplateSpec, langs, subjectTemplate, langKey, emailFrom, templatePath);
     }
 
     @SneakyThrows
@@ -96,19 +118,22 @@ public class EmailTemplateService {
         String configPath = String.format(CONFIG_PATH_TEMPLATE, tenantKey);
 
         String subject = ofNullable(emailTemplateSpec.getSubjectTemplate().get(langKey)).orElse(StringUtils.EMPTY);
-        if (!subject.equals(updateTemplateRequest.getTemplateSubject())) {
-            updateTemplateSpecSubject(templateKey, langKey, updateTemplateRequest.getTemplateSubject(), configPath);
+        String from = ofNullable(emailTemplateSpec.getEmailFrom().get(langKey)).orElse(StringUtils.EMPTY);
+        if (!subject.equals(updateTemplateRequest.getSubjectTemplate()) || !from.equals(updateTemplateRequest.getEmailFrom())) {
+            updateTemplateSpecProps(templateKey, langKey, updateTemplateRequest.getSubjectTemplate(), updateTemplateRequest.getEmailFrom(), configPath);
         }
 
         updateTemplateContent(emailTemplateSpec.getTemplatePath(), langKey, updateTemplateRequest.getContent(), configPath);
     }
 
     private TemplateDetails createTemplateDetails(String templateContent, EmailTemplateSpec emailTemplateSpec,
-                                                  List<String> langs, String subjectTemplate, String langKey) {
+                                                  List<String> langs, String subjectTemplate, String langKey, String emailFrom, String templatePath) {
         TemplateDetails templateDetails = templateDetailsMapper.emailTemplateToDetails(emailTemplateSpec);
         templateDetails.setContent(templateContent);
         templateDetails.setSubjectTemplate(subjectTemplate);
+        templateDetails.setEmailFrom(emailFrom);
         templateDetails.setLangs(langs);
+        templateDetails.setTemplatePath(templatePath);
 
         List<String> dependsOnTemplateKeys = emailTemplateSpec.getDependsOnTemplateKeys();
         if (dependsOnTemplateKeys != null) {
@@ -124,17 +149,27 @@ public class EmailTemplateService {
     }
 
     private String getSubjectTemplateByLang(EmailTemplateSpec emailTemplateSpec, String langKey) {
-        return of(emailTemplateSpec)
-            .map(EmailTemplateSpec::getSubjectTemplate)
-            .map(it -> it.getOrDefault(langKey, it.get(DEFAULT_LANGUAGE)))
+        return getTemplatePropertyByLang(emailTemplateSpec, langKey, EmailTemplateSpec::getSubjectTemplate)
             .orElseThrow(() -> new EntityNotFoundException("Email subject was not found"));
     }
 
+    private String getEmailFromByLang(EmailTemplateSpec emailTemplateSpec, String langKey) {
+        return getTemplatePropertyByLang(emailTemplateSpec, langKey, EmailTemplateSpec::getEmailFrom)
+            .orElseThrow(() -> new EntityNotFoundException("Email from was not found"));
+    }
+
+    private Optional<String> getTemplatePropertyByLang(EmailTemplateSpec emailTemplateSpec, String langKey, Function<EmailTemplateSpec, Map<String, String>> fieldMapper) {
+        return of(emailTemplateSpec)
+            .map(fieldMapper)
+            .map(it -> it.getOrDefault(langKey, it.get(DEFAULT_LANGUAGE)));
+    }
+
     @SneakyThrows
-    private void updateTemplateSpecSubject(String templateKey, String langKey, String subject, String configPath) {
+    private void updateTemplateSpecProps(String templateKey, String langKey, String subject, String from, String configPath) {
         CustomEmailTemplateSpec customEmailTemplateSpec = new CustomEmailTemplateSpec();
         customEmailTemplateSpec.setTemplateKey(templateKey);
         customEmailTemplateSpec.setSubjectTemplate(Map.of(langKey, subject));
+        customEmailTemplateSpec.setEmailFrom(Map.of(langKey, from));
         CustomEmailSpec updatedCustomEmailSpec = customEmailSpecService.updateCustomEmailSpec(customEmailTemplateSpec);
 
         String emailsSpecYml = yamlMapper.writerWithDefaultPrettyPrinter().writeValueAsString(updatedCustomEmailSpec);

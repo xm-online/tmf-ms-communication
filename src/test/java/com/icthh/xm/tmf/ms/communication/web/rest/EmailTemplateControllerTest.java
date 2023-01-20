@@ -135,9 +135,11 @@ public class EmailTemplateControllerTest {
     public void getEmailSpec() {
         Map<String, String> firstSubject = Map.of(DEFAULT_LANGUAGE,"Subject 1");
         Map<String, String> secondSubject = Map.of(DEFAULT_LANGUAGE,"Subject 2");
+        Map<String, String> firstEmailFrom = Map.of(DEFAULT_LANGUAGE,"Email from 1");
+        Map<String, String> secondEmailFrom = Map.of(DEFAULT_LANGUAGE,"Email from 2");
         List<EmailTemplateSpec> emailTemplateSpecList = List.of(
-            new EmailTemplateSpec("firstKey", "Name 1", firstSubject, "firstKey.ftl", "{}", "{}", "{}", List.of()),
-            new EmailTemplateSpec("secondKey", "Name 2", secondSubject, "secondKey.ftl", "{}", "{}", "{}", List.of())
+            new EmailTemplateSpec("firstKey", "Name 1", firstSubject, firstEmailFrom, "firstKey.ftl", "{}", "{}", "{}", List.of()),
+            new EmailTemplateSpec("secondKey", "Name 2", secondSubject, secondEmailFrom,  "secondKey.ftl", "{}", "{}", "{}", List.of())
         );
         EmailSpec emailSpec = new EmailSpec();
         emailSpec.setEmails(emailTemplateSpecList);
@@ -150,6 +152,7 @@ public class EmailTemplateControllerTest {
             .andExpect(jsonPath("$.[*].templateKey").value(containsInAnyOrder("firstKey", "secondKey")))
             .andExpect(jsonPath("$.[*].name").value(containsInAnyOrder("Name 1", "Name 2")))
             .andExpect(jsonPath("$.[*].subjectTemplate.en").value(containsInAnyOrder("Subject 1", "Subject 2")))
+            .andExpect(jsonPath("$.[*].emailFrom.en").value(containsInAnyOrder("Email from 1", "Email from 2")))
             .andExpect(jsonPath("$.[*].templatePath").value(containsInAnyOrder("firstKey.ftl", "secondKey.ftl")))
             .andExpect(jsonPath("$.[*].contextExample").value(containsInAnyOrder(two("{}"))))
             .andExpect(jsonPath("$.[*].contextSpec").value(containsInAnyOrder(two("{}"))))
@@ -169,6 +172,7 @@ public class EmailTemplateControllerTest {
         mockMvc.perform(get(API_BASE + "/" + DEFAULT_TEMPLATE_KEY + "/" + DEFAULT_LANGUAGE))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.subjectTemplate").value(templateDetails.getSubjectTemplate()))
+            .andExpect(jsonPath("$.emailFrom").value(templateDetails.getEmailFrom()))
             .andExpect(jsonPath("$.content").value(templateDetails.getContent()))
             .andExpect(jsonPath("$.contextExample").value(templateDetails.getContextExample()))
             .andExpect(jsonPath("$.contextSpec").value(templateDetails.getContextSpec()))
@@ -193,6 +197,7 @@ public class EmailTemplateControllerTest {
         TemplateDetails templateDetails = new TemplateDetails();
         templateDetails.setContent(DEFAULT_CONTENT);
         templateDetails.setSubjectTemplate("Subject 1");
+        templateDetails.setEmailFrom("Email from 1");
         templateDetails.setContextSpec("{}");
         templateDetails.setContextForm("{}");
         templateDetails.setContextExample("{}");
@@ -219,7 +224,8 @@ public class EmailTemplateControllerTest {
 
     private UpdateTemplateRequest createUpdateRequestTemplate() {
         UpdateTemplateRequest updateTemplateRequest = new UpdateTemplateRequest();
-        updateTemplateRequest.setTemplateSubject("template subject");
+        updateTemplateRequest.setSubjectTemplate("template subject");
+        updateTemplateRequest.setEmailFrom("template email from");
         updateTemplateRequest.setContent("some content");
 
         return updateTemplateRequest;
