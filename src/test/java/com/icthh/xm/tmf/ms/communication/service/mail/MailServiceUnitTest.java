@@ -66,7 +66,7 @@ public class MailServiceUnitTest {
     private static final String RID = "rid";
     public static final String TENANT_NAME = "RESINTTEST";
     public static final String TEMPLATE_KEY = "firstTemplateKey";
-    public static final String MACRO_TEMPLATE_KEY = "macroTemplateKey";
+    public static final String MACRO_TEMPLATE_KEY = "/macroTemplateKey";
     private static final String EMAIL_SPECIFICATION_PATH_PATTERN = "/config/tenants/{tenantName}/communication/email-spec.yml";
     private static final String CUSTOM_EMAIL_SPECIFICATION_PATH_PATTERN = "/config/tenants/{tenantName}/communication/custom-email-spec.yml";
     private static final String EMAIL_SPECIFICATION_PATH = "/config/tenants/RESINTTEST/communication/email-spec.yml";

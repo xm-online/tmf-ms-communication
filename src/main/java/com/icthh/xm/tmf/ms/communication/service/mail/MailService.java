@@ -314,9 +314,9 @@ public class MailService {
                 return;
             }
 
+            String templatePath = EmailTemplateUtil.emailTemplateKey(tenantKey, templateName,locale.getLanguage());
             String emailTemplate = tenantEmailTemplateService.getEmailTemplateByKey(tenantKey, templateName, locale.getLanguage());
-            String processedContent = emailTemplateService.processEmailTemplate(tenantKey.getValue(), emailTemplate, objectModel, locale.getLanguage());
-
+            String processedContent = emailTemplateService.processEmailTemplate(tenantKey.getValue(), emailTemplate, objectModel, locale.getLanguage(), templatePath);
             try {
                 tenantContextHolder.getPrivilegedContext().setTenant(new PlainTenant(tenantKey));
 
