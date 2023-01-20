@@ -7,6 +7,7 @@ import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.config.domain.Configuration;
+import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
 import com.icthh.xm.tmf.ms.communication.domain.dto.UpdateTemplateRequest;
@@ -67,7 +68,7 @@ public class EmailTemplateService {
     @SneakyThrows
     public RenderTemplateResponse renderEmailContent(RenderTemplateRequest renderTemplateRequest) {
         String tenantKey = tenantContextHolder.getTenantKey();
-        String renderedContent = processEmailTemplate(tenantKey, renderTemplateRequest.getContent(), renderTemplateRequest.getModel(), renderTemplateRequest.getLang(), UUID.randomUUID().toString());
+        String renderedContent = processEmailTemplate(tenantKey, renderTemplateRequest.getContent(), renderTemplateRequest.getModel(), renderTemplateRequest.getLang(), renderTemplateRequest.getTemplatePath());
         RenderTemplateResponse renderTemplateResponse = new RenderTemplateResponse();
         renderTemplateResponse.setContent(renderedContent);
         return renderTemplateResponse;
@@ -104,8 +105,9 @@ public class EmailTemplateService {
         String templatePath = emailTemplateSpec.getTemplatePath();
         String tenantKey = tenantContextHolder.getTenantKey();
         String templateContent = tenantEmailTemplateService.getEmailTemplate(tenantKey, templatePath, langKey);
+        templatePath = EmailTemplateUtil.emailTemplateKey(new TenantKey(tenantKey), templatePath, langKey);
 
-        return createTemplateDetails(templateContent, emailTemplateSpec, langs, subjectTemplate, langKey, emailFrom);
+        return createTemplateDetails(templateContent, emailTemplateSpec, langs, subjectTemplate, langKey, emailFrom, templatePath);
     }
 
     @SneakyThrows
@@ -125,12 +127,13 @@ public class EmailTemplateService {
     }
 
     private TemplateDetails createTemplateDetails(String templateContent, EmailTemplateSpec emailTemplateSpec,
-                                                  List<String> langs, String subjectTemplate, String langKey, String emailFrom) {
+                                                  List<String> langs, String subjectTemplate, String langKey, String emailFrom, String templatePath) {
         TemplateDetails templateDetails = templateDetailsMapper.emailTemplateToDetails(emailTemplateSpec);
         templateDetails.setContent(templateContent);
         templateDetails.setSubjectTemplate(subjectTemplate);
         templateDetails.setEmailFrom(emailFrom);
         templateDetails.setLangs(langs);
+        templateDetails.setTemplatePath(templatePath);
 
         List<String> dependsOnTemplateKeys = emailTemplateSpec.getDependsOnTemplateKeys();
         if (dependsOnTemplateKeys != null) {
