@@ -6,6 +6,7 @@ import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
 import com.icthh.xm.tmf.ms.communication.domain.dto.TemplateDetails;
+import com.icthh.xm.tmf.ms.communication.domain.dto.TemplateMultiLangDetails;
 import com.icthh.xm.tmf.ms.communication.domain.dto.UpdateTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
@@ -44,6 +45,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -57,6 +59,7 @@ public class EmailTemplateControllerTest {
     private static final String API_BASE = "/api/templates";
     private static final String DEFAULT_TEMPLATE_KEY = "templateKey";
     private static final String TEMPLATE_KEY = "templateKey1";
+    public static final String UK_LANG = "uk";
 
     private MockMvc mockMvc;
 
@@ -181,6 +184,29 @@ public class EmailTemplateControllerTest {
 
     @Test
     @SneakyThrows
+    public void getTemplateMultiLangDetailsByKey() {
+        TemplateMultiLangDetails templateDetails = createMultiLangTemplateDetails();
+
+        when(emailTemplateService.getTemplateMultiLangDetailsByKey(DEFAULT_TEMPLATE_KEY)).thenReturn(templateDetails);
+
+        mockMvc.perform(get(API_BASE + "/" + DEFAULT_TEMPLATE_KEY))
+                .andExpect(status().isOk())
+                .andDo(print())
+                .andExpect(jsonPath("$.subjectTemplate.en").value(templateDetails.getSubjectTemplate().get(DEFAULT_LANGUAGE)))
+                .andExpect(jsonPath("$.subjectTemplate.uk").value(templateDetails.getSubjectTemplate().get(UK_LANG)))
+                .andExpect(jsonPath("$.emailFrom.en").value(templateDetails.getEmailFrom().get(DEFAULT_LANGUAGE)))
+                .andExpect(jsonPath("$.emailFrom.uk").value(templateDetails.getEmailFrom().get(UK_LANG)))
+                .andExpect(jsonPath("$.content.en").value(templateDetails.getContent().get(DEFAULT_LANGUAGE)))
+                .andExpect(jsonPath("$.content.uk").value(templateDetails.getContent().get(UK_LANG)))
+                .andExpect(jsonPath("$.contextExample").value(templateDetails.getContextExample()))
+                .andExpect(jsonPath("$.contextSpec").value(templateDetails.getContextSpec()))
+                .andExpect(jsonPath("$.contextForm").value(templateDetails.getContextForm()));
+
+        verify(emailTemplateService).getTemplateMultiLangDetailsByKey(eq(DEFAULT_TEMPLATE_KEY));
+    }
+
+    @Test
+    @SneakyThrows
     public void testUpdateTemplate() {
         UpdateTemplateRequest updateTemplateRequest = createUpdateRequestTemplate();
 
@@ -201,6 +227,18 @@ public class EmailTemplateControllerTest {
         templateDetails.setContextSpec("{}");
         templateDetails.setContextForm("{}");
         templateDetails.setContextExample("{}");
+        templateDetails.setLangs(List.of("en", "uk"));
+        return templateDetails;
+    }
+
+    private TemplateMultiLangDetails createMultiLangTemplateDetails() {
+        TemplateMultiLangDetails templateDetails = new TemplateMultiLangDetails();
+        templateDetails.setContent(Map.of(DEFAULT_LANGUAGE, DEFAULT_CONTENT, UK_LANG, "uk content"));
+        templateDetails.setSubjectTemplate(Map.of(DEFAULT_LANGUAGE, "Subject 1", UK_LANG, "subject uk"));
+        templateDetails.setEmailFrom(Map.of(DEFAULT_LANGUAGE, "Email from 1", UK_LANG, "from uk"));
+        templateDetails.setContextSpec("{\"a\":1}");
+        templateDetails.setContextForm("{\"a\":2}");
+        templateDetails.setContextExample("{\"a\":3}");
         templateDetails.setLangs(List.of("en", "uk"));
         return templateDetails;
     }
