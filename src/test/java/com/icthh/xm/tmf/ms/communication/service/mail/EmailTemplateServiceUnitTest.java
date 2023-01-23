@@ -13,6 +13,7 @@ import com.icthh.xm.tmf.ms.communication.CommunicationApp;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.SecurityBeanOverrideConfiguration;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
+import com.icthh.xm.tmf.ms.communication.domain.dto.TemplateMultiLangDetails;
 import com.icthh.xm.tmf.ms.communication.domain.dto.UpdateTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
@@ -72,8 +73,10 @@ public class EmailTemplateServiceUnitTest {
     private static final String CUSTOM_EMAILS_TEMPLATES_PATH = "/config/tenants/TEST/communication/custom-emails/";
     private static final String CUSTOM_EMAIL_TEMPLATES_PATH = "/config/tenants/TEST/communication/custom-emails/activation/firstTemplateKey/en.ftl";
     private static final String FIRST_EMAIL_TEMPLATE_PATH = "/config/tenants/TEST/communication/emails/activation/firstTemplateKey/en.ftl";
+    private static final String FIRST_EMAIL_TEMPLATE_PATH_UK = "/config/tenants/TEST/communication/emails/activation/firstTemplateKey/uk.ftl";
     private static final String SECOND_EMAIL_TEMPLATE_PATH = "/config/tenants/TEST/communication/emails/activation/secondTemplateKey/en.ftl";
     private static final String BASE_EMAIL_TEMPLATE_PATH = "/config/tenants/TEST/communication/emails/activation/base/en.ftl";
+    public static final String UK_LANG = "uk";
     private TenantContextHolder tenantContextHolder;
 
     private EmailSpecService emailSpecService;
@@ -213,6 +216,61 @@ public class EmailTemplateServiceUnitTest {
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
 
         subject.getTemplateDetailsByKey("notValidKey", DEFAULT_LANGUAGE);
+    }
+
+    @Test(expected = EntityNotFoundException.class)
+    public void getTemplateMultiLangDetailsByKeyThrowEntityNotFoundWhenTemplateKeyNotValid() {
+        String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
+        emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
+        subject.getTemplateMultiLangDetailsByKey("notValidKey");
+    }
+
+    @Test
+    public void getTemplateMultiLangDetailsByKeyWithCustomPath() {
+        String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
+        String customEmailSpecificationConfig = loadFile("config/specs/custom-email-spec-2.yml");
+        EmailTemplateSpec expectedEmailTemplate = readConfiguration(emailSpecificationConfig, EmailSpec.class).getEmails().get(0);
+        CustomEmailTemplateSpec expectedCustomEmailTemplate = readConfiguration(customEmailSpecificationConfig, CustomEmailSpec.class).getEmails().get(0);
+        String templateBody = loadFile("templates/customTemplate.ftl");
+
+        emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
+        customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
+        tenantEmailTemplateService.onRefresh(CUSTOM_EMAIL_TEMPLATES_PATH, templateBody);
+        tenantEmailTemplateService.onRefresh(FIRST_EMAIL_TEMPLATE_PATH_UK, "UK_TEMPLATE_BODY");
+
+        TemplateMultiLangDetails actual = subject.getTemplateMultiLangDetailsByKey("firstTemplateKey");
+
+        assertThat(actual.getContent().get(DEFAULT_LANGUAGE)).isEqualTo(templateBody);
+        assertThat(actual.getContent().get(UK_LANG)).isEqualTo("UK_TEMPLATE_BODY");
+        assertThat(actual.getContextForm()).isEqualTo(expectedEmailTemplate.getContextForm());
+        assertThat(actual.getContextSpec()).isEqualTo(expectedEmailTemplate.getContextSpec());
+        assertThat(actual.getContextExample()).isEqualTo(expectedEmailTemplate.getContextExample());
+        assertThat(actual.getSubjectTemplate().get(DEFAULT_LANGUAGE)).isEqualTo(expectedCustomEmailTemplate.getSubjectTemplate().get(DEFAULT_LANGUAGE));
+        assertThat(actual.getEmailFrom().get(DEFAULT_LANGUAGE)).isEqualTo(expectedCustomEmailTemplate.getEmailFrom().get(DEFAULT_LANGUAGE));
+        assertThat(actual.getSubjectTemplate().get(UK_LANG)).isEqualTo(expectedCustomEmailTemplate.getSubjectTemplate().get(UK_LANG));
+        assertThat(actual.getEmailFrom().get(UK_LANG)).isEqualTo(expectedCustomEmailTemplate.getEmailFrom().get(UK_LANG));
+    }
+
+    @Test
+    public void getTemplateMultiLangDetailsByWhenByOneLangTemplateNotExists() {
+        String templateBody = "TEMPLATE+BODY";
+        String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
+        EmailTemplateSpec expectedEmailTemplate = readConfiguration(emailSpecificationConfig, EmailSpec.class).getEmails().get(0);
+
+        emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
+        tenantEmailTemplateService.onRefresh(CUSTOM_EMAIL_TEMPLATES_PATH, templateBody);
+
+        TemplateMultiLangDetails actual = subject.getTemplateMultiLangDetailsByKey("firstTemplateKey");
+
+        assertThat(actual.getContent().get(DEFAULT_LANGUAGE)).isEqualTo(templateBody);
+        assertThat(actual.getContent().get(UK_LANG)).isNullOrEmpty();
+        assertThat(actual.getContextForm()).isEqualTo(expectedEmailTemplate.getContextForm());
+        assertThat(actual.getContextSpec()).isEqualTo(expectedEmailTemplate.getContextSpec());
+        assertThat(actual.getContextExample()).isEqualTo(expectedEmailTemplate.getContextExample());
+        assertThat(actual.getSubjectTemplate().get(DEFAULT_LANGUAGE)).isEqualTo(expectedEmailTemplate.getSubjectTemplate().get(DEFAULT_LANGUAGE));
+        assertThat(actual.getSubjectTemplate().get(UK_LANG)).isEqualTo(expectedEmailTemplate.getSubjectTemplate().get(UK_LANG));
+        assertThat(actual.getEmailFrom().get(DEFAULT_LANGUAGE)).isEqualTo(expectedEmailTemplate.getEmailFrom().get(DEFAULT_LANGUAGE));
+        assertThat(actual.getEmailFrom().get(UK_LANG)).isEqualTo(expectedEmailTemplate.getEmailFrom().get(UK_LANG));
     }
 
     @Test

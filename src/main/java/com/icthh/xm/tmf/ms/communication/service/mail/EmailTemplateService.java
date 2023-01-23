@@ -4,11 +4,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
-import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.config.domain.Configuration;
+import com.icthh.xm.tmf.ms.communication.domain.dto.BaseTemplateDetails;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
+import com.icthh.xm.tmf.ms.communication.domain.dto.TemplateMultiLangDetails;
 import com.icthh.xm.tmf.ms.communication.domain.dto.UpdateTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.spec.CustomEmailSpec;
 import com.icthh.xm.tmf.ms.communication.domain.spec.CustomEmailTemplateSpec;
@@ -103,8 +104,23 @@ public class EmailTemplateService {
         String templatePath = emailTemplateSpec.getTemplatePath();
         String tenantKey = tenantContextHolder.getTenantKey();
         String templateContent = tenantEmailTemplateService.getEmailTemplate(tenantKey, templatePath, langKey);
+        return createTemplateDetails(templateContent, emailTemplateSpec, langs, subjectTemplate, emailFrom);
+    }
 
-        return createTemplateDetails(templateContent, emailTemplateSpec, langs, subjectTemplate, langKey, emailFrom);
+    public TemplateMultiLangDetails getTemplateMultiLangDetailsByKey(String templateKey) {
+        List<String> langs = emailSpecService.getEmailSpec().getLangs();
+        EmailTemplateSpec emailTemplateSpec = emailSpecService.getEmailTemplateSpecByKey(templateKey);
+        Map<String, String> subjectTemplate = emailTemplateSpec.getSubjectTemplate();
+        Map<String, String> emailFrom = emailTemplateSpec.getEmailFrom();
+        Map<String, String> contentByLang = new HashMap<>();
+        String templatePath = emailTemplateSpec.getTemplatePath();
+        String tenantKey = tenantContextHolder.getTenantKey();
+        langs.forEach(langKey -> {
+            tenantEmailTemplateService.getTemplateOverrideable(tenantKey, templatePath, langKey).ifPresent(content -> {
+                contentByLang.put(langKey, content);
+            });
+        });
+        return createMultiLangTemplateDetails(contentByLang, emailTemplateSpec, langs, subjectTemplate, emailFrom);
     }
 
     @SneakyThrows
@@ -123,35 +139,48 @@ public class EmailTemplateService {
         updateTemplateContent(emailTemplateSpec.getTemplatePath(), langKey, updateTemplateRequest.getContent(), configPath);
     }
 
+    private TemplateMultiLangDetails createMultiLangTemplateDetails(Map<String, String> templateContent, EmailTemplateSpec emailTemplateSpec,
+                                                                    List<String> langs, Map<String, String> subjectTemplate, Map<String, String> emailFrom) {
+        TemplateMultiLangDetails templateDetails = templateDetailsMapper.emailTemplateToMultiLangDetails(emailTemplateSpec);
+        templateDetails.setContent(templateContent);
+        templateDetails.setSubjectTemplate(subjectTemplate);
+        templateDetails.setEmailFrom(emailFrom);
+        templateDetails.setLangs(langs);
+        processDependsSpec(emailTemplateSpec, templateDetails);
+        return templateDetails;
+    }
+
     private TemplateDetails createTemplateDetails(String templateContent, EmailTemplateSpec emailTemplateSpec,
-                                                  List<String> langs, String subjectTemplate, String langKey, String emailFrom) {
+                                                  List<String> langs, String subjectTemplate, String emailFrom) {
         TemplateDetails templateDetails = templateDetailsMapper.emailTemplateToDetails(emailTemplateSpec);
         templateDetails.setContent(templateContent);
         templateDetails.setSubjectTemplate(subjectTemplate);
         templateDetails.setEmailFrom(emailFrom);
         templateDetails.setLangs(langs);
+        processDependsSpec(emailTemplateSpec, templateDetails);
+        return templateDetails;
+    }
 
+    private void processDependsSpec(EmailTemplateSpec emailTemplateSpec, BaseTemplateDetails templateDetails) {
         List<String> dependsOnTemplateKeys = emailTemplateSpec.getDependsOnTemplateKeys();
         if (dependsOnTemplateKeys != null) {
             dependsOnTemplateKeys.forEach(it -> {
-                TemplateDetails parentTemplateDetails = getTemplateDetailsByKey(it, langKey);
+                TemplateMultiLangDetails parentTemplateDetails = getTemplateMultiLangDetailsByKey(it);
                 templateDetails.setContextExample(mergeJsons(parentTemplateDetails.getContextExample(), templateDetails.getContextExample()));
                 templateDetails.setContextSpec(mergeJsons(parentTemplateDetails.getContextSpec(), templateDetails.getContextSpec()));
                 templateDetails.setContextForm(mergeJsons(parentTemplateDetails.getContextForm(), templateDetails.getContextForm()));
             });
         }
-
-        return templateDetails;
     }
 
     private String getSubjectTemplateByLang(EmailTemplateSpec emailTemplateSpec, String langKey) {
         return getTemplatePropertyByLang(emailTemplateSpec, langKey, EmailTemplateSpec::getSubjectTemplate)
-            .orElseThrow(() -> new EntityNotFoundException("Email subject was not found"));
+            .orElse(null);
     }
 
     private String getEmailFromByLang(EmailTemplateSpec emailTemplateSpec, String langKey) {
         return getTemplatePropertyByLang(emailTemplateSpec, langKey, EmailTemplateSpec::getEmailFrom)
-            .orElseThrow(() -> new EntityNotFoundException("Email from was not found"));
+            .orElse(null);
     }
 
     private Optional<String> getTemplatePropertyByLang(EmailTemplateSpec emailTemplateSpec, String langKey, Function<EmailTemplateSpec, Map<String, String>> fieldMapper) {
@@ -212,3 +241,4 @@ public class EmailTemplateService {
         return objectMapper.writeValueAsString(targetNode);
     }
 }
+

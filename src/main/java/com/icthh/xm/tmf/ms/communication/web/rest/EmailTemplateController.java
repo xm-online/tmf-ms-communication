@@ -5,6 +5,7 @@ import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
 import com.icthh.xm.tmf.ms.communication.domain.dto.TemplateDetails;
+import com.icthh.xm.tmf.ms.communication.domain.dto.TemplateMultiLangDetails;
 import com.icthh.xm.tmf.ms.communication.domain.dto.UpdateTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
@@ -46,6 +47,12 @@ public class EmailTemplateController {
     @GetMapping("/{templateKey}/{langKey}")
     public TemplateDetails getTemplateByKey(@PathVariable String templateKey, @PathVariable String langKey) {
         return emailTemplateService.getTemplateDetailsByKey(templateKey, langKey);
+    }
+
+    @Timed
+    @GetMapping("/{templateKey}")
+    public TemplateMultiLangDetails getTemplateByKey(@PathVariable String templateKey) {
+        return emailTemplateService.getTemplateMultiLangDetailsByKey(templateKey);
     }
 
     @Timed
