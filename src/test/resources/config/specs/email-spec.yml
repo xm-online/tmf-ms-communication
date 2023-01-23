@@ -51,4 +51,4 @@ emails:
       name: "Macro template key"
       subjectTemplate: {en: "Macro subject", uk: "Тема макроса"}
       emailFrom: {en: "Macro email from", uk: "Поле від макроса"}
-      templatePath: /config/tenants/RESINTTEST/communication/emails/templateName-BASE/en.ftl
+      templatePath: templateName-BASE

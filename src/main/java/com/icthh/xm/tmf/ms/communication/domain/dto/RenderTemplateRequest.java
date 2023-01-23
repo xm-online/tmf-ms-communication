@@ -12,6 +12,6 @@ public class RenderTemplateRequest {
     private String content;
     @NotNull
     private Map<String, Object> model;
-
+    private String templatePath;
     private String lang;
 }

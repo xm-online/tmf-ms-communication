@@ -10,8 +10,10 @@ import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -46,11 +48,13 @@ public class EmailSpecService extends AbstractRefreshableConfiguration<EmailSpec
                 emailTemplateSpecList.stream().filter(it -> it.getTemplateKey().equals(templateKey)).findFirst());
     }
 
-    public Optional<EmailTemplateSpec> getEmailTemplateSpecByPath(String tenantKey, String templatePath) {
+    public List<EmailTemplateSpec> getEmailTemplateSpecByPath(String tenantKey, String templatePath) {
         return getEmailSpec(tenantKey)
             .map(EmailSpec::getEmails)
-            .flatMap(emailTemplateSpecList ->
-                emailTemplateSpecList.stream().filter(it -> it.getTemplatePath().equals(templatePath)).findFirst());
+            .stream()
+            .flatMap(Collection::stream)
+            .filter(it -> it.getTemplatePath().equals(templatePath))
+            .collect(Collectors.toList());
     }
 
     @Override

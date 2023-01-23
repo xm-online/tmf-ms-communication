@@ -166,6 +166,7 @@ public class EmailTemplateServiceUnitTest {
         renderTemplateRequest.setContent(content);
         renderTemplateRequest.setModel(model);
         renderTemplateRequest.setLang(lang);
+        renderTemplateRequest.setTemplatePath(TENANT_KEY + "/test/" + DEFAULT_LANGUAGE);
         return renderTemplateRequest;
     }
 
@@ -176,6 +177,7 @@ public class EmailTemplateServiceUnitTest {
         EmailTemplateSpec expectedEmailTemplate = readConfiguration(emailSpecificationConfig, EmailSpec.class).getEmails().get(0);
         CustomEmailTemplateSpec expectedCustomEmailTemplate = readConfiguration(customEmailSpecificationConfig, CustomEmailSpec.class).getEmails().get(0);
         String templateBody = loadFile("templates/customTemplate.ftl");
+        String templatePath = TENANT_KEY + "/" + expectedEmailTemplate.getTemplatePath() + "/" + DEFAULT_LANGUAGE;
 
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
         customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
@@ -189,6 +191,7 @@ public class EmailTemplateServiceUnitTest {
         assertThat(actual.getContextExample()).isEqualTo(expectedEmailTemplate.getContextExample());
         assertThat(actual.getSubjectTemplate()).isEqualTo(expectedCustomEmailTemplate.getSubjectTemplate().get(DEFAULT_LANGUAGE));
         assertThat(actual.getEmailFrom()).isEqualTo(expectedCustomEmailTemplate.getEmailFrom().get(DEFAULT_LANGUAGE));
+        assertThat(actual.getTemplatePath()).isEqualTo(templatePath);
     }
 
     @Test
@@ -196,6 +199,7 @@ public class EmailTemplateServiceUnitTest {
         String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
         EmailTemplateSpec expected = readConfiguration(emailSpecificationConfig, EmailSpec.class).getEmails().get(1);
         String templateBody = loadFile("templates/templateToRender.ftl");
+        String templatePath = TENANT_KEY + "/" + expected.getTemplatePath() + "/" + DEFAULT_LANGUAGE;
 
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
         tenantEmailTemplateService.onRefresh(SECOND_EMAIL_TEMPLATE_PATH, templateBody);
@@ -208,6 +212,7 @@ public class EmailTemplateServiceUnitTest {
         assertThat(actual.getContextExample()).isEqualTo(expected.getContextExample());
         assertThat(actual.getSubjectTemplate()).isEqualTo(expected.getSubjectTemplate().get(DEFAULT_LANGUAGE));
         assertThat(actual.getEmailFrom()).isEqualTo(expected.getEmailFrom().get(DEFAULT_LANGUAGE));
+        assertThat(actual.getTemplatePath()).isEqualTo(templatePath);
     }
 
     @Test(expected = EntityNotFoundException.class)

@@ -7,6 +7,7 @@ import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -113,7 +114,7 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
         String tenantKeyValue = pathVariables.get(TENANT_KEY);
 
         String templatePathKey = EmailTemplateUtil.emailTemplateKey(TenantKey.valueOf(tenantKeyValue), templatePath, langKey);
-        Optional<EmailTemplateSpec> templateSpecKey = emailSpecService.getEmailTemplateSpecByPath(tenantKeyValue, key);
+        List<EmailTemplateSpec> templateSpecKey = emailSpecService.getEmailTemplateSpecByPath(tenantKeyValue, templatePath);
 
         if (StringUtils.isBlank(config)) {
             emailTemplates.remove(templatePathKey);
@@ -128,12 +129,12 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
         getTemplateOverrideable(tenantKeyValue, templatePath, langKey)
             .ifPresentOrElse((cfg) -> {
                     templateLoader.putTemplate(templatePathKey, cfg);
-                    templateSpecKey.ifPresent(emailTemplateSpec ->
+                    templateSpecKey.forEach(emailTemplateSpec ->
                         multiTenantLangStringTemplateLoaderService.putTemplate(emailTemplateSpec.getTemplateKey(), cfg, tenantKeyValue, langKey));
                 },
                 () -> {
                     templateLoader.removeTemplate(templatePathKey);
-                    templateSpecKey.ifPresent(emailTemplateSpec ->
+                    templateSpecKey.forEach(emailTemplateSpec ->
                         multiTenantLangStringTemplateLoaderService.removeTemplate(emailTemplateSpec.getTemplateKey(), tenantKeyValue, langKey));
             });
     }

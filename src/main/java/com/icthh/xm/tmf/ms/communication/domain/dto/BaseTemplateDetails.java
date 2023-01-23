@@ -9,4 +9,5 @@ public abstract class BaseTemplateDetails {
     private String contextForm;
     private String contextExample;
     private List<String> langs;
+    private String templatePath;
 }

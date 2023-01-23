@@ -9,4 +9,5 @@ public class TemplateDetails extends BaseTemplateDetails {
     private String subjectTemplate;
     private String emailFrom;
     private String content;
+    private String templatePath;
 }
