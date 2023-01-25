@@ -32,8 +32,8 @@ public class CustomEmailSpecService extends AbstractRefreshableConfiguration<Cus
             .map((customSpec) -> {
                 findCustomEmailTemplateSpec(customSpec, customEmailTemplateSpec.getTemplateKey())
                     .ifPresentOrElse((foundSpec) -> {
-                            foundSpec.setSubjectTemplate(customEmailTemplateSpec.getSubjectTemplate());
-                            foundSpec.setEmailFrom(customEmailTemplateSpec.getEmailFrom());
+                            foundSpec.updateSubjectTemplate(customEmailTemplateSpec.getSubjectTemplate());
+                            foundSpec.updateEmailFrom(customEmailTemplateSpec.getEmailFrom());
                         },
                         () -> customSpec.getEmails().add(customEmailTemplateSpec));
                 return customSpec;
