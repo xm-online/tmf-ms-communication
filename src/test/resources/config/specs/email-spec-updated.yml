@@ -46,3 +46,23 @@ emails:
                { "key": "title", "title": { "en": "Title" }, "type": "string" }
             ]
           }
+    - templateKey: templateWithoutEmailFromAndSubject
+      name: "Template without emailFrom and subject"
+      templatePath: uaa/activate
+      contextExample: |
+          {
+              "name": "Default name"
+          }
+      contextSpec: |
+          {
+              "type": "object",
+              "properties": {
+                  "name": { "type": "string" }
+              }
+          }
+      contextForm: |
+          {
+            "form": [
+               { "key": "name", "title": { "en": "Name" }, "type": "string" }
+            ]
+          }

@@ -321,13 +321,14 @@ public class EmailTemplateServiceUnitTest {
     @Test
     public void testUpdateTemplate() {
         String emailSpecificationConfig = loadFile("config/specs/email-spec-updated.yml");
+        String templateKey = "firstTemplateKey";
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
 
         UpdateTemplateRequest updateTemplateRequest = createUpdateRequestTemplate();
 
         when(commonConfigRepository.getConfig(eq(null), any(Collection.class))).thenReturn(null);
 
-        subject.updateTemplate("firstTemplateKey", "en", updateTemplateRequest);
+        subject.updateTemplate(templateKey, "en", updateTemplateRequest);
 
         verify(commonConfigRepository, times(2)).getConfig(eq(null), any(Collection.class));
 
@@ -335,7 +336,31 @@ public class EmailTemplateServiceUnitTest {
         verify(commonConfigRepository, times(2)).updateConfigFullPath(configCaptor.capture(), eq(null));
         List<Configuration> configs = configCaptor.getAllValues();
 
-        assertTrue(isExpectedSpec(configs.get(0)));
+        assertTrue(isExpectedSpec(configs.get(0), templateKey));
+        assertTrue(isExpectedEmail(configs.get(1)));
+
+        verifyNoMoreInteractions(commonConfigRepository);
+    }
+
+    @Test
+    public void testUpdateTemplateWhenEmailFromAndSubjectDoesNotExist() {
+        String emailSpecificationConfig = loadFile("config/specs/email-spec-updated.yml");
+        String templateKey = "templateWithoutEmailFromAndSubject";
+        emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
+
+        UpdateTemplateRequest updateTemplateRequest = createUpdateRequestTemplate();
+
+        when(commonConfigRepository.getConfig(eq(null), any(Collection.class))).thenReturn(null);
+
+        subject.updateTemplate(templateKey, "en", updateTemplateRequest);
+
+        verify(commonConfigRepository, times(2)).getConfig(eq(null), any(Collection.class));
+
+        ArgumentCaptor<Configuration> configCaptor = ArgumentCaptor.forClass(Configuration.class);
+        verify(commonConfigRepository, times(2)).updateConfigFullPath(configCaptor.capture(), eq(null));
+        List<Configuration> configs = configCaptor.getAllValues();
+
+        assertTrue(isExpectedSpec(configs.get(0), templateKey));
         assertTrue(isExpectedEmail(configs.get(1)));
 
         verifyNoMoreInteractions(commonConfigRepository);
@@ -368,10 +393,10 @@ public class EmailTemplateServiceUnitTest {
         return updateTemplateRequest;
     }
 
-    private boolean isExpectedSpec(Configuration configuration) {
+    private boolean isExpectedSpec(Configuration configuration, String templateKey) {
         EmailSpec emailSpec = readConfiguration(configuration.getContent(), EmailSpec.class);
         EmailTemplateSpec emailTemplateSpec = emailSpec.getEmails().stream()
-            .filter((spec) -> spec.getTemplateKey().equals("firstTemplateKey")).findFirst().get();
+            .filter((spec) -> spec.getTemplateKey().equals(templateKey)).findFirst().get();
         return configuration.getPath().equals(CUSTOM_EMAIL_SPECIFICATION_PATH)
             && emailTemplateSpec.getSubjectTemplate().get("en").equals(UPDATED_SUBJECT_NAME)
             && emailTemplateSpec.getEmailFrom().get("en").equals(UPDATED_EMAIL_FROM);

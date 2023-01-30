@@ -133,8 +133,12 @@ public class EmailTemplateService {
         String tenantKey = tenantContextHolder.getTenantKey();
         String configPath = String.format(CONFIG_PATH_TEMPLATE, tenantKey);
 
-        String subject = ofNullable(emailTemplateSpec.getSubjectTemplate().get(langKey)).orElse(StringUtils.EMPTY);
-        String from = ofNullable(emailTemplateSpec.getEmailFrom().get(langKey)).orElse(StringUtils.EMPTY);
+        String subject = ofNullable(emailTemplateSpec.getSubjectTemplate())
+            .map(it -> it.get(langKey))
+            .orElse(StringUtils.EMPTY);
+        String from = ofNullable(emailTemplateSpec.getEmailFrom())
+            .map(it -> it.get(langKey))
+            .orElse(StringUtils.EMPTY);
         if (!subject.equals(updateTemplateRequest.getSubjectTemplate()) || !from.equals(updateTemplateRequest.getEmailFrom())) {
             updateTemplateSpecProps(templateKey, langKey, updateTemplateRequest.getSubjectTemplate(), updateTemplateRequest.getEmailFrom(), configPath);
         }
