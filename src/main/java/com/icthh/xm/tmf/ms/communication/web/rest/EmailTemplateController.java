@@ -1,6 +1,8 @@
 package com.icthh.xm.tmf.ms.communication.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.icthh.xm.commons.logging.LoggingAspectConfig;
+import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateResponse;
@@ -33,6 +35,7 @@ public class EmailTemplateController {
 
     @Timed
     @PostMapping("/render")
+    @IgnoreLogginAspect
     public RenderTemplateResponse renderEmailContentToHtml(@Valid @RequestBody RenderTemplateRequest renderTemplateRequest) {
         return emailTemplateService.renderEmailContent(renderTemplateRequest);
     }

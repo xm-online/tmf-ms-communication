@@ -75,6 +75,9 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
 
     @LoggingAspectConfig(resultDetails = false)
     public Optional<String> getTemplateOverrideable(String templatePath) {
+        log.trace("Get template overrideable by templatePath. templatePath: {}, emailTemplates: {}, customEmailTemplates {}",
+                templatePath, emailTemplates, customEmailTemplates);
+
         if (customEmailTemplates.containsKey(templatePath)) {
             return Optional.of(customEmailTemplates.get(templatePath));
         } else if (emailTemplates.containsKey(templatePath)) {
