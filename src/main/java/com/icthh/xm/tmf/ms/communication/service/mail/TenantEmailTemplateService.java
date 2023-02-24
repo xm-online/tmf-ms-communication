@@ -1,6 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.service.mail;
 
 import com.icthh.xm.commons.config.client.api.RefreshableConfiguration;
+import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.logging.LoggingAspectConfig;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
@@ -57,10 +58,19 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
 
     @LoggingAspectConfig(resultDetails = false)
     public String getEmailTemplateByKey(TenantKey tenantKey, String templateKey, String locale) {
-        return emailSpecService.getEmailTemplateSpec(tenantKey.getValue(), templateKey)
-            .map(EmailTemplateSpec::getTemplatePath)
-            .flatMap(this::getTemplateOverrideable)
-            .orElseGet(() -> getEmailTemplate(tenantKey.getValue(), templateKey, locale));
+        Optional<EmailTemplateSpec> emailTemplateSpec = emailSpecService.getEmailTemplateSpec(tenantKey.getValue(), templateKey);
+        if (emailTemplateSpec.isPresent()) {
+            Optional<String> templatePathOptional = emailTemplateSpec.map(EmailTemplateSpec::getTemplatePath);
+            if (templatePathOptional.isEmpty()) {
+                throw new EntityNotFoundException("Template path is empty in specification");
+            }
+            String templatePath = templatePathOptional.get();
+
+            return getTemplateOverrideable(templatePath)
+                .orElseGet(() -> getEmailTemplate(tenantKey.getValue(), templatePath, locale));
+        } else {
+            return getEmailTemplate(tenantKey.getValue(), templateKey, locale);
+        }
     }
 
     @LoggingAspectConfig(resultDetails = false)

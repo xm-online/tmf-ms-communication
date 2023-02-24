@@ -47,6 +47,27 @@ emails:
                { "key": "title", "title": { "en": "Title" }, "type": "string" }
             ]
           }
+    - templateKey: thirdTemplateKey
+      name: "Third template"
+      subjectTemplate: {en: "Default subject 3", uk: "Тема за замовчуванням 3"}
+      emailFrom: {en: "Default email from 3", uk: "Поле від за замовчуванням 3"}
+      contextExample: |
+          {
+              "title": "Default title"
+          }
+      contextSpec: |
+          {
+              "type": "object",
+              "properties": {
+                  "title": { "type": "string" }
+              }
+          }
+      contextForm: |
+          {
+            "form": [
+               { "key": "title", "title": { "en": "Title" }, "type": "string" }
+            ]
+          }
     - templateKey: macroTemplateKey
       name: "Macro template key"
       subjectTemplate: {en: "Macro subject", uk: "Тема макроса"}
