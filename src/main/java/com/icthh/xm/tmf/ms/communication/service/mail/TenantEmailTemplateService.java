@@ -60,11 +60,8 @@ public class TenantEmailTemplateService implements RefreshableConfiguration {
     public String getEmailTemplateByKey(TenantKey tenantKey, String templateKey, String locale) {
         Optional<EmailTemplateSpec> emailTemplateSpec = emailSpecService.getEmailTemplateSpec(tenantKey.getValue(), templateKey);
         if (emailTemplateSpec.isPresent()) {
-            Optional<String> templatePathOptional = emailTemplateSpec.map(EmailTemplateSpec::getTemplatePath);
-            if (templatePathOptional.isEmpty()) {
-                throw new EntityNotFoundException("Template path is empty in specification");
-            }
-            String templatePath = templatePathOptional.get();
+            String templatePath = emailTemplateSpec.map(EmailTemplateSpec::getTemplatePath)
+                .orElseThrow(() -> new EntityNotFoundException("Template path is empty in specification"));
 
             return getTemplateOverrideable(templatePath)
                 .orElseGet(() -> getEmailTemplate(tenantKey.getValue(), templatePath, locale));
