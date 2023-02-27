@@ -285,8 +285,8 @@ public class MailServiceUnitTest {
     }
 
     @Test
-    public void testDefaultGetEmailTemplateByKey() {
-        String emailPath = "/config/tenants/XM/communication/emails/activation/secondTemplateKey/en.ftl";
+    public void testGetEmailTemplateByKeyDefault() {
+        String emailPath = "/config/tenants/RESINTTEST/communication/emails/activation/secondTemplateKey/en.ftl";
         String config = "Some email content";
 
         String emailSpecConfig = loadFile("config/specs/email-spec.yml");
@@ -300,7 +300,7 @@ public class MailServiceUnitTest {
 
     @Test(expected = EntityNotFoundException.class)
     public void testGetEmailTemplateByKeyWithoutPath() {
-        String emailPath = "/config/tenants/XM/communication/emails/activation/thirdTemplateKey/en.ftl";
+        String emailPath = "/config/tenants/RESINTTEST/communication/emails/activation/thirdTemplateKey/en.ftl";
         String config = "Some email content";
 
         String emailSpecConfig = loadFile("config/specs/email-spec.yml");
@@ -314,7 +314,7 @@ public class MailServiceUnitTest {
 
     @Test
     public void testGetEmailTemplateByKeyWithoutSpec() {
-        String emailPath = "/config/tenants/XM/communication/emails/noSpecTemplateName/en.ftl";
+        String emailPath = "/config/tenants/RESINTTEST/communication/emails/noSpecTemplateName/en.ftl";
         String config = "Some email content";
 
         templateService.onRefresh(emailPath, config);
