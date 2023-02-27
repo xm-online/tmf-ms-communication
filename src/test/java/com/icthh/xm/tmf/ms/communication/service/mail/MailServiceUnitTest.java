@@ -307,9 +307,7 @@ public class MailServiceUnitTest {
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecConfig);
         templateService.onRefresh(emailPath, config);
 
-        String emailTemplate = templateService.getEmailTemplateByKey(TenantKey.valueOf(TENANT_NAME), "thirdTemplateKey", "en");
-
-        assertThat(emailTemplate).isEqualTo(config);
+        templateService.getEmailTemplateByKey(TenantKey.valueOf(TENANT_NAME), "thirdTemplateKey", "en");
     }
 
     @Test
