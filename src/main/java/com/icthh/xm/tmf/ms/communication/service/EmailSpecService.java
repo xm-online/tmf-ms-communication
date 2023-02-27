@@ -53,7 +53,7 @@ public class EmailSpecService extends AbstractRefreshableConfiguration<EmailSpec
             .map(EmailSpec::getEmails)
             .stream()
             .flatMap(Collection::stream)
-            .filter(it -> it.getTemplatePath().equals(templatePath))
+            .filter(it -> templatePath.equals(it.getTemplatePath()))
             .collect(Collectors.toList());
     }
 

@@ -14,6 +14,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.mail.provider.MailProviderService;
 import com.icthh.xm.commons.security.XmAuthenticationContext;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
@@ -281,6 +282,44 @@ public class MailServiceUnitTest {
         templateService.onRefresh(customEmailPath, "");
         assertThrows(NullPointerException.class, () -> getContentFromTemplateLoader("XM/activation/subfolder/en"));
 
+    }
+
+    @Test
+    public void testGetEmailTemplateByKeyDefault() {
+        String emailPath = "/config/tenants/RESINTTEST/communication/emails/activation/secondTemplateKey/en.ftl";
+        String config = "Some email content";
+
+        String emailSpecConfig = loadFile("config/specs/email-spec.yml");
+        emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecConfig);
+        templateService.onRefresh(emailPath, config);
+
+        String emailTemplate = templateService.getEmailTemplateByKey(TenantKey.valueOf(TENANT_NAME), "secondTemplateKey", "en");
+
+        assertThat(emailTemplate).isEqualTo(config);
+    }
+
+    @Test(expected = EntityNotFoundException.class)
+    public void testGetEmailTemplateByKeyWithoutPath() {
+        String emailPath = "/config/tenants/RESINTTEST/communication/emails/activation/thirdTemplateKey/en.ftl";
+        String config = "Some email content";
+
+        String emailSpecConfig = loadFile("config/specs/email-spec.yml");
+        emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecConfig);
+        templateService.onRefresh(emailPath, config);
+
+        templateService.getEmailTemplateByKey(TenantKey.valueOf(TENANT_NAME), "thirdTemplateKey", "en");
+    }
+
+    @Test
+    public void testGetEmailTemplateByKeyWithoutSpec() {
+        String emailPath = "/config/tenants/RESINTTEST/communication/emails/noSpecTemplateName/en.ftl";
+        String config = "Some email content";
+
+        templateService.onRefresh(emailPath, config);
+
+        String emailTemplate = templateService.getEmailTemplateByKey(TenantKey.valueOf(TENANT_NAME), "noSpecTemplateName", "en");
+
+        assertThat(emailTemplate).isEqualTo(config);
     }
 
     @SneakyThrows
