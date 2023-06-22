@@ -1,4 +1,4 @@
-version: '3.3'
+version: '3.8'
 services:
     communication-app:
         image: xmonline/tmf-ms-communication:${IMAGE_TMF_MS_COMMUNICATION_TAG:-latest}
