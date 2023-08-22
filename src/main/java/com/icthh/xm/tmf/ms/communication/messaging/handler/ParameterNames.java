@@ -47,6 +47,16 @@ public final class ParameterNames {
      */
     public static final String RESULT_TYPE = "RESULT.TYPE";
 
+    /**
+     * Override source type TON
+     */
+    public static final String SOURCE_TYPE_TON = "SOURCE.TON";
+
+    /**
+     * Override destination type TON
+     */
+    public static final String DESTINATION_TYPE_TON = "DESTINATION.TON";
+
     public enum ResultType {
 
         /**
