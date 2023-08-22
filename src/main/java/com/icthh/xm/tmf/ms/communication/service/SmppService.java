@@ -33,6 +33,7 @@ import org.jsmpp.bean.DataCoding;
 import org.jsmpp.bean.ESMClass;
 import org.jsmpp.bean.GeneralDataCoding;
 import org.jsmpp.bean.MessageClass;
+import org.jsmpp.bean.NumberingPlanIndicator;
 import org.jsmpp.bean.OptionalParameter.OctetString;
 import org.jsmpp.bean.RegisteredDelivery;
 import org.jsmpp.bean.TypeOfNumber;
@@ -175,8 +176,6 @@ public class SmppService {
         NegativeResponseException,
         ResponseTimeoutException {
 
-        Smpp smpp = appProps.getSmpp();
-
         DataCoding dataCoding = getDataCoding(message);
         log.info("Start send message from: {} to: {} with encoding [{}] and content.size: {}, " +
                 "optional parameters: {}, custom parameters: {}", senderId, destAddrs,
@@ -187,32 +186,62 @@ public class SmppService {
             .collect(Collectors.toList());
         optional.add(toPayload(message));
 
-        SMPPSession session = getActualSession();
+        SmppShortMessageConfigHolder shortMessageBuilder =
+            buildMessageParameters(senderId, destAddrs, deliveryReport, customParameters, dataCoding, optional);
 
-        Date scheduleDeliveryTime = new Date();
+        SMPPSession session = getActualSession();
         String messageId = session.submitShortMessage(
-            smpp.getServiceType(),
-            getSourceAddrTon(customParameters.getSourceTon(), smpp),
-            smpp.getSourceAddrNpi(),
-            getSourceAddr(senderId, smpp),
-            getDestAddrTon(customParameters.getDestinationTon(), smpp),
-            smpp.getDestAddrNpi(),
-            destAddrs,
-            new ESMClass(),
-            (customParameters.getProtocolId() != null ? customParameters.getProtocolId().byteValue() :
-                (byte) smpp.getProtocolId()),
-            (byte) smpp.getPriorityFlag(),
-            timeFormatter.format(scheduleDeliveryTime),
-            validityPeriodOrDefault(customParameters.getValidityPeriod(), scheduleDeliveryTime,
-                IntegerValidator.getInstance().validate(smpp.getValidityPeriod())),
-            new RegisteredDelivery(deliveryReport),
-            (byte) smpp.getReplaceIfPresentFlag(), dataCoding,
-            (byte) smpp.getSmDefaultMsgId(),
-            EMPTY_MESSAGE,
-            optional.toArray(OctetString[]::new)
+            shortMessageBuilder.getServiceType(),
+            shortMessageBuilder.getSourceAddrTon(),
+            shortMessageBuilder.getSourceAddrNpi(),
+            shortMessageBuilder.getSourceAddr(),
+            shortMessageBuilder.getDestAddrTon(),
+            shortMessageBuilder.getDestAddrNpi(),
+            shortMessageBuilder.getDestinationAddr(),
+            shortMessageBuilder.getEsmClass(),
+            shortMessageBuilder.getProtocolId(),
+            shortMessageBuilder.getPriorityFlag(),
+            shortMessageBuilder.getScheduleDeliveryTime(),
+            shortMessageBuilder.getValidityPeriod(),
+            shortMessageBuilder.getRegisteredDelivery(),
+            shortMessageBuilder.getReplaceIfPresentFlag(),
+            shortMessageBuilder.getDataCoding(),
+            shortMessageBuilder.getSmDefaultMsgId(),
+            shortMessageBuilder.getShortMessage(),
+            shortMessageBuilder.getOptionalParameters().toArray(OctetString[]::new)
         );
         log.info("Message submitted, message_id is {}", messageId);
         return messageId;
+    }
+
+    private SmppShortMessageConfigHolder buildMessageParameters(String senderId, String destAddrs, byte deliveryReport,
+                                                                CustomParametersBuilder customParameters,
+                                                                DataCoding dataCoding, List<OctetString> optional) {
+        Smpp smpp = appProps.getSmpp();
+        Date scheduleDeliveryTime = new Date();
+
+        return SmppShortMessageConfigHolder.builder()
+            .serviceType(smpp.getServiceType())
+            .sourceAddrTon(getSourceAddrTon(customParameters.getSourceTon(), smpp))
+            .sourceAddrNpi(smpp.getSourceAddrNpi())
+            .sourceAddr(getSourceAddr(senderId, smpp))
+            .destAddrTon(getDestAddrTon(customParameters.getDestinationTon(), smpp))
+            .destAddrNpi(smpp.getDestAddrNpi())
+            .destinationAddr(destAddrs)
+            .esmClass(new ESMClass())
+            .protocolId((customParameters.getProtocolId() != null ? customParameters.getProtocolId().byteValue() :
+                (byte) smpp.getProtocolId()))
+            .priorityFlag((byte) smpp.getPriorityFlag())
+            .scheduleDeliveryTime(timeFormatter.format(scheduleDeliveryTime))
+            .validityPeriod(validityPeriodOrDefault(customParameters.getValidityPeriod(), scheduleDeliveryTime,
+                IntegerValidator.getInstance().validate(smpp.getValidityPeriod())))
+            .registeredDelivery(new RegisteredDelivery(deliveryReport))
+            .replaceIfPresentFlag((byte) smpp.getReplaceIfPresentFlag())
+            .dataCoding(dataCoding)
+            .smDefaultMsgId((byte) smpp.getSmDefaultMsgId())
+            .shortMessage(EMPTY_MESSAGE)
+            .optionalParameters(optional)
+            .build();
     }
 
     private String validityPeriodOrDefault(Integer requestedValidityPeriod,
@@ -313,5 +342,101 @@ public class SmppService {
          * Smpp protocol id (uses the default if null)
          */
         private Integer protocolId;
+    }
+
+    @Builder
+    @Getter
+    private static class SmppShortMessageConfigHolder {
+
+        /**
+         * Is the service_type. The service_type parameter can be used to indicate the SMS Application service
+         * associated with the message.
+         */
+        private String serviceType;
+
+        /**
+         * Is the source_addr_ton. Type of Number for source address.
+         */
+        private TypeOfNumber sourceAddrTon;
+
+        /**
+         * Is the source_addr_npi. Numbering Plan Indicator for source address.
+         */
+        private NumberingPlanIndicator sourceAddrNpi;
+
+        /**
+         * Is the source_addr. Address of SME which originated this message
+         */
+        private String sourceAddr;
+
+        /**
+         * Is the dest_addr_ton. Type of Number for destination.
+         */
+        private TypeOfNumber destAddrTon;
+
+        /**
+         * Is the dest_addr_npi. Numbering Plan Indicator for destination.
+         */
+        private NumberingPlanIndicator destAddrNpi;
+
+        /**
+         * Is the destination_addr. Destination address of this short message.
+         */
+        private String destinationAddr;
+
+        /**
+         * Is the esm_class. Indicates Message Mode & Message Type.
+         */
+        private ESMClass esmClass;
+
+        /**
+         * Is the protocol_id. Protocol Identifier. Network specific field.
+         */
+        private byte protocolId;
+
+        /**
+         * Is the priority_flag. Designates the priority level of the message.
+         */
+        private byte priorityFlag;
+
+        /**
+         * Is the schedule_delivery_time. The short message is to be scheduled by the SMSC for delivery
+         */
+        private String scheduleDeliveryTime;
+
+        /**
+         * Is the validity_period. The validity period of this message.
+         */
+        private String validityPeriod;
+
+        /**
+         * Is the registered_delivery. Indicator to signify if an SMSC delivery receipt or an SME acknowledgement is required.
+         */
+        private RegisteredDelivery registeredDelivery;
+
+        /**
+         * Is the replace_if_present_flag.  Flag indicating if submitted message should replace an existing message.
+         */
+        private byte replaceIfPresentFlag;
+
+        /**
+         * Is the data_coding. Defines the encoding scheme of the short message user data.
+         */
+        private DataCoding dataCoding;
+
+        /**
+         * Is the sm_default_msg_id. Indicates the short message to send from a list of predefined (‘canned’) short messages stored on the SMSC.
+         */
+        private byte smDefaultMsgId;
+
+        /**
+         * Is the short_message. Use message_payload in optionalParameters
+         */
+        private byte[] shortMessage;
+
+        /**
+         * Is the optional parameters. See the specification
+         */
+        private List<OctetString> optionalParameters;
     }
 }

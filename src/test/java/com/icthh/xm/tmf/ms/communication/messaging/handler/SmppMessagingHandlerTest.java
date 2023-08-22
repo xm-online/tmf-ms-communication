@@ -366,8 +366,8 @@ public class SmppMessagingHandlerTest {
     @SneakyThrows
     private void failMessage(Exception e, String errorCode, String testMessage,
                              CommunicationRequestCharacteristic...additionalCharacteristics) {
-        when(smppService.send("PH", "TestContext", "TestSender",
-            (byte) 1, Collections.emptyMap(), any(SmppService.CustomParametersBuilder.class)))
+        when(smppService.send(eq("PH"), eq("TestContext"), eq("TestSender"),
+            eq((byte) 1), anyMap(), any(SmppService.CustomParametersBuilder.class)))
             .thenThrow(e);
 
         smppMessagingHandler.handle(message());
@@ -405,8 +405,8 @@ public class SmppMessagingHandlerTest {
     @Test
     @SneakyThrows
     public void receiveMessageSuccessWithDistributionIdTest() {
-        when(smppService.send("PH", "TestContext", "TestSender",
-            (byte) 0, Collections.emptyMap(), any(SmppService.CustomParametersBuilder.class)))
+        when(smppService.send(eq("PH"), eq("TestContext"), eq("TestSender"),
+                eq((byte) 0), anyMap(), any(SmppService.CustomParametersBuilder.class)))
             .thenReturn(MESSAGE_ID_VALUE);
         CommunicationMessage message = message();
         addDistributionId(message);
@@ -432,8 +432,8 @@ public class SmppMessagingHandlerTest {
     public void communicationMessageCreateMappingTest() throws Exception {
         CommunicationMessageCreate messageCreate = messageCreate();
         smppMessagingHandler.handle(messageCreate);
-        verify(smppService).send(messageCreate.getReceiver().get(0).getPhoneNumber(), messageCreate.getContent(),
-            messageCreate.getSender().getId(), (byte) 1, Map.of(OPTIONAL_KEY_SHORT, OPTIONAL_VALUE), any(SmppService.CustomParametersBuilder.class));
+        verify(smppService).send(eq(messageCreate.getReceiver().get(0).getPhoneNumber()), eq(messageCreate.getContent()),
+            eq(messageCreate.getSender().getId()), eq((byte) 1), eq(Map.of(OPTIONAL_KEY_SHORT, OPTIONAL_VALUE)), any(SmppService.CustomParametersBuilder.class));
     }
 
     @Test
