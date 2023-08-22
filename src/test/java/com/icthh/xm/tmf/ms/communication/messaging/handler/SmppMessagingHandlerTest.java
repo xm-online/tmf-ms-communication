@@ -5,8 +5,10 @@ import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.DISTRIBUT
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.FAILED;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.Status.SUCCESS;
 import static com.icthh.xm.tmf.ms.communication.messaging.handler.ParameterNames.DELIVERY_REPORT;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.ParameterNames.DESTINATION_TYPE_TON;
 import static com.icthh.xm.tmf.ms.communication.messaging.handler.ParameterNames.ERROR_CODE;
 import static com.icthh.xm.tmf.ms.communication.messaging.handler.ParameterNames.MESSAGE_ID;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.ParameterNames.SOURCE_TYPE_TON;
 import static java.nio.charset.StandardCharsets.ISO_8859_1;
 import static java.nio.charset.StandardCharsets.UTF_16;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -52,6 +54,7 @@ import org.apache.commons.io.IOUtils;
 import org.jsmpp.PDUException;
 import org.jsmpp.bean.DeliverSm;
 import org.jsmpp.bean.MessageType;
+import org.jsmpp.bean.TypeOfNumber;
 import org.jsmpp.extra.NegativeResponseException;
 import org.junit.Before;
 import org.junit.Test;
@@ -152,7 +155,9 @@ public class SmppMessagingHandlerTest {
     public void receiveMessageSuccessTest() {
         //given
         when(smppService.send(anyString(), anyString(), anyString(), anyByte(),
-            anyMap(), eq(300), eq(Integer.valueOf(PROTOCOL_ID_VALUE))))
+            anyMap(),
+            any(SmppService.CustomParametersBuilder.class)
+        ))
             .thenReturn(MESSAGE_ID_VALUE);
 
         CommunicationMessage messageRequest = message();
@@ -202,7 +207,7 @@ public class SmppMessagingHandlerTest {
     public void shouldProcessRequestWithoutCharacteristics() {
         //given
         when(smppService.send(anyString(), anyString(), anyString(), anyByte(),
-            anyMap(), any(), any()))
+            anyMap(), any(SmppService.CustomParametersBuilder.class)))
             .thenReturn(MESSAGE_ID_VALUE);
 
         CommunicationMessage messageRequest = message();
@@ -362,7 +367,7 @@ public class SmppMessagingHandlerTest {
     private void failMessage(Exception e, String errorCode, String testMessage,
                              CommunicationRequestCharacteristic...additionalCharacteristics) {
         when(smppService.send("PH", "TestContext", "TestSender",
-            (byte) 1, Collections.emptyMap(), null, null))
+            (byte) 1, Collections.emptyMap(), any(SmppService.CustomParametersBuilder.class)))
             .thenThrow(e);
 
         smppMessagingHandler.handle(message());
@@ -401,7 +406,7 @@ public class SmppMessagingHandlerTest {
     @SneakyThrows
     public void receiveMessageSuccessWithDistributionIdTest() {
         when(smppService.send("PH", "TestContext", "TestSender",
-            (byte) 0, Collections.emptyMap(), null, null))
+            (byte) 0, Collections.emptyMap(), any(SmppService.CustomParametersBuilder.class)))
             .thenReturn(MESSAGE_ID_VALUE);
         CommunicationMessage message = message();
         addDistributionId(message);
@@ -428,7 +433,38 @@ public class SmppMessagingHandlerTest {
         CommunicationMessageCreate messageCreate = messageCreate();
         smppMessagingHandler.handle(messageCreate);
         verify(smppService).send(messageCreate.getReceiver().get(0).getPhoneNumber(), messageCreate.getContent(),
-            messageCreate.getSender().getId(), (byte) 1, Map.of(OPTIONAL_KEY_SHORT, OPTIONAL_VALUE), null, null);
+            messageCreate.getSender().getId(), (byte) 1, Map.of(OPTIONAL_KEY_SHORT, OPTIONAL_VALUE), any(SmppService.CustomParametersBuilder.class));
     }
 
+    @Test
+    public void findSourceTypeTon() {
+        assertEquals(smppMessagingHandler.findSourceTypeTon(messageSourceTon("INTERNATIONAL", null).getCharacteristic()), "INTERNATIONAL");
+        when(smppService.getSourceAddrTon(anyString(), any())).thenCallRealMethod();
+        assertEquals(TypeOfNumber.INTERNATIONAL, smppService.getSourceAddrTon("INTERNATIONAL", new ApplicationProperties.Smpp()));
+    }
+
+    @Test
+    public void findDestinationTypeTon() {
+        assertEquals(smppMessagingHandler.findDestinationTypeTon(messageSourceTon(null, "INTERNATIONAL").getCharacteristic()), "INTERNATIONAL");
+        when(smppService.getDestAddrTon(anyString(), any())).thenCallRealMethod();
+        assertEquals(TypeOfNumber.INTERNATIONAL, smppService.getDestAddrTon("INTERNATIONAL", new ApplicationProperties.Smpp()));
+    }
+
+    public static CommunicationMessage messageSourceTon(String sourceTone, String destinationTone) {
+        return new CommunicationMessage() {{
+            setType(com.icthh.xm.tmf.ms.communication.domain.MessageType.SMS.name());
+            if (sourceTone != null) {
+                setCharacteristic(Lists.newArrayList(new CommunicationRequestCharacteristic() {{
+                    name(SOURCE_TYPE_TON);
+                    value(sourceTone);
+                }}));
+            }
+            if (destinationTone != null) {
+                setCharacteristic(Lists.newArrayList(new CommunicationRequestCharacteristic() {{
+                    name(DESTINATION_TYPE_TON);
+                    value(destinationTone);
+                }}));
+            }
+        }};
+    }
 }

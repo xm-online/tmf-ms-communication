@@ -14,6 +14,7 @@ import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
 import com.icthh.xm.tmf.ms.communication.rules.RuleResponse;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
+import com.icthh.xm.tmf.ms.communication.service.SmppService.CustomParametersBuilder;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
@@ -131,10 +132,18 @@ public class SmppMessagingHandler implements BasicMessageHandler {
             throw new RuleValidationException(ruleResponse);
         }
 
+        List<CommunicationRequestCharacteristic> messageCharacteristics = message.getCharacteristic();
+        CustomParametersBuilder customParameters = CustomParametersBuilder.builder()
+            .protocolId(getFromCharacteristics(messageCharacteristics, ParameterNames.PROTOCOL_ID, Ints::tryParse))
+            .validityPeriod(
+                getFromCharacteristics(messageCharacteristics, ParameterNames.VALIDITY_PERIOD, Ints::tryParse))
+            .sourceTon(findSourceTypeTon(messageCharacteristics))
+            .destinationTon(findDestinationTypeTon(messageCharacteristics))
+            .build();
+
         String messageId = smppService.send(phoneNumber, message.getContent(), message.getSender().getId(),
             getDeliveryReport(message.getCharacteristic()), buildOptionalParameters(message),
-            getFromCharacteristics(message.getCharacteristic(), ParameterNames.VALIDITY_PERIOD, Ints::tryParse),
-            getFromCharacteristics(message.getCharacteristic(), ParameterNames.PROTOCOL_ID, Ints::tryParse)
+            customParameters
         );
         String queueName = messaging.getSentQueueName();
         sendMessage(success(messageId, message), queueName);
@@ -189,6 +198,25 @@ public class SmppMessagingHandler implements BasicMessageHandler {
             .findFirst()
             .map(c -> NumberUtils.toByte(c.getValue(), (byte) 0))
             .orElse((byte) 0);
+    }
+
+    String findSourceTypeTon(List<CommunicationRequestCharacteristic> characteristics) {
+        return Optional.ofNullable(characteristics).orElse(Collections.emptyList())
+            .stream()
+            .filter(c -> ParameterNames.SOURCE_TYPE_TON.equals(c.getName()))
+            .findFirst()
+            .map(CommunicationRequestCharacteristic::getValue)
+            .orElse(null);
+
+    }
+
+    String findDestinationTypeTon(List<CommunicationRequestCharacteristic> characteristics) {
+        return Optional.ofNullable(characteristics).orElse(Collections.emptyList())
+            .stream()
+            .filter(c -> ParameterNames.DESTINATION_TYPE_TON.equals(c.getName()))
+            .findFirst()
+            .map(CommunicationRequestCharacteristic::getValue)
+            .orElse(null);
     }
 
     static final class ErrorCodes {

@@ -18,8 +18,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import javax.annotation.PreDestroy;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.validator.routines.IntegerValidator;
 import org.jsmpp.InvalidResponseException;
@@ -31,6 +35,7 @@ import org.jsmpp.bean.GeneralDataCoding;
 import org.jsmpp.bean.MessageClass;
 import org.jsmpp.bean.OptionalParameter.OctetString;
 import org.jsmpp.bean.RegisteredDelivery;
+import org.jsmpp.bean.TypeOfNumber;
 import org.jsmpp.extra.NegativeResponseException;
 import org.jsmpp.extra.ResponseTimeoutException;
 import org.jsmpp.session.BindParameter;
@@ -106,6 +111,7 @@ public class SmppService {
      * @param protocolId         smpp protocol id (uses the default if null)
      * @return message id - unique identifier of the message. Used in delivery reports.
      */
+    @Deprecated(since = "Since method send with customParameters was introduced")
     public String send(String destAddrs, String message, String senderId, byte deliveryReport, Map<Short,
         String> optionalParameters, Integer validityPeriod, Integer protocolId) throws PDUException, IOException,
         InvalidResponseException,
@@ -140,6 +146,64 @@ public class SmppService {
             (byte) smpp.getPriorityFlag(),
             timeFormatter.format(scheduleDeliveryTime),
             validityPeriodOrDefault(validityPeriod, scheduleDeliveryTime,
+                IntegerValidator.getInstance().validate(smpp.getValidityPeriod())),
+            new RegisteredDelivery(deliveryReport),
+            (byte) smpp.getReplaceIfPresentFlag(), dataCoding,
+            (byte) smpp.getSmDefaultMsgId(),
+            EMPTY_MESSAGE,
+            optional.toArray(OctetString[]::new)
+        );
+        log.info("Message submitted, message_id is {}", messageId);
+        return messageId;
+    }
+
+    /**
+     * Send a message
+     *
+     * @param destAddrs          destination number
+     * @param message            text message
+     * @param senderId           sender number or alpha-name
+     * @param deliveryReport     enabled delivery report
+     * @param optionalParameters optional parameters, key - parameter tag, value - parameter value
+     * @param customParameters   custom parameters. {@link com.icthh.xm.tmf.ms.communication.service.SmppService.CustomParametersBuilder}
+     *
+     * @return message id - unique identifier of the message. Used in delivery reports.
+     */
+    public String send(String destAddrs, String message, String senderId, byte deliveryReport, Map<Short,
+        String> optionalParameters, CustomParametersBuilder customParameters) throws PDUException, IOException,
+        InvalidResponseException,
+        NegativeResponseException,
+        ResponseTimeoutException {
+
+        Smpp smpp = appProps.getSmpp();
+
+        DataCoding dataCoding = getDataCoding(message);
+        log.info("Start send message from: {} to: {} with encoding [{}] and content.size: {}, " +
+                "optional parameters: {}, custom parameters: {}", senderId, destAddrs,
+            dataCoding, message.length(), optionalParameters, customParameters);
+
+        List<OctetString> optional = optionalParameters.entrySet().stream()
+            .map(e -> new OctetString(e.getKey(), e.getValue()))
+            .collect(Collectors.toList());
+        optional.add(toPayload(message));
+
+        SMPPSession session = getActualSession();
+
+        Date scheduleDeliveryTime = new Date();
+        String messageId = session.submitShortMessage(
+            smpp.getServiceType(),
+            getSourceAddrTon(customParameters.getSourceTon(), smpp),
+            smpp.getSourceAddrNpi(),
+            getSourceAddr(senderId, smpp),
+            getDestAddrTon(customParameters.getDestinationTon(), smpp),
+            smpp.getDestAddrNpi(),
+            destAddrs,
+            new ESMClass(),
+            (customParameters.getProtocolId() != null ? customParameters.getProtocolId().byteValue() :
+                (byte) smpp.getProtocolId()),
+            (byte) smpp.getPriorityFlag(),
+            timeFormatter.format(scheduleDeliveryTime),
+            validityPeriodOrDefault(customParameters.getValidityPeriod(), scheduleDeliveryTime,
                 IntegerValidator.getInstance().validate(smpp.getValidityPeriod())),
             new RegisteredDelivery(deliveryReport),
             (byte) smpp.getReplaceIfPresentFlag(), dataCoding,
@@ -210,8 +274,44 @@ public class SmppService {
         return isBlank(senderId) ? smpp.getSourceAddr() : senderId;
     }
 
+    public TypeOfNumber getSourceAddrTon(String sourceTon, Smpp smpp) {
+        return isBlank(sourceTon) ? smpp.getSourceAddrTon() : TypeOfNumber.valueOf(sourceTon);
+    }
+
+    public TypeOfNumber getDestAddrTon(String destTon, Smpp smpp) {
+        return isBlank(destTon) ? smpp.getDestAddrTon() : TypeOfNumber.valueOf(destTon);
+    }
+
     @PreDestroy
     public void onDestroy() throws Exception {
         session.unbindAndClose();
+    }
+
+    @Builder
+    @Getter
+    @ToString
+    @EqualsAndHashCode
+    public static class CustomParametersBuilder {
+
+        /**
+         * Source address ton (optional, by default get from application.properties)
+         */
+        private String sourceTon;
+
+        /**
+         * Destination address ton (optional, by default get from application.properties)
+         */
+        private String destinationTon;
+
+        /**
+         * A number of seconds a message is valid. If is not delivered in this period will get EXPIRED delivery state
+         * (uses the default if null).
+         */
+        private Integer validityPeriod;
+
+        /**
+         * Smpp protocol id (uses the default if null)
+         */
+        private Integer protocolId;
     }
 }
