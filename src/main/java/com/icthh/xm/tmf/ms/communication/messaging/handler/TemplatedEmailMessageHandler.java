@@ -78,6 +78,8 @@ public class TemplatedEmailMessageHandler implements BasicMessageHandler {
 
     private void sendWithAttachments(Map<String, Object> objectModel, String templateName, Locale locale,
                                      String sender, String subject, String receiver, List<Attachment> attachments) {
+        log.debug("Messages attachments {}", attachments);
+
         mailService.sendEmailFromTemplateWithAttachments(
             TenantContextUtils.getRequiredTenantKey(tenantContextHolder.getContext()),
             locale,

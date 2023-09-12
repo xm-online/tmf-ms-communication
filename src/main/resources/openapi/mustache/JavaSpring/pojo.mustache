@@ -154,15 +154,19 @@ public class {{classname}} {{#parent}}extends {{{.}}}{{/parent}}{{^parent}}{{#ha
     return a.isPresent() ? Arrays.deepHashCode(new Object[]{a.get()}) : 31;
   }{{/vendorExtensions.x-jackson-optional-nullable-helpers}}
 
-  @Override
-  public String toString() {
+    @Override
+    public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("{{classname}} {");
     {{#parent}}sb.append(toIndentedString(super.toString()));{{/parent}}
-    {{#vars}}sb.append("{{name}}: ").append(toIndentedString({{name}})).append(", ");
-    {{/vars}}sb.append("}").deleteCharAt(sb.toString().lastIndexOf(","));
+    {{#vars}}
+     {{^vendorExtensions.x-tostringIgnore}}
+      sb.append("{{name}}: ").append(toIndentedString({{name}})).append(", ");
+      {{/vendorExtensions.x-tostringIgnore}}
+    {{/vars}}
+    sb.append("}").deleteCharAt(sb.toString().lastIndexOf(","));
     return sb.toString();
-  }
+    }
 
   /**
    * Convert the given object to string with each line indented by 4 spaces

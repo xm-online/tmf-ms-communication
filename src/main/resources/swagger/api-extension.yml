@@ -11,6 +11,7 @@ definitions:
                 properties:
                     fileBytes:
                         type: string
+                        x-tostringIgnore: true
                 required:
                     - fileBytes
     ExtendedCommunicationMessage:
