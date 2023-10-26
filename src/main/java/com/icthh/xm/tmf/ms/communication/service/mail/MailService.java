@@ -43,7 +43,6 @@ import org.springframework.context.i18n.LocaleContext;
 import org.springframework.core.io.InputStreamSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 /**
@@ -142,7 +141,7 @@ public class MailService {
     }
 
     /**
-     * Async send of email.
+     * Send of email.
      *
      * @param tenantKey    the tenant key
      * @param locale       the locale
@@ -153,7 +152,6 @@ public class MailService {
      * @param rid          the request id
      * @param from         the from email
      */
-    @Async
     public void sendEmailFromTemplate(TenantKey tenantKey,
                                       Locale locale,
                                       String templateName,
@@ -173,7 +171,7 @@ public class MailService {
     }
 
     /**
-     * Async send of email with attachment
+     * Send of email with attachment
      *
      * @param tenantKey          the tenant key
      * @param locale             the locale
@@ -187,7 +185,6 @@ public class MailService {
      * @param dataSource         the {@code javax.activation.DataSource} to take the content from, determining the InputStream
      *                           and the content type
      */
-    @Async
     public void sendEmailFromTemplateWithAttachment(TenantKey tenantKey,
                                                     Locale locale,
                                                     String templateName,
@@ -210,7 +207,7 @@ public class MailService {
     }
 
     /**
-     * Async send of email with attachment
+     * Send of email with attachment
      *
      * @param tenantKey    the tenant key
      * @param locale       the locale
@@ -223,7 +220,6 @@ public class MailService {
      * @param attachments  map of attachment file name which appear in the mail and data source of file content
      *                     and the content type
      */
-    @Async
     public void sendEmailFromTemplateWithAttachments(TenantKey tenantKey,
                                                      Locale locale,
                                                      String templateName,
@@ -255,7 +251,6 @@ public class MailService {
      * @param dataSource         the {@code javax.activation.DataSource} to take the content from, determining the InputStream
      *                           and the content type
      */
-    @Async
     public void sendEmailWithContentAndAttachments(
         TenantKey tenantKey,
         String content,
@@ -281,7 +276,6 @@ public class MailService {
      * @param email   the to email
      * @param from    the from email
      */
-    @Async
     public void sendEmailWithContent(
         TenantKey tenantKey,
         String content,
