@@ -166,7 +166,7 @@ public class MailService {
             locale,
             templateName,
             subject,
-            new EmailReceiver(email, List.of()),
+            new EmailReceiver(email),
             objectModel,
             rid,
             from,
@@ -202,7 +202,7 @@ public class MailService {
             locale,
             templateName,
             subject,
-            new EmailReceiver(email, List.of()),
+            new EmailReceiver(email),
             objectModel,
             rid,
             from,
@@ -236,7 +236,7 @@ public class MailService {
             locale,
             templateName,
             subject,
-            new EmailReceiver(email, List.of()),
+            new EmailReceiver(email),
             objectModel,
             rid,
             from,
@@ -285,7 +285,7 @@ public class MailService {
         initAndSendEmail(tenantKey,
             content,
             subject,
-            new EmailReceiver(email, List.of()),
+            new EmailReceiver(email),
             MdcUtils.generateRid(),
             from,
             Map.of(attachmentFilename, dataSource));
@@ -308,7 +308,7 @@ public class MailService {
         initAndSendEmail(tenantKey,
             content,
             subject,
-            new EmailReceiver(email, List.of()),
+            new EmailReceiver(email),
             MdcUtils.generateRid(),
             from,
             null);
@@ -479,7 +479,7 @@ public class MailService {
                    String from,
                    Map<String, InputStreamSource> attachments,
                    JavaMailSender javaMailSender) {
-        sendEmail(new EmailReceiver(to, List.of()), subject, content, from, attachments, javaMailSender);
+        sendEmail(new EmailReceiver(to), subject, content, from, attachments, javaMailSender);
     }
 
     void sendEmail(EmailReceiver emailReceiver,
