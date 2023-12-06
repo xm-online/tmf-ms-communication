@@ -4,18 +4,25 @@ import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
+import com.icthh.xm.tmf.ms.communication.domain.EmailReceiver;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageCreateResolver;
 import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageResolver;
 import com.icthh.xm.tmf.ms.communication.service.mail.MailService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
-import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
+import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
+
 import java.util.List;
-import java.util.stream.Collectors;
+
+import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+
+import javax.validation.Valid;
+
+import static java.util.stream.Collectors.toList;
 
 
 @Service
@@ -24,6 +31,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class EmailMessageHandler implements BasicMessageHandler {
 
+    public static final String EMAIL_BCC = "BCC";
     private final MailService mailService;
     private final CommunicationMessageMapper mapper;
     private final TenantContextHolder tenantContextHolder;
@@ -43,7 +51,7 @@ public class EmailMessageHandler implements BasicMessageHandler {
                 TenantContextUtils.getRequiredTenantKey(tenantContextHolder),
                 messageCreate.getContent(),
                 messageCreate.getSubject(),
-                receiver.getEmail(),
+                new EmailReceiver(receiver.getEmail(), extractBcc(receiver.getCharacteristic())),
                 messageCreate.getSender().getId()
             ));
 
@@ -53,5 +61,17 @@ public class EmailMessageHandler implements BasicMessageHandler {
     @Override
     public MessageType getType() {
         return MessageType.Email;
+    }
+
+    public static EmailReceiver toEmailReceiver(Receiver receiver) {
+        return new EmailReceiver(receiver.getEmail(), extractBcc(receiver.getCharacteristic()));
+    }
+
+    public static List<String> extractBcc(List<CommunicationRequestCharacteristic> characteristic) {
+        characteristic = characteristic == null ? List.of() : characteristic;
+        return characteristic.stream()
+            .filter(c -> EMAIL_BCC.equals(c.getName()))
+            .map(CommunicationRequestCharacteristic::getValue)
+            .collect(toList());
     }
 }

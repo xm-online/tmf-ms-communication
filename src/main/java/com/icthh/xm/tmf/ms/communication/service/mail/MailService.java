@@ -22,6 +22,7 @@ import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService;
 import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService.CommunicationTenantConfig.MailSetting;
+import com.icthh.xm.tmf.ms.communication.domain.EmailReceiver;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
 import freemarker.template.Configuration;
@@ -35,6 +36,7 @@ import javax.annotation.Resource;
 import javax.mail.internet.MimeMessage;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.MessageSource;
@@ -163,7 +165,8 @@ public class MailService {
         initAndSendEmail(tenantKey,
             locale,
             templateName,
-            subject, email,
+            subject,
+            new EmailReceiver(email),
             objectModel,
             rid,
             from,
@@ -199,7 +202,7 @@ public class MailService {
             locale,
             templateName,
             subject,
-            email,
+            new EmailReceiver(email),
             objectModel,
             rid,
             from,
@@ -225,6 +228,26 @@ public class MailService {
                                                      String templateName,
                                                      String subject,
                                                      String email,
+                                                     Map<String, Object> objectModel,
+                                                     String rid,
+                                                     String from,
+                                                     Map<String, InputStreamSource> attachments) {
+        initAndSendEmail(tenantKey,
+            locale,
+            templateName,
+            subject,
+            new EmailReceiver(email),
+            objectModel,
+            rid,
+            from,
+            attachments);
+    }
+
+    public void sendEmailFromTemplateWithAttachments(TenantKey tenantKey,
+                                                     Locale locale,
+                                                     String templateName,
+                                                     String subject,
+                                                     EmailReceiver email,
                                                      Map<String, Object> objectModel,
                                                      String rid,
                                                      String from,
@@ -262,7 +285,7 @@ public class MailService {
         initAndSendEmail(tenantKey,
             content,
             subject,
-            email,
+            new EmailReceiver(email),
             MdcUtils.generateRid(),
             from,
             Map.of(attachmentFilename, dataSource));
@@ -285,7 +308,22 @@ public class MailService {
         initAndSendEmail(tenantKey,
             content,
             subject,
-            email,
+            new EmailReceiver(email),
+            MdcUtils.generateRid(),
+            from,
+            null);
+    }
+
+    public void sendEmailWithContent(
+        TenantKey tenantKey,
+        String content,
+        String subject,
+        EmailReceiver emailReceiver,
+        String from) {
+        initAndSendEmail(tenantKey,
+            content,
+            subject,
+            emailReceiver,
             MdcUtils.generateRid(),
             from,
             null);
@@ -295,7 +333,7 @@ public class MailService {
                                   Locale locale,
                                   String templateName,
                                   String subject,
-                                  String email,
+                                  EmailReceiver email,
                                   Map<String, Object> objectModel,
                                   String rid,
                                   String from,
@@ -441,9 +479,19 @@ public class MailService {
                    String from,
                    Map<String, InputStreamSource> attachments,
                    JavaMailSender javaMailSender) {
+        sendEmail(new EmailReceiver(to), subject, content, from, attachments, javaMailSender);
+    }
+
+    void sendEmail(EmailReceiver emailReceiver,
+                   String subject,
+                   String content,
+                   String from,
+                   Map<String, InputStreamSource> attachments,
+                   JavaMailSender javaMailSender) {
         // Prepare message using a Spring helper
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
         MimeMessageHelper message;
+        String to = emailReceiver.getEmail();
         try {
             boolean hasAttachments = !isEmpty(attachments) &&
                 attachments
@@ -466,6 +514,7 @@ public class MailService {
                     message.addAttachment(entry.getKey(), entry.getValue());
                 }
             }
+            emailReceiver.getBcc().forEach(it -> getAddBcc(it, message));
             javaMailSender.send(mimeMessage);
             log.debug("Sent email to User '{}'", to);
         } catch (Exception e) {
@@ -477,24 +526,29 @@ public class MailService {
         }
     }
 
+    @SneakyThrows
+    private void getAddBcc(String it, MimeMessageHelper message) {
+        message.addBcc(it);
+    }
+
     private void initAndSendEmail(TenantKey tenantKey,
                                   String content,
                                   String subject,
-                                  String email,
+                                  EmailReceiver emailReceiver,
                                   String rid,
                                   String from,
                                   Map<String, InputStreamSource> attachments) {
         execForCustomRid(rid, () -> {
-            if (email == null) {
+            if (emailReceiver.getEmail() == null) {
                 log.warn("Can't send email on null address for tenant: {}, Email [ subject : {}, to : {} ]",
-                    tenantKey.getValue(), subject, email);
+                    tenantKey.getValue(), subject, emailReceiver.getEmail());
                 return;
             }
 
             try {
                 tenantContextHolder.getPrivilegedContext().setTenant(new PlainTenant(tenantKey));
                 sendEmail(
-                    email,
+                    emailReceiver,
                     subject,
                     content,
                     from,

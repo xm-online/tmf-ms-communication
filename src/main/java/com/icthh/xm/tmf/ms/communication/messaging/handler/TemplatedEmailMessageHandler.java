@@ -1,5 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.EmailMessageHandler.toEmailReceiver;
 import static java.util.stream.Collectors.toMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -9,6 +10,7 @@ import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
+import com.icthh.xm.tmf.ms.communication.domain.EmailReceiver;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageCreateResolver;
 import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageResolver;
@@ -58,8 +60,8 @@ public class TemplatedEmailMessageHandler implements BasicMessageHandler {
     @LogicExtensionPoint(value = "Send", resolver = CustomMessageCreateResolver.class)
     public CommunicationMessage handle(CommunicationMessageCreate messageCreate) {
         log.debug("Handling message {}", messageCreate);
-        List<String> emails = messageCreate.getReceiver().stream()
-            .map(Receiver::getEmail)
+        List<EmailReceiver> emails = messageCreate.getReceiver().stream()
+            .map(EmailMessageHandler::toEmailReceiver)
             .collect(Collectors.toList());
 
         Map<String, Object> objectModel = toObjectModel(messageCreate.getCharacteristic());
@@ -70,14 +72,14 @@ public class TemplatedEmailMessageHandler implements BasicMessageHandler {
         String sender = messageCreate.getSender().getId();
         String subject = messageCreate.getSubject();
 
-        for (String email : emails) {
+        for (EmailReceiver email : emails) {
             sendWithAttachments(templateModel, templateName, locale, sender, subject, email, messageCreate.getAttachment());
         }
         return mapper.messageCreateToMessage(messageCreate);
     }
 
     private void sendWithAttachments(Map<String, Object> objectModel, String templateName, Locale locale,
-                                     String sender, String subject, String receiver, List<Attachment> attachments) {
+                                     String sender, String subject, EmailReceiver receiver, List<Attachment> attachments) {
         log.debug("Messages attachments {}", attachments);
 
         mailService.sendEmailFromTemplateWithAttachments(

@@ -26,6 +26,7 @@ import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService;
 import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService.CommunicationTenantConfig.MailSetting;
 import com.icthh.xm.tmf.ms.communication.config.SecurityBeanOverrideConfiguration;
+import com.icthh.xm.tmf.ms.communication.domain.EmailReceiver;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 
@@ -158,7 +159,7 @@ public class MailServiceUnitTest {
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(spiedMailService).sendEmail(
-            captor.capture(), // to
+            eq(new EmailReceiver(EMAIL)), // to
             captor.capture(), // subject
             eq("OTHER_BASE_START_CUSTOM_BASE_END"),
             captor.capture(), // from
@@ -167,7 +168,7 @@ public class MailServiceUnitTest {
         );
 
         List<String> allValues = captor.getAllValues();
-        assertThat(allValues).containsExactly(EMAIL, "Subject with value1", "test@communication.com");
+        assertThat(allValues).containsExactly("Subject with value1", "test@communication.com");
     }
 
     @Test
@@ -197,7 +198,7 @@ public class MailServiceUnitTest {
 
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(spiedMailService).sendEmail(
-            captor.capture(), // to
+            eq(new EmailReceiver(EMAIL)), // to
             captor.capture(), // subject
             eq("OTHER_BASE_START_CUSTOM_BASE_END"),
             captor.capture(), // from
@@ -206,7 +207,7 @@ public class MailServiceUnitTest {
         );
 
         List<String> allValues = captor.getAllValues();
-        assertThat(allValues).containsExactly(EMAIL, "Subject with value1", "test@communication.com");
+        assertThat(allValues).containsExactly("Subject with value1", "test@communication.com");
     }
 
     @Test

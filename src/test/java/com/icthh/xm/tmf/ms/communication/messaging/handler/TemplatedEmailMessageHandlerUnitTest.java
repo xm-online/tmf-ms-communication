@@ -5,12 +5,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
 
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.TenantKey;
+import com.icthh.xm.tmf.ms.communication.domain.EmailReceiver;
 import com.icthh.xm.tmf.ms.communication.service.mail.MailService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
@@ -37,7 +39,7 @@ import java.util.Locale;
 import java.util.Map;
 
 @RunWith(MockitoJUnitRunner.class)
-public class TemplatedEmailMessageHandlerTest {
+public class TemplatedEmailMessageHandlerUnitTest {
 
     @Mock
     MailService mailService;
@@ -71,9 +73,9 @@ public class TemplatedEmailMessageHandlerTest {
 
         emailMessageHandler.handle(messageCreate);
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(mailService).sendEmailWithContent(any(), captor.capture(), captor.capture(), captor.capture(), captor.capture());
+        verify(mailService).sendEmailWithContent(any(), captor.capture(), captor.capture(), eq(new EmailReceiver("email")), captor.capture());
         List<String> allValues = captor.getAllValues();
-        assertThat(allValues).containsExactly("content", "subject", "email", "sender");
+        assertThat(allValues).containsExactly("content", "subject", "sender");
     }
 
     @Test
@@ -110,7 +112,7 @@ public class TemplatedEmailMessageHandlerTest {
                 Locale.ENGLISH,
                 "templateName",
                 "subject",
-                "email",
+                new EmailReceiver("email"),
                 Map.of("firstName", "firstName", "lastName", "lastName",
                     "templateName", "templateName", "language", "en"
                 ),
@@ -150,7 +152,46 @@ public class TemplatedEmailMessageHandlerTest {
                 Locale.ENGLISH,
                 "templateName",
                 "subject",
-                "email",
+                new EmailReceiver("email"),
+                Map.of("value", 15),
+                "rid",
+                "sender",
+                Map.of());
+        }
+    }
+
+    @Test
+    public void testHandleMessageShouldSendEmailWithTemplateModelWithBbc() {
+        CommunicationMessageCreate messageCreate = new CommunicationMessageCreate();
+        messageCreate.setContent("content");
+        messageCreate.setSubject("subject");
+        Receiver receiver = new Receiver().email("email");
+        receiver.addCharacteristicItem(new CommunicationRequestCharacteristic().name("BCC").value("email2"));
+        messageCreate.setReceiver(List.of(receiver));
+        messageCreate.setSender(new Sender().id("sender"));
+        messageCreate.setSender(new Sender().id("sender"));
+        messageCreate.setType("TemplatedEmail");
+        List<CommunicationRequestCharacteristic> characteristics = createBaseTemplateCharacteristicList();
+        characteristics.add(createBaseTemplateCharacteristic("templateModel", "{ \"value\": 15 }"));
+        messageCreate.setCharacteristic(characteristics);
+
+        TenantContext tenantContextMock = mock(TenantContext.class);
+        when(tenantContextMock.getTenantKey()).thenReturn(Optional.of(new TenantKey("xm")));
+
+        when(tenantContextHolder.getContext()).thenReturn(tenantContextMock);
+        when(mapper.messageCreateToMessage(messageCreate)).thenReturn(new CommunicationMessage());
+
+        try (MockedStatic<MdcUtils> utilities = Mockito.mockStatic(MdcUtils.class)) {
+            utilities.when(MdcUtils::generateRid).thenReturn("rid");
+
+            templatedEmailMessageHandler.handle(messageCreate);
+
+            verify(mailService).sendEmailFromTemplateWithAttachments(
+                TenantContextUtils.getRequiredTenantKey(tenantContextHolder.getContext()),
+                Locale.ENGLISH,
+                "templateName",
+                "subject",
+                new EmailReceiver("email", List.of("email2")),
                 Map.of("value", 15),
                 "rid",
                 "sender",
