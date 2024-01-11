@@ -20,6 +20,7 @@ import com.icthh.xm.commons.tenant.PlainTenant;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.TenantKey;
+import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService;
 import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService.CommunicationTenantConfig.MailSetting;
 import com.icthh.xm.tmf.ms.communication.domain.EmailReceiver;
@@ -58,6 +59,7 @@ import org.springframework.stereotype.Service;
 public class MailService {
 
     private final JHipsterProperties jHipsterProperties;
+    private final ApplicationProperties applicationProperties;
     private final MailProviderService mailProviderService;
     private final MessageSource messageSource;
     private final TenantEmailTemplateService tenantEmailTemplateService;
@@ -522,6 +524,10 @@ public class MailService {
                 log.debug("Email could not be sent to user '" + to + "'", e);
             } else {
                 log.warn("Email could not be sent to user '{}': {}", to, e.getMessage());
+            }
+
+            if (applicationProperties.getEmail().isFailOnError()) {
+                throw new IllegalStateException("Email could not be sent to user '" + to + "' : " + e.getMessage());
             }
         }
     }

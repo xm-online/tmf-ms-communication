@@ -26,6 +26,7 @@ public class ApplicationProperties {
     private final Smpp smpp = new Smpp();
     private final Retry retry = new Retry();
     private final Firebase firebase = new Firebase();
+    private final Email email = new Email();
     private int kafkaConcurrencyCount;
     private String kafkaSystemTopic;
     private String kafkaSystemQueue;
@@ -126,5 +127,11 @@ public class ApplicationProperties {
     @Setter
     public static class TopicSpec {
         private boolean enabled;
+    }
+
+    @Getter
+    @Setter
+    public static class Email {
+        private boolean failOnError = false;
     }
 }
