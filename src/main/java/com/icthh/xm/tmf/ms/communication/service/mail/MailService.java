@@ -527,7 +527,7 @@ public class MailService {
             }
 
             if (applicationProperties.getEmail().isFailOnError()) {
-                throw new IllegalStateException("Email could not be sent to user '" + to + "' : " + e.getMessage());
+                throw new IllegalStateException("Email could not be sent to user '" + to, e);
             }
         }
     }
