@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -48,6 +49,8 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.cloud.stream.test.binder.MessageCollectorAutoConfiguration;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -89,6 +92,9 @@ public class MailServiceUnitTest {
 
     @MockBean
     private MailProviderService mailProviderService;
+
+    @MockBean
+    private KafkaTemplate<String, String> kafkaTemplate;
 
     @Autowired
     private TenantContextHolder tenantContextHolder;
@@ -169,6 +175,30 @@ public class MailServiceUnitTest {
 
         List<String> allValues = captor.getAllValues();
         assertThat(allValues).containsExactly("Subject with value1", "test@communication.com");
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldFailOnEmailSend() {
+        String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/" + TEMPLATE_NAME + "/en.ftl";
+        String basePath = "/config/tenants/" + TENANT_NAME + "/communication/emails/" + TEMPLATE_NAME + "-BASE/en.ftl";
+        String body = "<#import \"/" + TENANT_NAME + "/" + TEMPLATE_NAME + "-BASE/en\" as main>OTHER_<@main.body>_CUSTOM_</@main.body>";
+        String base = "<#macro body>BASE_START<#nested>BASE_END</#macro>";
+        templateService.onRefresh(mainPath, body);
+        templateService.onRefresh(basePath, base);
+        applicationProperties.getEmail().setFailOnError(true);
+        doThrow(new MailSendException("Simulated send failure")).when(javaMailSender).send(any(MimeMessage.class));
+
+        MailService spiedMailService = spy((MailService) AopTestUtils.getUltimateTargetObject(mailService));
+        spiedMailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME),
+            ENGLISH,
+            TEMPLATE_NAME,
+            SUBJECT,
+            EMAIL,
+            Map.of(
+                "variable1", "value1",
+                "variable2", "value2"
+            ),
+            RID, FROM);
     }
 
     @Test

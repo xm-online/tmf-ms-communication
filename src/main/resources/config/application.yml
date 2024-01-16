@@ -252,3 +252,5 @@ application:
 
     topicSpec:
         enabled: true
+    email:
+        failOnError: false
