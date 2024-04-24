@@ -9,10 +9,8 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
-import org.junit.Rule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.rules.ExpectedException;
 import org.mapstruct.factory.Mappers;
 import org.mockito.Mockito;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -27,9 +25,6 @@ class TwilioServiceTest {
 
     TwilioService service;
     KafkaTemplate<String, String> kafkaTemplate;
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     @BeforeEach
     public void beforeEach() {
