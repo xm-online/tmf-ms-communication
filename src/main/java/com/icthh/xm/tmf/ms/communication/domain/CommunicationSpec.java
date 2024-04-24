@@ -41,6 +41,7 @@ public class CommunicationSpec implements Serializable {
         private Boolean useClientValidationFeature;
         private String accountSid;
         private String authToken;
+        private String defaultSender;
     }
 
     @Getter
