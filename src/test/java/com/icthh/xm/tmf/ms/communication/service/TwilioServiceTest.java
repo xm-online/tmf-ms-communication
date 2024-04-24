@@ -21,7 +21,6 @@ import java.util.List;
 
 import static com.icthh.xm.tmf.ms.communication.domain.MessageType.Twilio;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TwilioServiceTest {
