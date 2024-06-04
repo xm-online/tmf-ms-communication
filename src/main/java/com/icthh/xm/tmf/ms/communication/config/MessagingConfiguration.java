@@ -61,8 +61,8 @@ public class MessagingConfiguration {
 
     @Bean
     public MessagingAdapter messagingAdapter(KafkaTemplate<String, Object> channelResolver,
-                                             ApplicationProperties applicationProperties) {
-        return new MessagingAdapter(channelResolver, applicationProperties);
+                                             ApplicationProperties applicationProperties, KafkaProperties kafkaProperties) {
+        return new MessagingAdapter(channelResolver, applicationProperties, kafkaProperties);
     }
 
     @Bean
