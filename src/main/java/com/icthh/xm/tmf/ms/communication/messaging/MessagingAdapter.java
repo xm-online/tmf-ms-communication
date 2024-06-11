@@ -29,6 +29,9 @@ public class MessagingAdapter {
     private final ApplicationProperties applicationProperties;
     private final KafkaProperties kafkaProperties;
 
+    final static int NUM_PARTITIONS = 3;
+    final static short REPLICATION_FACTOR = 3;
+
     @PostConstruct
     public void initTopic() {
         Map<String, Object> configs = new HashMap<>();
@@ -41,7 +44,7 @@ public class MessagingAdapter {
             Set<String> currentTopicList = topics.names().get();
             if (!currentTopicList.contains(deliveredMoQueueName)) {
                 log.info("Creating topic {}", deliveredMoQueueName);
-                NewTopic newTopic = new NewTopic(deliveredMoQueueName, 3, (short) 3);
+                NewTopic newTopic = new NewTopic(deliveredMoQueueName, NUM_PARTITIONS, REPLICATION_FACTOR);
                 client.createTopics(List.of(newTopic));
             }
         } catch (ExecutionException | InterruptedException e) {
