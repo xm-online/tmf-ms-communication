@@ -254,3 +254,9 @@ application:
         enabled: true
     email:
         failOnError: false
+    kafka-topics:
+        auto-create: false
+        configs:
+            - name: communication_delivered_mo_reports
+              numPartitions: 3
+              replicationFactor: 3

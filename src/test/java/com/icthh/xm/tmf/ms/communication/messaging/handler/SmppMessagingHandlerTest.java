@@ -45,7 +45,6 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
 import io.netty.util.concurrent.ImmediateEventExecutor;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -66,7 +65,6 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.skyscreamer.jsonassert.JSONAssert;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.testcontainers.shaded.com.google.common.collect.Lists;
 
@@ -100,8 +98,6 @@ public class SmppMessagingHandlerTest {
     private BusinessRuleValidator businessRuleValidator;
     @Spy
     private ApplicationProperties applicationProperties = createApplicationProperties();
-    @Mock
-    private KafkaProperties kafkaProperties;
     @Spy
     CommunicationMessageMapper mapper = Mappers.getMapper(CommunicationMessageMapper.class);
 
@@ -111,7 +107,7 @@ public class SmppMessagingHandlerTest {
     @Before
     public void setUp() {
         ExecutorService executorService = ImmediateEventExecutor.INSTANCE;
-        MessagingAdapter messagingAdapter = new MessagingAdapter(kafkaTemplate, applicationProperties, kafkaProperties);
+        MessagingAdapter messagingAdapter = new MessagingAdapter(kafkaTemplate, applicationProperties);
         sendToKafkaDeliveryReportListener = new SendToKafkaDeliveryReportListener(messagingAdapter, executorService);
         sendToKafkaMoDeliveryReportListener = new SendToKafkaMoDeliveryReportListener(messagingAdapter, executorService);
         RuleResponse response = new RuleResponse();

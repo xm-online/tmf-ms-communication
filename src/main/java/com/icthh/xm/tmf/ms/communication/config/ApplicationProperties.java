@@ -43,6 +43,7 @@ public class ApplicationProperties {
     private String topicSpecificationPathPattern;
     private String emailQueueNameTemplate;
     private TopicSpec topicSpec;
+    private KafkaTopics kafkaTopics;
 
     @Getter
     @Setter
@@ -133,5 +134,19 @@ public class ApplicationProperties {
     @Setter
     public static class Email {
         private boolean failOnError = false;
+    }
+
+    @Getter
+    @Setter
+    public static class KafkaTopics {
+        private boolean autoCreate;
+        private List<Config> configs;
+
+        @Data
+        public static class Config {
+            private String name;
+            private Integer numPartitions;
+            private Integer replicationFactor;
+        }
     }
 }
