@@ -30,12 +30,14 @@ public class XmCommunicationMsLepContextFactory implements LepContextFactory {
     @Override
     public BaseLepContext buildLepContext(LepMethod lepMethod) {
         LepContext lepContext = new LepContext();
+
+        lepContext.commonsService = new CommonsExecutor(commonsService);
+        lepContext.meterRegistry = meterRegistry;
+
         lepContext.services = new LepContext.LepServices();
         lepContext.services.tenantConfigService = tenantConfigService;
         lepContext.services.permissionService = permissionCheckService;
         lepContext.services.mailService = mailService;
-        lepContext.services.commonsService = new CommonsExecutor(commonsService);
-        lepContext.services.meterRegistry = meterRegistry;
 
         lepContext.templates = new LepContext.LepTemplates();
         lepContext.templates.kafka = kafkaTemplateService;
