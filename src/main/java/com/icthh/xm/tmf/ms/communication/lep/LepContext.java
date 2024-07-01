@@ -15,9 +15,7 @@ public class LepContext extends BaseLepContext  {
 
     public LepServices services;
     public LepTemplates templates;
-    public CommonsExecutor commonsService;
     public MeterRegistry meterRegistry;
-
 
     public static class LepServices {
         public MailService mailService;

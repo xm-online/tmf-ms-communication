@@ -41,9 +41,9 @@ public class XmCommunicationMsLepProcessingApplicationListenerTest {
 
         assertNotNull(context.services);
         assertNotNull(context.templates);
+        assertNotNull(context.commons);
 
         assertNotNull(context.meterRegistry);
-        assertNotNull(context.commonsService);
         assertNotNull(context.services.tenantConfigService);
         assertNotNull(context.services.permissionService);
         assertNotNull(context.services.mailService);

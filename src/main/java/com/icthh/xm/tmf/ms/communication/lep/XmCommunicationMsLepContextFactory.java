@@ -21,7 +21,6 @@ public class XmCommunicationMsLepContextFactory implements LepContextFactory {
     private final BusinessTimeConfigService tenantConfigService;
     private final RestTemplate restTemplate;
     private final RestTemplate loadBalancedRestTemplate;
-    private final CommonsService commonsService;
     private final PermissionCheckService permissionCheckService;
     private final KafkaTemplateService kafkaTemplateService;
     private final MailService mailService;
@@ -31,7 +30,6 @@ public class XmCommunicationMsLepContextFactory implements LepContextFactory {
     public BaseLepContext buildLepContext(LepMethod lepMethod) {
         LepContext lepContext = new LepContext();
 
-        lepContext.commonsService = new CommonsExecutor(commonsService);
         lepContext.meterRegistry = meterRegistry;
 
         lepContext.services = new LepContext.LepServices();
