@@ -1,16 +1,12 @@
 package com.icthh.xm.tmf.ms.communication.lep;
 
-import com.icthh.xm.commons.lep.commons.CommonsExecutor;
-import com.icthh.xm.lep.api.ScopedContext;
-import com.icthh.xm.lep.core.DefaultScopedContext;
+import com.icthh.xm.commons.GroovyMapLepContextWrapper;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
-import io.micrometer.core.instrument.MeterRegistry;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.HashMap;
@@ -34,33 +30,50 @@ public class XmCommunicationMsLepProcessingApplicationListenerTest {
     @MockBean
     SmppService smppService;
 
-    @MockBean
-    private JavaMailSender javaMailSender;
-
     @Autowired
-    private XmCommunicationMsLepProcessingApplicationListener listener;
+    private XmCommunicationMsLepContextFactory contextFactory;
 
     @Test
     @SuppressWarnings("unchecked")
     public void testBindExecutionContext() {
 
-        ScopedContext context = new DefaultScopedContext("scope");
-        listener.bindExecutionContext(context);
+        LepContext context = (LepContext) contextFactory.buildLepContext(null);
 
-        assertEquals(4, context.getValues().size());
-        assertNotNull(context.getValue(BINDING_KEY_COMMONS, CommonsExecutor.class));
-        assertNotNull(context.getValue(BINDING_KEY_SERVICES, Map.class));
-        assertNotNull(context.getValue(BINDING_KEY_TEMPLATES, Map.class));
-        assertNotNull(context.getValue(BINDING_KEY_METER_REGISTRY, MeterRegistry.class));
+        assertNotNull(context.services);
+        assertNotNull(context.templates);
+        assertNotNull(context.commons);
 
-        Map<String, Object> services = (HashMap<String, Object>) context.getValue(BINDING_KEY_SERVICES, HashMap.class);
+        assertNotNull(context.meterRegistry);
+        assertNotNull(context.services.tenantConfigService);
+        assertNotNull(context.services.permissionService);
+        assertNotNull(context.services.mailService);
+
+        assertNotNull(context.templates.kafka);
+        assertNotNull(context.templates.rest);
+        assertNotNull(context.templates.loadBalancedRest);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testBindExecutionContextMap() {
+
+        GroovyMapLepContextWrapper context = (GroovyMapLepContextWrapper) contextFactory.buildLepContext(null);
+
+        assertEquals(4, context.size());
+        assertNotNull(context.get(BINDING_KEY_COMMONS));
+        assertNotNull(context.get(BINDING_KEY_SERVICES));
+        assertNotNull(context.get(BINDING_KEY_TEMPLATES));
+        assertNotNull(context.get(BINDING_KEY_METER_REGISTRY));
+
+        Map<String, Object> services = (HashMap<String, Object>) context.get(BINDING_KEY_SERVICES);
         assertEquals(3, services.values().size());
         assertNotNull(services.get(BINDING_SUB_KEY_SERVICE_TENANT_CONFIG_SERICE));
         assertNotNull(services.get(BINDING_SUB_KEY_PERMISSION_SERVICE));
         assertNotNull(services.get(BINDING_SUB_KEY_SERVICE_MAIL_SERVICE));
 
-        Map<String, Object> templates = (HashMap<String, Object>) context.getValue(BINDING_KEY_TEMPLATES, HashMap.class);
+        Map<String, Object> templates = (HashMap<String, Object>) context.get(BINDING_KEY_TEMPLATES);
         assertEquals(3, templates.values().size());
         assertNotNull(templates.get(BINDING_SUB_KEY_TEMPLATE_REST));
     }
+
 }
