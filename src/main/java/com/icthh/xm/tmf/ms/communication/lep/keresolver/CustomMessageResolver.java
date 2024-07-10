@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+import static org.apache.commons.lang3.StringUtils.upperCase;
+
 @Component
 public class CustomMessageResolver implements LepKeyResolver {
 
@@ -15,6 +17,6 @@ public class CustomMessageResolver implements LepKeyResolver {
     @Override
     public List<String> segments(LepMethod method) {
         CommunicationMessage message = method.getParameter(MESSAGE, CommunicationMessage.class);
-        return List.of(message.getType());
+        return List.of(upperCase(message.getType()));
     }
 }
