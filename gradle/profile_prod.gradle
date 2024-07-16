@@ -44,13 +44,13 @@ processResources {
 }
 
 generateGitProperties {
-    failOnNoGitDirectory = false
     onlyIf {
         !source.isEmpty()
     }
 }
 
 gitProperties {
+    failOnNoGitDirectory = false
     keys = ["git.branch", "git.commit.id.abbrev", "git.commit.id.describe"]
 }
 
