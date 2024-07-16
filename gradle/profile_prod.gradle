@@ -44,6 +44,7 @@ processResources {
 }
 
 generateGitProperties {
+    failOnNoGitDirectory = false
     onlyIf {
         !source.isEmpty()
     }
