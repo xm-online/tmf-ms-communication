@@ -25,7 +25,6 @@ plugins {
     id "net.ltgt.apt-idea"
     id "net.ltgt.apt"
     id "org.sonarqube"
-    id "com.github.spotbugs"
     id 'checkstyle'
     id 'pmd'
     id 'war'
@@ -204,10 +203,6 @@ checkstyle {
     toolVersion = "${checkstyle_version}"
     ignoreFailures = true
     configFile = rootProject.file('./qa/checkstyle.xml')
-}
-
-spotbugs {
-    ignoreFailures = true
 }
 
 pmd {
