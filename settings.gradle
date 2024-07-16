@@ -1,5 +1,11 @@
 
 pluginManagement {
+     repositories {
+        maven { url 'https://plugins.gradle.org/m2/' }
+        gradlePluginPortal()
+        mavenCentral()
+        //jhipster-needle-gradle-plugin-management-repositories - JHipster will add additional entries here
+     }
      plugins {
          id 'org.springframework.boot' version "${spring_boot_version}"
          id 'com.google.cloud.tools.jib' version "${jib_plugin_version}"
