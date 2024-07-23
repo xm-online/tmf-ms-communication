@@ -16,7 +16,6 @@ import com.icthh.xm.commons.i18n.spring.service.LocalizationMessageService;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.mail.provider.MailProviderService;
-import com.icthh.xm.commons.tenant.PlainTenant;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.TenantKey;
@@ -351,23 +350,18 @@ public class MailService {
             String templatePath = EmailTemplateUtil.emailTemplateKey(tenantKey, templateName,locale.getLanguage());
             String emailTemplate = tenantEmailTemplateService.getEmailTemplateByKey(tenantKey, templateName, locale.getLanguage());
             String processedContent = emailTemplateService.processEmailTemplate(tenantKey.getValue(), emailTemplate, objectModel, locale.getLanguage(), templatePath);
-            try {
-                tenantContextHolder.getPrivilegedContext().setTenant(new PlainTenant(tenantKey));
 
-                MailParams mailParams = resolve(subject, from, templateName, locale, objectModel);
-                mailParams = resolveMailParamsBySpec(mailParams, tenantKey.getValue(), templateName, locale.getLanguage(), objectModel);
+            MailParams mailParams = resolve(subject, from, templateName, locale, objectModel);
+            mailParams = resolveMailParamsBySpec(mailParams, tenantKey.getValue(), templateName, locale.getLanguage(), objectModel);
 
-                sendEmail(
-                    email,
-                    mailParams.getSubject(),
-                    processedContent,
-                    mailParams.getFrom(),
-                    attachments,
-                    mailProviderService.getJavaMailSender(tenantKey.getValue())
-                );
-            } finally {
-                tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
-            }
+            sendEmail(
+                email,
+                mailParams.getSubject(),
+                processedContent,
+                mailParams.getFrom(),
+                attachments,
+                mailProviderService.getJavaMailSender(tenantKey.getValue())
+            );
         });
     }
 
@@ -551,19 +545,14 @@ public class MailService {
                 return;
             }
 
-            try {
-                tenantContextHolder.getPrivilegedContext().setTenant(new PlainTenant(tenantKey));
-                sendEmail(
-                    emailReceiver,
-                    subject,
-                    content,
-                    from,
-                    attachments,
-                    mailProviderService.getJavaMailSender(tenantKey.getValue())
-                );
-            } finally {
-                tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
-            }
+            sendEmail(
+                emailReceiver,
+                subject,
+                content,
+                from,
+                attachments,
+                mailProviderService.getJavaMailSender(tenantKey.getValue())
+            );
         });
     }
 
