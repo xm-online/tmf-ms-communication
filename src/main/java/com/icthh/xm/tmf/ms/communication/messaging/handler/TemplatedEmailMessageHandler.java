@@ -1,6 +1,5 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.EmailMessageHandler.toEmailReceiver;
 import static java.util.stream.Collectors.toMap;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -10,6 +9,7 @@ import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
+import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.domain.EmailReceiver;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageCreateResolver;
@@ -20,7 +20,6 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.ExtendedAttachment;
-import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -72,18 +71,19 @@ public class TemplatedEmailMessageHandler implements BasicMessageHandler {
         String sender = messageCreate.getSender().getId();
         String subject = messageCreate.getSubject();
 
+        TenantKey requiredTenantKey = TenantContextUtils.getRequiredTenantKey(tenantContextHolder.getContext());
         for (EmailReceiver email : emails) {
-            sendWithAttachments(templateModel, templateName, locale, sender, subject, email, messageCreate.getAttachment());
+            sendWithAttachments(requiredTenantKey, templateModel, templateName, locale, sender, subject, email, messageCreate.getAttachment());
         }
         return mapper.messageCreateToMessage(messageCreate);
     }
 
-    private void sendWithAttachments(Map<String, Object> objectModel, String templateName, Locale locale,
+    private void sendWithAttachments(TenantKey tenantKey, Map<String, Object> objectModel, String templateName, Locale locale,
                                      String sender, String subject, EmailReceiver receiver, List<Attachment> attachments) {
         log.debug("Messages attachments {}", attachments);
 
         mailService.sendEmailFromTemplateWithAttachments(
-            TenantContextUtils.getRequiredTenantKey(tenantContextHolder.getContext()),
+            tenantKey,
             locale,
             templateName,
             subject,
@@ -127,6 +127,7 @@ public class TemplatedEmailMessageHandler implements BasicMessageHandler {
         if (templateModel == null) {
             return objectModel;
         }
-        return new ObjectMapper().readValue(String.valueOf(templateModel), new TypeReference<Map<String, Object>>() {});
+        return new ObjectMapper().readValue(String.valueOf(templateModel), new TypeReference<Map<String, Object>>() {
+        });
     }
 }
