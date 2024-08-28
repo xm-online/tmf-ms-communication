@@ -363,7 +363,10 @@ dependencies {
     testImplementation "org.testcontainers:testcontainers:1.10.1"
     testImplementation 'org.springframework.cloud:spring-cloud-stream-test-support'
 
-    implementation 'com.google.firebase:firebase-admin:7.0.0'
+    implementation('com.google.firebase:firebase-admin:9.3.0') {
+        exclude group: 'com.google.guava', module: 'guava'
+    }
+
     implementation "org.freemarker:freemarker:${freemarker_version}"
 }
 

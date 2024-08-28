@@ -86,7 +86,7 @@ public class FirebaseService {
         log.debug("Sending messages {}: ", firebaseMessage);
 
         BatchResponse response = getFirebaseMessaging(message)
-            .sendMulticast(firebaseMessage);
+            .sendEachForMulticast(firebaseMessage);
 
         log.debug("Total messages {}, success count {}, failure count {}",
             response.getResponses().size(), response.getSuccessCount(), response.getFailureCount());
