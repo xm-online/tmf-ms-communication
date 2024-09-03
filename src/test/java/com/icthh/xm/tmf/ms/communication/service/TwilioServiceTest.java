@@ -1,6 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.CommunicationMessageMapper;
@@ -18,11 +19,11 @@ import java.util.List;
 
 import static com.icthh.xm.tmf.ms.communication.domain.MessageType.Twilio;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class TwilioServiceTest {
 
     TwilioService service;
-
     KafkaTemplate<String, String> kafkaTemplate;
 
     @BeforeEach
@@ -39,6 +40,13 @@ class TwilioServiceTest {
         cfg.setAccountSid("AC528fe950968998cae3d3df2ac4f64fc0");
         cfg.setAuthToken("5c93979e622a013ce781bb9b51eba6b8");
         service.registerSender("test", cfg);
+
+        CommunicationSpec.Twilio cfgWithSender = new CommunicationSpec.Twilio();
+        cfgWithSender.setKey("senderKeyWithDefaultSender");
+        cfgWithSender.setAccountSid("AC528fe950968998cae3d3df2ac4f64fc0");
+        cfgWithSender.setAuthToken("5c93979e622a013ce781bb9b51eba6b8");
+        cfgWithSender.setDefaultSender("+15005550006");
+        service.registerSender("test", cfgWithSender);
     }
 
     @Test
@@ -61,4 +69,45 @@ class TwilioServiceTest {
         assertThat(test.getStatus()).isNotBlank();
         assertThat(test.getHref()).isNotBlank();
     }
+
+    @Test
+    void emptySenderTest() {
+        CommunicationMessageCreate m = new CommunicationMessageCreate();
+        m.setType(Twilio.name());
+        m.setContent("Test message");
+
+        Receiver r = new Receiver();
+        r.setPhoneNumber("+380631231212");
+
+        Sender s = new Sender();
+        s.setId("senderKey");
+
+        m.setReceiver(List.of(r));
+        m.setSender(s);
+
+        assertThrows(BusinessException.class, () -> {
+            service.send("test", m);
+        }, "Sender PhoneNumber is not provided");
+    }
+
+    @Test
+    void defaultSenderTest() {
+        CommunicationMessageCreate m = new CommunicationMessageCreate();
+        m.setType(Twilio.name());
+        m.setContent("Test message");
+
+        Receiver r = new Receiver();
+        r.setPhoneNumber("+380631231212");
+
+        Sender s = new Sender();
+        s.setId("senderKeyWithDefaultSender");
+
+        m.setReceiver(List.of(r));
+        m.setSender(s);
+
+        CommunicationMessage test = service.send("test", m);
+        assertThat(test.getStatus()).isNotBlank();
+        assertThat(test.getHref()).isNotBlank();
+    }
+
 }
