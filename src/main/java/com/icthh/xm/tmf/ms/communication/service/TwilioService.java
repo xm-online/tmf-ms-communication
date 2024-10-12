@@ -7,6 +7,7 @@ import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.CommunicationMessageMapper;
+import com.icthh.xm.tmf.ms.communication.messaging.template.TwilioMessageTemplateService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
@@ -44,8 +45,10 @@ public class TwilioService  implements MessageService {
     private final ApplicationProperties applicationProperties;
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final CommunicationMessageMapper messageMapper;
+    private final TwilioMessageTemplateService messageTemplateService;
 
     private Map<String, Map<String, TwilioRestClient>> twilioClients = new ConcurrentHashMap<>();
+    private Map<String, Map<String, String>> twilioClientPhoneNumbers = new ConcurrentHashMap<>();
 
     @Override
     public CommunicationMessage recive(String tenantKey, CommunicationMessage message) {
@@ -67,12 +70,14 @@ public class TwilioService  implements MessageService {
             throw new BusinessException("Only one receiver should be provided. Current number=" + message.getReceiver().size());
         }
 
-        String senderPhoneNumber = message.getSender().getPhoneNumber();
+        String senderPhoneNumber = getSenderPhoneName(tenantKey, message.getSender());
         if (StringUtils.isEmpty(senderPhoneNumber)) {
             throw new BusinessException("Sender PhoneNumber is not provided");
         }
 
-        Message createdMessage = byPhoneNumber(message.getReceiver().get(0), senderPhoneNumber, message.getContent()).create(client);
+        String messageContent = messageTemplateService.getMessageContent(tenantKey, message);
+
+        Message createdMessage = byPhoneNumber(message.getReceiver().get(0), senderPhoneNumber, messageContent).create(client);
         log.debug("twilioResponse: {}", createdMessage);
         CommunicationMessage result = messageMapper.messageCreateToMessage(message);
         result.setSendTime(OffsetDateTime.now());
@@ -98,6 +103,7 @@ public class TwilioService  implements MessageService {
 
     public void unregisterTwilioSenders(String tenantKey) {
         twilioClients.remove(tenantKey);
+        twilioClientPhoneNumbers.remove(tenantKey);
     }
 
     protected MessageCreator byNumberOrSid(Receiver receiver, CommunicationMessageCreate message, String serviceId) {
@@ -126,6 +132,15 @@ public class TwilioService  implements MessageService {
         return twilioClients.getOrDefault(tenantKey, new ConcurrentHashMap<>());
     }
 
+    private String getSenderPhoneName(String tenantKey, Sender sender) {
+        if (StringUtils.isNotEmpty(sender.getPhoneNumber())) {
+            return sender.getPhoneNumber();
+        }
+        return Optional
+            .ofNullable(twilioClientPhoneNumbers.getOrDefault(tenantKey, new ConcurrentHashMap<>()).get(sender.getId()))
+            .orElseThrow(() -> new BusinessException("Sender phone number is missing by sender Id: "+ sender.getId()));
+    }
+
     private String buildReceiveMessageTopicName(String tenantKey) {
         String sendQueuePattern = applicationProperties.getMessaging().getReciveQueueNameTemplate();
         return String.format(sendQueuePattern, tenantKey.toLowerCase(), MessageType.Twilio.name().toLowerCase());
@@ -145,6 +160,12 @@ public class TwilioService  implements MessageService {
         Map<String, TwilioRestClient> clients = twilioClients.getOrDefault(tenantKey, new ConcurrentHashMap<>());
         clients.put(twilioConfig.getKey(), client);
         twilioClients.put(tenantKey, clients);
+
+        if (StringUtils.isNotEmpty(twilioConfig.getSenderPhoneNumber())) {
+            Map<String, String> clientPhoneNumbers = twilioClientPhoneNumbers.getOrDefault(tenantKey, new ConcurrentHashMap<>());
+            clientPhoneNumbers.put(twilioConfig.getKey(), twilioConfig.getSenderPhoneNumber());
+            twilioClientPhoneNumbers.put(tenantKey, clientPhoneNumbers);
+        }
     }
 
     @SneakyThrows

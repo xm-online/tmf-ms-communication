@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.util.LinkedList;
@@ -41,6 +42,7 @@ public class CommunicationSpec implements Serializable {
         private Boolean useClientValidationFeature;
         private String accountSid;
         private String authToken;
+        private String senderPhoneNumber = StringUtils.EMPTY;
     }
 
     @Getter
