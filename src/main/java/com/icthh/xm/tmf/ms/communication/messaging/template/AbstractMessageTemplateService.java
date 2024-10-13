@@ -54,19 +54,24 @@ public abstract class AbstractMessageTemplateService implements MessageTemplateS
         return getMessageContent(tenantKey, messageTemplateName, locale, model);
     }
 
-    public String processEmailTemplate(String tenantKey, String content, Map<String, Object> model,
-                                       String lang, String templatePath) {
+    /**
+     * Method to fill up given template with parameters (e.g. '${param1}', '${dto.param1 + ' ' + dto.param2}')
+     * @param tenantKey tenant to get template loader from
+     * @param content template content to fill
+     * @param model data to fill template with
+     * @param lang template language
+     * @param templatePath template path
+     * @return message content ready for sending
+     */
+    public String processTemplate(String tenantKey, String content, Map<String, Object> model,
+                                  String lang, String templatePath) {
         try {
             freemarker.template.Configuration configuration = (freemarker.template.Configuration) freeMarkerConfiguration.clone();
-            StringTemplateLoader templateLoaderByTenantAndLang = templateLoaderService.getTemplateLoader(tenantKey, lang);
-            MultiTemplateLoader multiTemplateLoader = new MultiTemplateLoader(
-                new TemplateLoader[]{templateLoaderByTenantAndLang, templateLoader}
-            );
-            configuration.setTemplateLoader(multiTemplateLoader);
+            configuration.setTemplateLoader(getMultiTemplateLoader(tenantKey, lang));
 
-            Template mailTemplate = new Template(templatePath, content, configuration);
+            Template template = new Template(templatePath, content, configuration);
+            return FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
 
-            return FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, model);
         } catch (TemplateException e) {
             log.error("Template could not be rendered with content: {} and model: {} for language: {}.", content,
                 model, lang, e);
@@ -76,6 +81,11 @@ public abstract class AbstractMessageTemplateService implements MessageTemplateS
                 model, lang, e);
             throw new RenderTemplateException(e.getMessage(), content, model, lang);
         }
+    }
+
+    private MultiTemplateLoader getMultiTemplateLoader(String tenantKey, String lang) {
+        StringTemplateLoader templateLoaderByTenantAndLang = templateLoaderService.getTemplateLoader(tenantKey, lang);
+        return new MultiTemplateLoader(new TemplateLoader[]{templateLoaderByTenantAndLang, templateLoader});
     }
 
     private Map<String, Object> getMessageModel(CommunicationMessageCreate message) {

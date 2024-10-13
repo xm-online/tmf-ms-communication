@@ -31,7 +31,7 @@ public class TwilioMessageTemplateService extends AbstractMessageTemplateService
     public String getMessageContent(String tenantKey, String templateName, Locale locale, Map<String, Object> model) {
         String templatePath = getTemplatePath(tenantKey, templateName, locale.getLanguage());
         String templateContent = messageTemplateConfigurationService.getMsisdnTemplateContent(templatePath);
-        return processEmailTemplate(tenantKey, templateContent, model, locale.getLanguage(), templatePath);
+        return processTemplate(tenantKey, templateContent, model, locale.getLanguage(), templatePath);
     }
 
     private String getTemplatePath(String tenantKey, String templateName, String langKey) {
