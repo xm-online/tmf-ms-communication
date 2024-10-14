@@ -92,11 +92,11 @@ public abstract class AbstractMessageTemplateService implements MessageTemplateS
         return message.getCharacteristic().stream()
             .filter(c -> TEMPLATE_MODEL_MESSAGE_CHARACTERISTIC.equals(c.getName()))
             .findFirst()
-            .map(c -> getTemaplteModelMap(c.getValue()))
+            .map(c -> getTemplateModelMap(c.getValue()))
             .orElse(Map.of());
     }
 
-    private Map<String, Object> getTemaplteModelMap(String config) {
+    private Map<String, Object> getTemplateModelMap(String config) {
         try {
             return objectMapper.readValue(config, new TypeReference<Map<String, Object>>() {
             });

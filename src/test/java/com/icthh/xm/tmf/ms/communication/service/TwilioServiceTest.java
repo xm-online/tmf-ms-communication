@@ -22,6 +22,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TwilioServiceTest {
 
+    private static String CONFIG_KEY = "senderKey";
+    private static String CONFIG_ACCOUNT_SID = "AC528fe950968998cae3d3df2ac4f64fc0";
+    private static String CONFIG_AUTH_TOKEN = "5c93979e622a013ce781bb9b51eba6b8";
+    private static String CONFIG_SENDER = "+15005550006";
+
     TwilioService service;
 
     KafkaTemplate<String, String> kafkaTemplate;
@@ -38,9 +43,9 @@ class TwilioServiceTest {
         service = new TwilioService(new ObjectMapper(), ap, kafkaTemplate,
             Mappers.getMapper(CommunicationMessageMapper.class), messageTemplateService);
         CommunicationSpec.Twilio cfg = new CommunicationSpec.Twilio();
-        cfg.setKey("senderKey");
-        cfg.setAccountSid("AC528fe950968998cae3d3df2ac4f64fc0");
-        cfg.setAuthToken("5c93979e622a013ce781bb9b51eba6b8");
+        cfg.setKey(CONFIG_KEY);
+        cfg.setAccountSid(CONFIG_ACCOUNT_SID);
+        cfg.setAuthToken(CONFIG_AUTH_TOKEN);
         service.registerSender("test", cfg);
     }
 
@@ -68,10 +73,10 @@ class TwilioServiceTest {
     @Test
     void send_getSenderPhoneNumberFromConfigurationMap() {
         CommunicationSpec.Twilio cfg = new CommunicationSpec.Twilio();
-        cfg.setKey("senderKey");
-        cfg.setAccountSid("AC528fe950968998cae3d3df2ac4f64fc0");
-        cfg.setAuthToken("5c93979e622a013ce781bb9b51eba6b8");
-        cfg.setSenderPhoneNumber("+15005550006");
+        cfg.setKey(CONFIG_KEY);
+        cfg.setAccountSid(CONFIG_ACCOUNT_SID);
+        cfg.setAuthToken(CONFIG_AUTH_TOKEN);
+        cfg.setSenderPhoneNumber(CONFIG_SENDER);
         service.registerSender("test1", cfg);
 
         // send message with sender phone number from config

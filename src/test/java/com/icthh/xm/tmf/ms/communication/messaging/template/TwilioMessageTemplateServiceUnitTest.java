@@ -77,7 +77,7 @@ public class TwilioMessageTemplateServiceUnitTest extends AbstractSpringBootTest
     }
 
     @Test
-    public void getMessageContent_invalidTemplate_shouldThrowException() throws JsonProcessingException {
+    public void getMessageContent_validDataModel_shouldReturnCorrectMessage() throws JsonProcessingException {
         Map<String, Object> model = Map.of(
             "code", "123456789",
             "user", Map.of("firstName", "John", "lastName", "Smith")
