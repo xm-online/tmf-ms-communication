@@ -22,7 +22,7 @@ public class MessageTemplateConfigurationServiceUnitTest {
 
     @Before
     public void setUp() {
-        when(properties.getMsisdnPathPattern()).thenReturn(TEST_PATTERN);
+        when(properties.getTwilioPathPattern()).thenReturn(TEST_PATTERN);
         messageTemplateConfigurationService = new MessageTemplateConfigurationService(properties);
     }
 

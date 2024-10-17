@@ -38,7 +38,7 @@ public class TwilioMessageTemplateService extends AbstractMessageTemplateService
         if (StringUtils.isBlank(langKey) || StringUtils.isBlank(templateName) || StringUtils.isBlank(tenantKey)) {
             throw new IllegalStateException("Language key, template name and tenant must be not blank");
         }
-        return applicationProperties.getMsisdnPathPattern()
+        return applicationProperties.getTwilioPathPattern()
             .replace("{tenantKey}", tenantKey)
             .replace("{langKey}", langKey)
             .replace("{templateName}", templateName);

@@ -16,28 +16,28 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class MessageTemplateConfigurationService implements RefreshableConfiguration {
 
-    private final String pathPattern;
+    private final String twilioPathPattern;
     private final AntPathMatcher matcher = new AntPathMatcher();
-    private final Map<String, String> msisdnTenantTemplates = new ConcurrentHashMap<>();
+    private final Map<String, String> twilioTenantTemplates = new ConcurrentHashMap<>();
 
     public MessageTemplateConfigurationService(ApplicationProperties properties) {
-        this.pathPattern = properties.getMsisdnPathPattern();
+        this.twilioPathPattern = properties.getTwilioPathPattern();
     }
 
     @Override
     public void onRefresh(String configPath, String config) {
         if (StringUtils.isBlank(config)) {
-            msisdnTenantTemplates.remove(configPath);
+            twilioTenantTemplates.remove(configPath);
             log.info("MSISDN template '{}' was removed", configPath);
         } else {
-            msisdnTenantTemplates.put(configPath, config);
+            twilioTenantTemplates.put(configPath, config);
             log.info("MSISDN template '{}' was updated", configPath);
         }
     }
 
     @Override
     public boolean isListeningConfiguration(String updatedKey) {
-        return matcher.match(pathPattern, updatedKey);
+        return matcher.match(twilioPathPattern, updatedKey);
     }
 
     @Override
@@ -48,7 +48,7 @@ public class MessageTemplateConfigurationService implements RefreshableConfigura
     }
 
     public String getMsisdnTemplateContent(String templatePath) {
-        return Optional.ofNullable(msisdnTenantTemplates.get(templatePath))
+        return Optional.ofNullable(twilioTenantTemplates.get(templatePath))
             .orElseThrow(() -> new EntityNotFoundException(String.format("Msisdn template not found: %s", templatePath)));
     }
 }

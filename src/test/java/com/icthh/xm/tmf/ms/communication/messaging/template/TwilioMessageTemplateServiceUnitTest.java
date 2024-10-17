@@ -51,7 +51,7 @@ public class TwilioMessageTemplateServiceUnitTest extends AbstractSpringBootTest
 
     @Before
     public void setUp() {
-        when(applicationProperties.getMsisdnPathPattern()).thenReturn(PATH_PATTERN);
+        when(applicationProperties.getTwilioPathPattern()).thenReturn(PATH_PATTERN);
         when(messageTemplateConfigurationService.getMsisdnTemplateContent(CONFIG_PATH)).thenReturn(CONFIG);
 
         twilioMessageTemplateService = new TwilioMessageTemplateService(freeMarkerConfiguration, templateLoader,

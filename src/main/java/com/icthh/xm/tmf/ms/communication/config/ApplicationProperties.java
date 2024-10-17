@@ -34,7 +34,7 @@ public class ApplicationProperties {
     private boolean streamBindingEnabled;
     private String channelSpecificationPathPattern;
     private String emailPathPattern;
-    private String msisdnPathPattern;
+    private String twilioPathPattern;
     private String customEmailPathPattern;
     private String emailSpecificationPathPattern;
     private String customEmailSpecificationPathPattern;
