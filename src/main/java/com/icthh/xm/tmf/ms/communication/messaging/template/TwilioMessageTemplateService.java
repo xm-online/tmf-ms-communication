@@ -1,6 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.messaging.template;
 
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
+import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.service.mail.MultiTenantLangStringTemplateLoaderService;
 import freemarker.cache.StringTemplateLoader;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,7 @@ public class TwilioMessageTemplateService extends AbstractMessageTemplateService
     @Override
     public String getMessageContent(String tenantKey, String templateName, Locale locale, Map<String, Object> model) {
         String templatePath = getTemplatePath(tenantKey, templateName, locale.getLanguage());
-        String templateContent = messageTemplateConfigurationService.getMsisdnTemplateContent(templatePath);
+        String templateContent = messageTemplateConfigurationService.getTemplateContent(templatePath, MessageType.Twilio);
         return processTemplate(tenantKey, templateContent, model, locale.getLanguage(), templatePath);
     }
 

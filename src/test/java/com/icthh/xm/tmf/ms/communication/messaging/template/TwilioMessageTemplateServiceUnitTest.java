@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.icthh.xm.tmf.ms.communication.AbstractSpringBootTest;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
+import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.service.mail.MultiTenantLangStringTemplateLoaderService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
@@ -28,8 +29,8 @@ public class TwilioMessageTemplateServiceUnitTest extends AbstractSpringBootTest
     private static final String TEMPLATE_NAME = "templateName";
     private static final Locale LOCALE = new Locale("uk","UA");
 
-    private static final String PATH_PATTERN = "/config/tenants/{tenantKey}/communication/msisdn/{langKey}/{templateName}.txt";
-    private static final String CONFIG_PATH = "/config/tenants/TEST/communication/msisdn/uk/templateName.txt";
+    private static final String PATH_PATTERN = "/config/tenants/{tenantKey}/communication/twilio/{templateName}/{langKey}.ftl";
+    private static final String CONFIG_PATH = "/config/tenants/TEST/communication/twilio/templateName/uk.ftl";
     private static final String CONFIG = "Hello, ${user.firstName + ' ' + user.lastName}! This is your code: ${code}";
 
     @Autowired
@@ -52,7 +53,7 @@ public class TwilioMessageTemplateServiceUnitTest extends AbstractSpringBootTest
     @Before
     public void setUp() {
         when(applicationProperties.getTwilioPathPattern()).thenReturn(PATH_PATTERN);
-        when(messageTemplateConfigurationService.getMsisdnTemplateContent(CONFIG_PATH)).thenReturn(CONFIG);
+        when(messageTemplateConfigurationService.getTemplateContent(CONFIG_PATH, MessageType.Twilio)).thenReturn(CONFIG);
 
         twilioMessageTemplateService = new TwilioMessageTemplateService(freeMarkerConfiguration, templateLoader,
             templateLoaderService, applicationProperties, messageTemplateConfigurationService);

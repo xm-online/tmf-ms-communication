@@ -3,6 +3,7 @@ package com.icthh.xm.tmf.ms.communication.messaging.template;
 import com.icthh.xm.commons.config.client.api.RefreshableConfiguration;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
+import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -26,12 +27,18 @@ public class MessageTemplateConfigurationService implements RefreshableConfigura
 
     @Override
     public void onRefresh(String configPath, String config) {
+        if (matcher.match(twilioPathPattern, configPath)) {
+            refreshMessageTemplateConfiguration(configPath, config, twilioTenantTemplates);
+        }
+    }
+
+    private void refreshMessageTemplateConfiguration(String configPath, String config, Map<String, String> tenantTemplates) {
         if (StringUtils.isBlank(config)) {
-            twilioTenantTemplates.remove(configPath);
-            log.info("MSISDN template '{}' was removed", configPath);
+            tenantTemplates.remove(configPath);
+            log.info("Message template '{}' was removed", configPath);
         } else {
-            twilioTenantTemplates.put(configPath, config);
-            log.info("MSISDN template '{}' was updated", configPath);
+            tenantTemplates.put(configPath, config);
+            log.info("Message template '{}' was updated", configPath);
         }
     }
 
@@ -47,8 +54,15 @@ public class MessageTemplateConfigurationService implements RefreshableConfigura
         }
     }
 
-    public String getMsisdnTemplateContent(String templatePath) {
-        return Optional.ofNullable(twilioTenantTemplates.get(templatePath))
-            .orElseThrow(() -> new EntityNotFoundException(String.format("Msisdn template not found: %s", templatePath)));
+    public String getTemplateContent(String templatePath, MessageType messageType) {
+        switch (messageType) {
+            case Twilio: return getTemplateContent(templatePath, twilioTenantTemplates);
+            default: throw new EntityNotFoundException(String.format("Message template not found: %s", templatePath));
+        }
+    }
+
+    public String getTemplateContent(String templatePath, Map<String, String> templatesMap) {
+        return Optional.ofNullable(templatesMap.get(templatePath))
+            .orElseThrow(() -> new EntityNotFoundException(String.format("Template not found: %s", templatePath)));
     }
 }
