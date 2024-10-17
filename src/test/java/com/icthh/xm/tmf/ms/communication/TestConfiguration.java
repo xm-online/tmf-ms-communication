@@ -8,6 +8,7 @@ import com.icthh.xm.commons.lep.groovy.GroovyLepEngineConfiguration;
 import com.icthh.xm.commons.lep.spring.LepUpdateMode;
 import com.icthh.xm.commons.logging.config.LoggingConfigService;
 import com.icthh.xm.commons.logging.config.LoggingConfigServiceStub;
+import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -38,6 +39,11 @@ public class TestConfiguration extends GroovyLepEngineConfiguration {
     @Bean
     public TenantAliasService tenantAliasService() {
         return new TenantAliasService(mock(CommonConfigRepository.class), mock(TenantListRepository.class));
+    }
+
+    @Bean
+    public SmppService smppService() {
+        return mock(SmppService.class);
     }
 
 }
