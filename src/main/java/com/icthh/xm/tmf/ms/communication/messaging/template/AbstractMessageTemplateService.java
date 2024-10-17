@@ -29,7 +29,7 @@ public abstract class AbstractMessageTemplateService implements MessageTemplateS
     private static final String LANGUAGE_MESSAGE_CHARACTERISTIC = "language";
     private static final String TEMPLATE_MODEL_MESSAGE_CHARACTERISTIC = "templateModel";
 
-    private final freemarker.template.Configuration freeMarkerConfiguration;
+    private final Configuration freeMarkerConfiguration;
     private final StringTemplateLoader templateLoader;
     private final MultiTenantLangStringTemplateLoaderService templateLoaderService;
     private ObjectMapper objectMapper;
