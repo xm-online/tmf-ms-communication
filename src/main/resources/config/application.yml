@@ -190,7 +190,7 @@ application:
     stream-binding-enabled: true
 
     # https://github.com/xm-online/tmf-ms-communication/wiki/Email-Template-Naming-Convention
-    msisdn-path-pattern: /config/tenants/{tenantKey}/communication/msisdn/{langKey}/{templateName}.txt
+    msisdn-path-pattern: /config/tenants/{tenantKey}/communication/msisdn/{templateName}/{langKey}.txt
     email-path-pattern: /config/tenants/{tenantKey}/communication/emails/**/{langKey}.ftl
     custom-email-path-pattern: /config/tenants/{tenantKey}/communication/custom-emails/**/{langKey}.ftl
     channel-specification-path-pattern: /config/tenants/{tenantName}/communication/communication.yml
