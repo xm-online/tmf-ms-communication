@@ -13,7 +13,7 @@
             For your XM^online account a password reset was requested, please click on the URL below to reset it:
         </p>
         <p>
-            <a href="${baseUrl}/reset/finish?key=${user.resetKey}">Reset Link</a>
+            <a href="${baseUrl}/reset/finish?key=${resetKey}">Reset Link</a>
         </p>
         <p>
             <span>Regards, </span>

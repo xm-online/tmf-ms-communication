@@ -13,7 +13,7 @@
             Your XM^online account has been created, please click on the URL below to access it:
         </p>
         <p>
-            <a href="${baseUrl}/reset/finish?key=${user.resetKey}">login</a>
+            <a href="${baseUrl}/reset/finish?key=${resetKey}">login</a>
         </p>
         <p>
             <span>Regards, </span>
