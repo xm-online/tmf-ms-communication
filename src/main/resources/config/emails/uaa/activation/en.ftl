@@ -13,7 +13,7 @@
             Your XM^online account has been created, please click on the URL below to access it:
         </p>
         <p>
-            <a href="${baseUrl}/activate?key=${user.activationKey}"
+            <a href="${baseUrl}/activate?key=${activationKey}"
             >Activation Link</a>
         </p>
         <p>

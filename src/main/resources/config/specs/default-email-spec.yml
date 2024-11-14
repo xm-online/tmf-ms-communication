@@ -11,10 +11,10 @@ emails:
           {
               "user": {
                 "firstName": "John",
-                "lastName": "Doe",
-                "activationKey": "myactivationkey"
+                "lastName": "Doe"
               },
-              "baseUrl": "my-company.com"
+              "baseUrl": "my-company.com",
+              "activationKey": "myactivationkey"
           }
       contextSpec: |
           {
@@ -24,11 +24,11 @@ emails:
                         "type": "object",
                         "properties": {
                             "firstName": { "type": "string" },
-                            "lastName": { "type": "string" },
-                            "activationKey": { "type": "string" }
+                            "lastName": { "type": "string" }
                         }
                   },
-                  "baseUrl": { "type": "string" }
+                  "baseUrl": { "type": "string" },
+                  "activationKey": { "type": "string" }
               }
           }
       contextForm: |
@@ -36,7 +36,7 @@ emails:
             "form": [
                { "key": "user.firstName", "title": { "en": "First name" }, "type": "string" },
                { "key": "user.lastName", "title": { "en": "Last name" }, "type": "string" },
-               { "key": "user.activationKey", "title": { "en": "Activation key" }, "type": "string" },
+               { "key": "activationKey", "title": { "en": "Activation key" }, "type": "string" },
                { "key": "baseUrl", "title": { "en": "Base URL" }, "type": "string" }
             ]
           }
@@ -49,10 +49,10 @@ emails:
           {
               "user": {
                 "firstName": "John",
-                "lastName": "Doe",
-                "resetKey": "myresetkey"
+                "lastName": "Doe"
               },
-              "baseUrl": "my-company.com"
+              "baseUrl": "my-company.com",
+              "resetKey": "myresetkey"
           }
       contextSpec: |
           {
@@ -62,11 +62,11 @@ emails:
                         "type": "object",
                         "properties": {
                             "firstName": { "type": "string" },
-                            "lastName": { "type": "string" },
-                            "resetKey": { "type": "string" }
+                            "lastName": { "type": "string" }
                         }
                   },
-                  "baseUrl": { "type": "string" }
+                  "baseUrl": { "type": "string" },
+                  "resetKey": { "type": "string" }
               }
           }
       contextForm: |
@@ -74,7 +74,7 @@ emails:
             "form": [
                { "key": "user.firstName", "title": { "en": "First name" }, "type": "string" },
                { "key": "user.lastName", "title": { "en": "Last name" }, "type": "string" },
-               { "key": "user.resetKey", "title": { "en": "Reset key" }, "type": "string" },
+               { "key": "resetKey", "title": { "en": "Reset key" }, "type": "string" },
                { "key": "baseUrl", "title": { "en": "Base URL" }, "type": "string" }
             ]
           }
@@ -87,10 +87,10 @@ emails:
           {
               "user": {
                 "firstName": "John",
-                "lastName": "Doe",
-                "resetKey": "myresetkey"
+                "lastName": "Doe"
               },
-              "baseUrl": "my-company.com"
+              "baseUrl": "my-company.com",
+              "resetKey": "myresetkey"
           }
       contextSpec: |
           {
@@ -100,11 +100,11 @@ emails:
                         "type": "object",
                         "properties": {
                             "firstName": { "type": "string" },
-                            "lastName": { "type": "string" },
-                            "resetKey": { "type": "string" }
+                            "lastName": { "type": "string" }
                         }
                   },
-                  "baseUrl": { "type": "string" }
+                  "baseUrl": { "type": "string" },
+                  "resetKey": { "type": "string" }
               }
           }
       contextForm: |
@@ -112,7 +112,7 @@ emails:
             "form": [
                { "key": "user.firstName", "title": { "en": "First name" }, "type": "string" },
                { "key": "user.lastName", "title": { "en": "Last name" }, "type": "string" },
-               { "key": "user.resetKey", "title": { "en": "Reset key" }, "type": "string" },
+               { "key": "resetKey", "title": { "en": "Reset key" }, "type": "string" },
                { "key": "baseUrl", "title": { "en": "Base URL" }, "type": "string" }
             ]
           }
