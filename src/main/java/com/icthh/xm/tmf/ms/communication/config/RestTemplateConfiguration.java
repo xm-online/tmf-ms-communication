@@ -13,8 +13,8 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class RestTemplateConfiguration {
 
-    @Value("${ribbon.http.client.enabled:true}")
-    private Boolean ribbonTemplateEnabled;
+    @Value("${spring.cloud.loadbalancer.enabled:true}")
+    private Boolean loadBalancedTemplateEnabled;
 
     @Bean
     public RestTemplate restTemplate() {
@@ -25,7 +25,7 @@ public class RestTemplateConfiguration {
     @Qualifier("loadBalancedRestTemplate")
     public RestTemplate loadBalancedRestTemplate(ObjectProvider<RestTemplateCustomizer> customizerProvider) {
         RestTemplate restTemplate = new RestTemplate();
-        if (ribbonTemplateEnabled) {
+        if (loadBalancedTemplateEnabled) {
             log.info("loadBalancedRestTemplate: using Ribbon load balancer");
             customizerProvider.ifAvailable(customizer -> customizer.customize(restTemplate));
         }
