@@ -5,15 +5,15 @@ import com.icthh.xm.commons.topic.service.DynamicConsumerConfiguration;
 import com.icthh.xm.commons.topic.service.DynamicConsumerConfigurationService;
 import com.icthh.xm.commons.topic.service.TopicManagerService;
 import java.util.List;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 
 @Configuration
 public class ApplicationConfiguration {
 
     @Bean
-    @ConditionalOnMissingBean
+    @Primary // TODO after fix in commons
     public DynamicConsumerConfigurationService dynamicConsumerConfigurationService(List<DynamicConsumerConfiguration> dynamicConsumerConfigurations,
                                                                                    TopicManagerService topicManagerService,
                                                                                    TenantListRepository tenantListRepository) {
