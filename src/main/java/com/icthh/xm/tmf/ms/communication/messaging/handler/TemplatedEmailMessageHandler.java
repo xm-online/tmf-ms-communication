@@ -80,8 +80,9 @@ public class TemplatedEmailMessageHandler implements BasicMessageHandler {
 
     private void sendWithAttachments(TenantKey tenantKey, Map<String, Object> objectModel, String templateName, Locale locale,
                                      String sender, String subject, EmailReceiver receiver, List<Attachment> attachments) {
-        log.debug("Messages attachments {}", attachments);
-
+        log.info("Attachments before convert: {}", attachments);
+        Map<String, InputStreamSource> attachment = convertAttachments(attachments);
+        log.info("Attachment after convert: {}", attachment);
         mailService.sendEmailFromTemplateWithAttachments(
             tenantKey,
             locale,
@@ -91,12 +92,13 @@ public class TemplatedEmailMessageHandler implements BasicMessageHandler {
             objectModel,
             MdcUtils.generateRid(),
             sender,
-            convertAttachments(attachments)
+            attachment
         );
     }
 
     private Map<String, InputStreamSource> convertAttachments(List<Attachment> attachments) {
         if (attachments == null || attachments.isEmpty()) {
+            log.warn("Empty attachments!!!");
             return Map.of();
         }
 

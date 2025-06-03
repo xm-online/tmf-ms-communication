@@ -489,6 +489,12 @@ public class MailService {
         MimeMessageHelper message;
         String to = emailReceiver.getEmail();
         try {
+            log.info("attachments: {}", attachments);
+            log.info("!isEmpty(attachments): {}", !isEmpty(attachments));
+            log.info("key & value: {}", attachments
+                .entrySet()
+                .stream()
+                .allMatch(entry -> nonNull(entry.getKey()) && nonNull(entry.getValue())));
             boolean hasAttachments = !isEmpty(attachments) &&
                 attachments
                     .entrySet()
