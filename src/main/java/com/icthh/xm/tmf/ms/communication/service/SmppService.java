@@ -41,6 +41,7 @@ import org.jsmpp.extra.NegativeResponseException;
 import org.jsmpp.extra.ResponseTimeoutException;
 import org.jsmpp.session.BindParameter;
 import org.jsmpp.session.SMPPSession;
+import org.jsmpp.session.Session;
 import org.jsmpp.util.AbsoluteTimeFormatter;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -279,7 +280,7 @@ public class SmppService {
                 session = createSession(appProps);
                 this.session = session;
             } else if (!session.getSessionState().isBound()) {
-                session.unbindAndClose();
+                unbindAndClose(session);
                 session = createSession(appProps);
                 this.session = session;
             }
@@ -313,7 +314,17 @@ public class SmppService {
 
     @PreDestroy
     public void onDestroy() throws Exception {
+        unbindAndClose(session);
+    }
+
+    private static void unbindAndClose(Session session) {
+        if (session == null) {
+            log.warn("Session is null, unbind and close skipped");
+            return;
+        }
+        log.info("Start unbind and close session {}", session.getSessionId());
         session.unbindAndClose();
+        log.info("End unbind and close session {}", session.getSessionId());
     }
 
     @Builder
