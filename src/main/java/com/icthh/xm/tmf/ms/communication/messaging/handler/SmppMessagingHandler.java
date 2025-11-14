@@ -1,16 +1,14 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
-import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.failed;
-import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.success;
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.ParameterNames.OPTIONAL_PARAMETER_PREFIX;
-import static java.util.stream.Collectors.toList;
-
 import com.google.common.primitives.Ints;
 import com.icthh.xm.commons.exceptions.BusinessException;
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Messaging;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
+import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageCreateResolver;
+import com.icthh.xm.tmf.ms.communication.lep.keresolver.CustomMessageResolver;
 import com.icthh.xm.tmf.ms.communication.rules.BusinessRuleValidator;
 import com.icthh.xm.tmf.ms.communication.rules.RuleResponse;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
@@ -19,14 +17,6 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -37,6 +27,20 @@ import org.jsmpp.extra.NegativeResponseException;
 import org.jsmpp.extra.ResponseTimeoutException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.failed;
+import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.success;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.ParameterNames.OPTIONAL_PARAMETER_PREFIX;
+import static java.util.stream.Collectors.toList;
 
 @Service
 @RequiredArgsConstructor
@@ -66,6 +70,7 @@ public class SmppMessagingHandler implements BasicMessageHandler {
      * indicates message unique identifier or {@link ParameterNames#ERROR_CODE} in case of error.
      */
     @Override
+    @LogicExtensionPoint(value = "Send", resolver = CustomMessageResolver.class)
     public CommunicationMessage handle(CommunicationMessage message) {
         Messaging messaging = applicationProperties.getMessaging();
         List<String> phoneNumbers = message.getReceiver().stream().map(Receiver::getPhoneNumber).collect(toList());
@@ -114,6 +119,7 @@ public class SmppMessagingHandler implements BasicMessageHandler {
     }
 
     @Override
+    @LogicExtensionPoint(value = "Send", resolver = CustomMessageCreateResolver.class)
     public CommunicationMessage handle(CommunicationMessageCreate messageCreate) {
         CommunicationMessage communicationMessage = mapper.messageCreateToMessage(messageCreate);
         this.handle(communicationMessage);
@@ -160,7 +166,7 @@ public class SmppMessagingHandler implements BasicMessageHandler {
                 CommunicationRequestCharacteristic::getValue));
     }
 
-    private Predicate<CommunicationRequestCharacteristic> isOptionalParameter(){
+    private Predicate<CommunicationRequestCharacteristic> isOptionalParameter() {
         return c -> c != null && StringUtils.startsWith(c.getName(), OPTIONAL_PARAMETER_PREFIX);
     }
 
