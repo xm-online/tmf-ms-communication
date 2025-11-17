@@ -3,6 +3,7 @@ package com.icthh.xm.tmf.ms.communication.messaging.handler;
 import com.google.common.primitives.Ints;
 import com.icthh.xm.commons.exceptions.BusinessException;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties.Messaging;
 import com.icthh.xm.tmf.ms.communication.domain.MessageResponse;
@@ -42,6 +43,7 @@ import static com.icthh.xm.tmf.ms.communication.domain.MessageResponse.success;
 import static com.icthh.xm.tmf.ms.communication.messaging.handler.ParameterNames.OPTIONAL_PARAMETER_PREFIX;
 import static java.util.stream.Collectors.toList;
 
+@LepService(group = "service.message")
 @Service
 @RequiredArgsConstructor
 @Slf4j
