@@ -26,12 +26,9 @@ import com.icthh.xm.tmf.ms.communication.domain.EmailReceiver;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
 import freemarker.template.Configuration;
-import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import io.github.jhipster.config.JHipsterProperties;
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
@@ -51,6 +48,7 @@ import org.springframework.core.io.InputStreamSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import com.icthh.xm.tmf.ms.communication.service.FreeMarkerHelper;
 
 /**
  * Service for sending emails.
@@ -67,12 +65,12 @@ public class MailService {
     private final MailProviderService mailProviderService;
     private final MessageSource messageSource;
     private final TenantEmailTemplateService tenantEmailTemplateService;
-    private final Configuration freeMarkerConfiguration;
     private final TenantContextHolder tenantContextHolder;
     private final CommunicationTenantConfigService tenantConfigService;
     private final LocalizationMessageService localizationMessageService;
     private final EmailSpecService emailSpecService;
     private final EmailTemplateService emailTemplateService;
+    private final FreeMarkerHelper freeMarkerHelper;
 
     @Resource
     @Lazy
@@ -451,10 +449,7 @@ public class MailService {
 
         try {
             String templateName = "template_" + value.hashCode();
-            Template template = new Template(templateName, new StringReader(value), freeMarkerConfiguration);
-            StringWriter result = new StringWriter();
-            template.process(objectModel, result);
-            return result.toString();
+            return freeMarkerHelper.processTemplate(templateName, objectModel);
         } catch (IOException | TemplateException e) {
             log.warn("Failed to process FreeMarker template: '{}', falling back to simple replacement. Error: {}",
                     value, e.getMessage());
