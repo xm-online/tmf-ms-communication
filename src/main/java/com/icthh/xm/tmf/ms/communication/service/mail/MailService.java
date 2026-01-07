@@ -49,6 +49,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import com.icthh.xm.tmf.ms.communication.service.FreeMarkerHelper;
+import com.icthh.xm.tmf.ms.communication.utils.Utils;
 
 /**
  * Service for sending emails.
@@ -448,11 +449,10 @@ public class MailService {
         }
 
         try {
-            String templateName = "template_" + value.hashCode();
-            return freeMarkerHelper.processTemplate(templateName, objectModel);
+            return freeMarkerHelper.processTemplate(Utils.getUniqTemplateName(value), objectModel);
         } catch (IOException | TemplateException e) {
-            log.warn("Failed to process FreeMarker template: '{}', falling back to simple replacement. Error: {}",
-                    value, e.getMessage());
+            log.error("Failed to process FreeMarker template: '{}', falling back to simple replacement.",
+                    value, e);
             // Fallback to simple token replacement if FreeMarker processing fails
             for (Map.Entry<String, Object> entry : objectModel.entrySet()) {
                 value = value.replace(tokenizeKey(entry.getKey()), String.valueOf(entry.getValue()));
