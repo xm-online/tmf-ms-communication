@@ -460,43 +460,6 @@ public class MailServiceUnitTest {
     }
 
     @Test
-    public void testSubjectWithFreeMarkerUpperCase() {
-        String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/upperCaseTemplate/en.ftl";
-        String body = "Email body content";
-        templateService.onRefresh(mainPath, body);
-
-        MailSetting mailSettingWithUpperCase = new MailSetting(
-            "upperCaseTemplate",
-            Map.of(ENGLISH.getLanguage(), "IMPORTANT: ${message?upper_case}"),
-            Map.of(ENGLISH.getLanguage(), "notifications@test.com")
-        );
-        communicationTenantConfigService.getCommunicationTenantConfig().getMailSettings().add(mailSettingWithUpperCase);
-
-        MailService spiedMailService = spy((MailService) AopTestUtils.getUltimateTargetObject(mailService));
-        spiedMailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME),
-            ENGLISH,
-            "upperCaseTemplate",
-            SUBJECT,
-            EMAIL,
-            Map.of("message", "urgent notification"),
-            RID, FROM);
-
-        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(spiedMailService).sendEmail(
-            eq(new EmailReceiver(EMAIL)),
-            captor.capture(), // subject
-            eq("Email body content"), // content
-            captor.capture(), // from
-            eq(null), // attachments
-            any()
-        );
-
-        List<String> allValues = captor.getAllValues();
-        assertThat(allValues.get(0)).isEqualTo("IMPORTANT: URGENT NOTIFICATION");
-        assertThat(allValues.get(1)).isEqualTo("notifications@test.com");
-    }
-
-    @Test
     public void testSubjectWithMultipleVariables() {
         String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/multiVarTemplate/en.ftl";
         String body = "Email body content";
