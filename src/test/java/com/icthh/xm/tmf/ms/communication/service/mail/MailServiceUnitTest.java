@@ -353,6 +353,302 @@ public class MailServiceUnitTest {
         assertThat(emailTemplate).isEqualTo(config);
     }
 
+    @Test
+    public void testSubjectWithSimpleVariableReplacement() {
+        String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/" + TEMPLATE_NAME + "/en.ftl";
+        String body = "Email body content";
+        templateService.onRefresh(mainPath, body);
+
+        MailService spiedMailService = spy((MailService) AopTestUtils.getUltimateTargetObject(mailService));
+        spiedMailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME),
+            ENGLISH,
+            TEMPLATE_NAME,
+            SUBJECT,
+            EMAIL,
+            Map.of("variable1", "INVOICE-12345"),
+            RID, FROM);
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(spiedMailService).sendEmail(
+            eq(new EmailReceiver(EMAIL)),
+            captor.capture(), // subject
+            eq("Email body content"), // content
+            captor.capture(), // from
+            eq(null), // attachments
+            any()
+        );
+
+        List<String> allValues = captor.getAllValues();
+        assertThat(allValues.get(0)).isEqualTo("Subject with INVOICE-12345");
+        assertThat(allValues.get(1)).isEqualTo("test@communication.com");
+    }
+
+    @Test
+    public void testSubjectWithFreeMarkerFormatting() {
+        String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/freeMarkerTemplate/en.ftl";
+        String body = "Email body content";
+        templateService.onRefresh(mainPath, body);
+
+        MailSetting mailSettingWithFormatting = new MailSetting(
+            "freeMarkerTemplate",
+            Map.of(ENGLISH.getLanguage(), "Invoice ${invoiceKey} - Amount: ${amount?string.currency}"),
+            Map.of(ENGLISH.getLanguage(), "billing@test.com")
+        );
+        communicationTenantConfigService.getCommunicationTenantConfig().getMailSettings().add(mailSettingWithFormatting);
+
+        MailService spiedMailService = spy((MailService) AopTestUtils.getUltimateTargetObject(mailService));
+        spiedMailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME),
+            ENGLISH,
+            "freeMarkerTemplate",
+            SUBJECT,
+            EMAIL,
+            Map.of("invoiceKey", "INV-001", "amount", 1234.56),
+            RID, FROM);
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(spiedMailService).sendEmail(
+            eq(new EmailReceiver(EMAIL)),
+            captor.capture(), // subject
+            eq("Email body content"), // content
+            captor.capture(), // from
+            eq(null), // attachments
+            any()
+        );
+
+        List<String> allValues = captor.getAllValues();
+        assertThat(allValues.get(0)).contains("Invoice INV-001");
+        assertThat(allValues.get(0)).contains("Amount:");
+        assertThat(allValues.get(1)).isEqualTo("billing@test.com");
+    }
+
+    @Test
+    public void testSubjectWithFreeMarkerConditionals() {
+        String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/conditionalTemplate/en.ftl";
+        String body = "Email body content";
+        templateService.onRefresh(mainPath, body);
+
+        MailSetting mailSettingWithConditional = new MailSetting(
+            "conditionalTemplate",
+            Map.of(ENGLISH.getLanguage(), "<#if isPaid>Payment Received<#else>Payment Pending</#if> - Invoice ${invoiceKey}"),
+            Map.of(ENGLISH.getLanguage(), "billing@test.com")
+        );
+        communicationTenantConfigService.getCommunicationTenantConfig().getMailSettings().add(mailSettingWithConditional);
+
+        MailService spiedMailService = spy((MailService) AopTestUtils.getUltimateTargetObject(mailService));
+
+        spiedMailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME),
+            ENGLISH,
+            "conditionalTemplate",
+            SUBJECT,
+            EMAIL,
+            Map.of("invoiceKey", "INV-001", "isPaid", true),
+            RID, FROM);
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(spiedMailService).sendEmail(
+            eq(new EmailReceiver(EMAIL)),
+            captor.capture(), // subject
+            eq("Email body content"), // content
+            captor.capture(), // from
+            eq(null), // attachments
+            any()
+        );
+
+        List<String> allValues = captor.getAllValues();
+        assertThat(allValues.get(0)).isEqualTo("Payment Received - Invoice INV-001");
+        assertThat(allValues.get(1)).isEqualTo("billing@test.com");
+    }
+
+    @Test
+    public void testSubjectWithFreeMarkerUpperCase() {
+        String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/upperCaseTemplate/en.ftl";
+        String body = "Email body content";
+        templateService.onRefresh(mainPath, body);
+
+        MailSetting mailSettingWithUpperCase = new MailSetting(
+            "upperCaseTemplate",
+            Map.of(ENGLISH.getLanguage(), "IMPORTANT: ${message?upper_case}"),
+            Map.of(ENGLISH.getLanguage(), "notifications@test.com")
+        );
+        communicationTenantConfigService.getCommunicationTenantConfig().getMailSettings().add(mailSettingWithUpperCase);
+
+        MailService spiedMailService = spy((MailService) AopTestUtils.getUltimateTargetObject(mailService));
+        spiedMailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME),
+            ENGLISH,
+            "upperCaseTemplate",
+            SUBJECT,
+            EMAIL,
+            Map.of("message", "urgent notification"),
+            RID, FROM);
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(spiedMailService).sendEmail(
+            eq(new EmailReceiver(EMAIL)),
+            captor.capture(), // subject
+            eq("Email body content"), // content
+            captor.capture(), // from
+            eq(null), // attachments
+            any()
+        );
+
+        List<String> allValues = captor.getAllValues();
+        assertThat(allValues.get(0)).isEqualTo("IMPORTANT: URGENT NOTIFICATION");
+        assertThat(allValues.get(1)).isEqualTo("notifications@test.com");
+    }
+
+    @Test
+    public void testSubjectWithMultipleVariables() {
+        String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/multiVarTemplate/en.ftl";
+        String body = "Email body content";
+        templateService.onRefresh(mainPath, body);
+
+        MailSetting mailSettingMultiVar = new MailSetting(
+            "multiVarTemplate",
+            Map.of(ENGLISH.getLanguage(), "Order ${orderId} for ${customerName} - ${itemCount} items"),
+            Map.of(ENGLISH.getLanguage(), "orders@test.com")
+        );
+        communicationTenantConfigService.getCommunicationTenantConfig().getMailSettings().add(mailSettingMultiVar);
+
+        MailService spiedMailService = spy((MailService) AopTestUtils.getUltimateTargetObject(mailService));
+        spiedMailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME),
+            ENGLISH,
+            "multiVarTemplate",
+            SUBJECT,
+            EMAIL,
+            Map.of("orderId", "ORD-999", "customerName", "John Doe", "itemCount", 5),
+            RID, FROM);
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(spiedMailService).sendEmail(
+            eq(new EmailReceiver(EMAIL)),
+            captor.capture(), // subject
+            eq("Email body content"), // content
+            captor.capture(), // from
+            eq(null), // attachments
+            any()
+        );
+
+        List<String> allValues = captor.getAllValues();
+        assertThat(allValues.get(0)).isEqualTo("Order ORD-999 for John Doe - 5 items");
+        assertThat(allValues.get(1)).isEqualTo("orders@test.com");
+    }
+
+    @Test
+    public void testFromWithFreeMarkerParametrization() {
+        String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/fromTemplate/en.ftl";
+        String body = "Email body content";
+        templateService.onRefresh(mainPath, body);
+
+        MailSetting mailSettingWithFromParam = new MailSetting(
+            "fromTemplate",
+            Map.of(ENGLISH.getLanguage(), "Password reset notification"),
+            Map.of(ENGLISH.getLanguage(), "support@xme.digital (${companyName} Support)")
+        );
+        communicationTenantConfigService.getCommunicationTenantConfig().getMailSettings().add(mailSettingWithFromParam);
+
+        MailService spiedMailService = spy((MailService) AopTestUtils.getUltimateTargetObject(mailService));
+        spiedMailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME),
+            ENGLISH,
+            "fromTemplate",
+            SUBJECT,
+            EMAIL,
+            Map.of("companyName", "XME.digital"),
+            RID, FROM);
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(spiedMailService).sendEmail(
+            eq(new EmailReceiver(EMAIL)),
+            captor.capture(), // subject
+            eq("Email body content"), // content
+            captor.capture(), // from
+            eq(null), // attachments
+            any()
+        );
+
+        List<String> allValues = captor.getAllValues();
+        assertThat(allValues.get(0)).isEqualTo("Password reset notification");
+        assertThat(allValues.get(1)).isEqualTo("support@xme.digital (XME.digital Support)");
+    }
+
+    @Test
+    public void testSubjectAndFromWithMultipleVariables() {
+        String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/subjectFromTemplate/en.ftl";
+        String body = "Email body content";
+        templateService.onRefresh(mainPath, body);
+
+        MailSetting mailSettingFull = new MailSetting(
+            "subjectFromTemplate",
+            Map.of(ENGLISH.getLanguage(), "Invoice ${invoiceId} from ${companyName}"),
+            Map.of(ENGLISH.getLanguage(), "${senderEmail} (${companyName} ${department})")
+        );
+        communicationTenantConfigService.getCommunicationTenantConfig().getMailSettings().add(mailSettingFull);
+
+        MailService spiedMailService = spy((MailService) AopTestUtils.getUltimateTargetObject(mailService));
+        spiedMailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME),
+            ENGLISH,
+            "subjectFromTemplate",
+            SUBJECT,
+            EMAIL,
+            Map.of(
+                "invoiceId", "INV-2024-001",
+                "companyName", "XME Corporation",
+                "senderEmail", "billing@xme.digital",
+                "department", "Billing"
+            ),
+            RID, FROM);
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(spiedMailService).sendEmail(
+            eq(new EmailReceiver(EMAIL)),
+            captor.capture(), // subject
+            eq("Email body content"), // content
+            captor.capture(), // from
+            eq(null), // attachments
+            any()
+        );
+
+        List<String> allValues = captor.getAllValues();
+        assertThat(allValues.get(0)).isEqualTo("Invoice INV-2024-001 from XME Corporation");
+        assertThat(allValues.get(1)).isEqualTo("billing@xme.digital (XME Corporation Billing)");
+    }
+
+    @Test
+    public void testSubjectWithEmptyObjectModel() {
+        String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/emptyModelTemplate/en.ftl";
+        String body = "Email body content";
+        templateService.onRefresh(mainPath, body);
+
+        MailSetting mailSettingEmpty = new MailSetting(
+            "emptyModelTemplate",
+            Map.of(ENGLISH.getLanguage(), "Static subject without variables"),
+            Map.of(ENGLISH.getLanguage(), "test@test.com")
+        );
+        communicationTenantConfigService.getCommunicationTenantConfig().getMailSettings().add(mailSettingEmpty);
+
+        MailService spiedMailService = spy((MailService) AopTestUtils.getUltimateTargetObject(mailService));
+        spiedMailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME),
+            ENGLISH,
+            "emptyModelTemplate",
+            SUBJECT,
+            EMAIL,
+            Map.of(),
+            RID, FROM);
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(spiedMailService).sendEmail(
+            eq(new EmailReceiver(EMAIL)),
+            captor.capture(), // subject
+            eq("Email body content"), // content
+            captor.capture(), // from
+            eq(null), // attachments
+            any()
+        );
+
+        List<String> allValues = captor.getAllValues();
+        assertThat(allValues.get(0)).isEqualTo("Static subject without variables");
+        assertThat(allValues.get(1)).isEqualTo("test@test.com");
+    }
+
     @SneakyThrows
     private String getContentFromTemplateLoader(String templateKey) {
         Object templateSource = templateLoader.findTemplateSource(templateKey);

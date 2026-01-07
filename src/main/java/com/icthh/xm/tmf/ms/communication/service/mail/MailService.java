@@ -26,7 +26,12 @@ import com.icthh.xm.tmf.ms.communication.domain.EmailReceiver;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
 import freemarker.template.Configuration;
+import freemarker.template.Template;
+import freemarker.template.TemplateException;
 import io.github.jhipster.config.JHipsterProperties;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
@@ -443,10 +448,22 @@ public class MailService {
         if (isBlank(value)) {
             return value;
         }
-        for (Map.Entry<String, Object> entry : objectModel.entrySet()) {
-            value = value.replace(tokenizeKey(entry.getKey()), String.valueOf(entry.getValue()));
+
+        try {
+            String templateName = "template_" + value.hashCode();
+            Template template = new Template(templateName, new StringReader(value), freeMarkerConfiguration);
+            StringWriter result = new StringWriter();
+            template.process(objectModel, result);
+            return result.toString();
+        } catch (IOException | TemplateException e) {
+            log.warn("Failed to process FreeMarker template: '{}', falling back to simple replacement. Error: {}",
+                    value, e.getMessage());
+            // Fallback to simple token replacement if FreeMarker processing fails
+            for (Map.Entry<String, Object> entry : objectModel.entrySet()) {
+                value = value.replace(tokenizeKey(entry.getKey()), String.valueOf(entry.getValue()));
+            }
+            return value;
         }
-        return value;
     }
 
     private String tokenizeKey(String key) {
