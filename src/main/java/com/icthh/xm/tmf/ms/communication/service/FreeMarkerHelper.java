@@ -16,9 +16,8 @@ public class FreeMarkerHelper {
 
     private final Configuration freeMarkerConfiguration;
 
-    public String processTemplate(String templateString, Map<String, Object> params) throws IOException, TemplateException {
-        String templateName = "template_" + templateString.hashCode();
-        Template template = new Template(templateName, new StringReader(templateString), freeMarkerConfiguration);
+    public String processTemplate(String templateName, String value, Map<String, Object> params) throws IOException, TemplateException {
+        Template template = new Template(templateName, new StringReader(value), freeMarkerConfiguration);
         return FreeMarkerTemplateUtils.processTemplateIntoString(template, params);
     }
 

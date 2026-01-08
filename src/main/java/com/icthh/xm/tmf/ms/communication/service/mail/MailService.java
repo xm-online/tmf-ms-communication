@@ -449,7 +449,7 @@ public class MailService {
         }
 
         try {
-            return freeMarkerHelper.processTemplate(Utils.getUniqTemplateName(value), objectModel);
+            return freeMarkerHelper.processTemplate(Utils.getUniqTemplateName(value), value, objectModel);
         } catch (IOException | TemplateException e) {
             log.error("Failed to process FreeMarker template: '{}', falling back to simple replacement.",
                     value, e);
