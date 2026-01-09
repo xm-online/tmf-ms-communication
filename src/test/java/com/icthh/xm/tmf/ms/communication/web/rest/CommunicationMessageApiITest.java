@@ -75,7 +75,6 @@ public class CommunicationMessageApiITest {
     @MockBean
     private MobileAppMessageHandler mobileAppMessageHandler;
 
-
     @Test
     @SneakyThrows
     public void testCreatesANewCommunicationMessageAndSendIt() {
