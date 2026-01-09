@@ -25,7 +25,6 @@ import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService
 import com.icthh.xm.tmf.ms.communication.domain.EmailReceiver;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
-import freemarker.template.Configuration;
 import freemarker.template.TemplateException;
 import io.github.jhipster.config.JHipsterProperties;
 import java.io.IOException;
@@ -452,18 +451,22 @@ public class MailService {
     }
 
     private String parseValueTemplate(String value, Map<String, Object> objectModel) {
-        try {
-            if (applicationProperties.isFreemarkerEnabled()) {
-                return freeMarkerHelper.processTemplate(Utils.getUniqTemplateName(value), value, objectModel);
-            } else {
-                for (Map.Entry<String, Object> entry : objectModel.entrySet()) {
-                    value = value.replace(tokenizeKey(entry.getKey()), String.valueOf(entry.getValue()));
-                }
-
-                return value;
+        if (applicationProperties.isSubjectFreemarkerProcessing()) {
+            return freemarkerProcess(value, objectModel);
+        } else {
+            for (Map.Entry<String, Object> entry : objectModel.entrySet()) {
+                value = value.replace(tokenizeKey(entry.getKey()), String.valueOf(entry.getValue()));
             }
+
+            return value;
+        }
+    }
+
+    private String freemarkerProcess(String value, Map<String, Object> objectModel) {
+        try {
+            return freeMarkerHelper.processTemplate(Utils.getUniqTemplateName(value), value, objectModel);
         } catch (IOException | TemplateException e) {
-            log.error("Failed to process FreeMarker template: '{}', falling back to simple replacement.",
+            log.error("Failed to process FreeMarker template: '{}'",
                     value, e);
             return value;
         }

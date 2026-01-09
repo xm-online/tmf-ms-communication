@@ -141,7 +141,7 @@ public class MailServiceUnitTest {
 
         applicationProperties.setEmailSpecificationPathPattern(EMAIL_SPECIFICATION_PATH_PATTERN);
         applicationProperties.setCustomEmailSpecificationPathPattern(CUSTOM_EMAIL_SPECIFICATION_PATH_PATTERN);
-        applicationProperties.setFreemarkerEnabled(true);
+        applicationProperties.setSubjectFreemarkerProcessing(true);
     }
 
     @Test
@@ -425,7 +425,7 @@ public class MailServiceUnitTest {
 
     @Test
     public void testSubjectWithFreeMarkerParamButNotEnabled() {
-        applicationProperties.setFreemarkerEnabled(false);
+        applicationProperties.setSubjectFreemarkerProcessing(false);
         String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/conditionalTemplate/en.ftl";
         String body = "Email body content";
         templateService.onRefresh(mainPath, body);
