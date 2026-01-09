@@ -75,6 +75,33 @@ public class CommunicationMessageApiITest {
     @MockBean
     private MobileAppMessageHandler mobileAppMessageHandler;
 
+
+    @Test
+    @SneakyThrows
+    public void testCreatesANewMessageWithFreemarkerKeySubject() {
+        Map<String, Object> request = of(
+                "content", CONTEXT_OF_SMS,
+                "receiver", createReceivers("phoneNumber", "380900510000", "380900510001", "380900510002"),
+                "type", "SMS",
+                "sender", of("id", SENDER_ID),
+                "subject", of("en", "")
+        );
+
+        mockMvc.perform(
+                        post("/api/communicationManagement/v2/communicationMessage/send").contentType("application/json")
+                                .content(TestUtil.convertObjectToJsonBytes(
+                                        request)))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<CommunicationMessageCreate> captor = ArgumentCaptor.forClass(CommunicationMessageCreate.class);
+        Set<String> phones = CollectionHelper.asSet("380900510000", "380900510001", "380900510002");
+        verify(smppMessagingHandler).handle(captor.capture());
+        assertEquals(captor.getValue().getSender().getId(), SENDER_ID);
+        assertEquals(captor.getValue().getType(), "SMS");
+        assertTrue(captor.getValue().getReceiver().stream().allMatch(r -> phones.contains(r.getPhoneNumber())));
+    }
+
     @Test
     @SneakyThrows
     public void testCreatesANewCommunicationMessageAndSendIt() {

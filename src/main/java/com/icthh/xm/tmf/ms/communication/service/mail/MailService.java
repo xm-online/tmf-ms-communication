@@ -448,15 +448,23 @@ public class MailService {
             return value;
         }
 
+        return parseValueTemplate(value, objectModel);
+    }
+
+    private String parseValueTemplate(String value, Map<String, Object> objectModel) {
         try {
-            return freeMarkerHelper.processTemplate(Utils.getUniqTemplateName(value), value, objectModel);
+            if (applicationProperties.isFreemarkerEnabled()) {
+                return freeMarkerHelper.processTemplate(Utils.getUniqTemplateName(value), value, objectModel);
+            } else {
+                for (Map.Entry<String, Object> entry : objectModel.entrySet()) {
+                    value = value.replace(tokenizeKey(entry.getKey()), String.valueOf(entry.getValue()));
+                }
+
+                return value;
+            }
         } catch (IOException | TemplateException e) {
             log.error("Failed to process FreeMarker template: '{}', falling back to simple replacement.",
                     value, e);
-            // Fallback to simple token replacement if FreeMarker processing fails
-            for (Map.Entry<String, Object> entry : objectModel.entrySet()) {
-                value = value.replace(tokenizeKey(entry.getKey()), String.valueOf(entry.getValue()));
-            }
             return value;
         }
     }

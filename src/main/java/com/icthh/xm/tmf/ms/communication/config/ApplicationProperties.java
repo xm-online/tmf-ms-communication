@@ -44,6 +44,7 @@ public class ApplicationProperties {
     private String topicSpecificationPathPattern;
     private String emailQueueNameTemplate;
     private TopicSpec topicSpec;
+    private boolean freemarkerEnabled;
 
     @Getter
     @Setter

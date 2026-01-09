@@ -141,6 +141,7 @@ public class MailServiceUnitTest {
 
         applicationProperties.setEmailSpecificationPathPattern(EMAIL_SPECIFICATION_PATH_PATTERN);
         applicationProperties.setCustomEmailSpecificationPathPattern(CUSTOM_EMAIL_SPECIFICATION_PATH_PATTERN);
+        applicationProperties.setFreemarkerEnabled(true);
     }
 
     @Test
@@ -418,6 +419,46 @@ public class MailServiceUnitTest {
         List<String> allValues = captor.getAllValues();
         assertThat(allValues.get(0)).contains("Invoice INV-001");
         assertThat(allValues.get(0)).contains("Amount:");
+        assertThat(allValues.get(1)).isEqualTo("billing@test.com");
+    }
+
+
+    @Test
+    public void testSubjectWithFreeMarkerParamButNotEnabled() {
+        applicationProperties.setFreemarkerEnabled(false);
+        String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/conditionalTemplate/en.ftl";
+        String body = "Email body content";
+        templateService.onRefresh(mainPath, body);
+
+        MailSetting mailSettingWithConditional = new MailSetting(
+                "conditionalTemplate",
+                Map.of(ENGLISH.getLanguage(), "<#if isPaid>Payment Received<#else>Payment Pending</#if> - Invoice ${invoiceKey}"),
+                Map.of(ENGLISH.getLanguage(), "billing@test.com")
+        );
+        communicationTenantConfigService.getCommunicationTenantConfig().getMailSettings().add(mailSettingWithConditional);
+
+        MailService spiedMailService = spy((MailService) AopTestUtils.getUltimateTargetObject(mailService));
+
+        spiedMailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME),
+                ENGLISH,
+                "conditionalTemplate",
+                SUBJECT,
+                EMAIL,
+                Map.of("invoiceKey", "INV-001", "isPaid", true),
+                RID, FROM);
+
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(spiedMailService).sendEmail(
+                eq(new EmailReceiver(EMAIL)),
+                captor.capture(), // subject
+                eq("Email body content"), // content
+                captor.capture(), // from
+                eq(null), // attachments
+                any()
+        );
+
+        List<String> allValues = captor.getAllValues();
+        assertThat(allValues.get(0)).isEqualTo("<#if isPaid>Payment Received<#else>Payment Pending</#if> - Invoice INV-001");
         assertThat(allValues.get(1)).isEqualTo("billing@test.com");
     }
 
