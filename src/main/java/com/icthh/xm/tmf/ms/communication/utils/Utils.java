@@ -13,4 +13,8 @@ public class Utils {
             throw new BusinessException("error.parameter.invalid", "Invalid parameter value " + value);
         }
     }
+
+    public static String getUniqTemplateName(String value) {
+        return "template_" + value.hashCode();
+    }
 }

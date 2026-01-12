@@ -25,8 +25,9 @@ import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService
 import com.icthh.xm.tmf.ms.communication.domain.EmailReceiver;
 import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
-import freemarker.template.Configuration;
+import freemarker.template.TemplateException;
 import io.github.jhipster.config.JHipsterProperties;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
@@ -46,6 +47,8 @@ import org.springframework.core.io.InputStreamSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import com.icthh.xm.tmf.ms.communication.service.FreeMarkerHelper;
+import com.icthh.xm.tmf.ms.communication.utils.Utils;
 
 /**
  * Service for sending emails.
@@ -62,12 +65,12 @@ public class MailService {
     private final MailProviderService mailProviderService;
     private final MessageSource messageSource;
     private final TenantEmailTemplateService tenantEmailTemplateService;
-    private final Configuration freeMarkerConfiguration;
     private final TenantContextHolder tenantContextHolder;
     private final CommunicationTenantConfigService tenantConfigService;
     private final LocalizationMessageService localizationMessageService;
     private final EmailSpecService emailSpecService;
     private final EmailTemplateService emailTemplateService;
+    private final FreeMarkerHelper freeMarkerHelper;
 
     @Resource
     @Lazy
@@ -443,10 +446,30 @@ public class MailService {
         if (isBlank(value)) {
             return value;
         }
-        for (Map.Entry<String, Object> entry : objectModel.entrySet()) {
-            value = value.replace(tokenizeKey(entry.getKey()), String.valueOf(entry.getValue()));
+
+        return parseValueTemplate(value, objectModel);
+    }
+
+    private String parseValueTemplate(String value, Map<String, Object> objectModel) {
+        if (applicationProperties.isSubjectFreemarkerProcessing()) {
+            return freemarkerProcess(value, objectModel);
+        } else {
+            for (Map.Entry<String, Object> entry : objectModel.entrySet()) {
+                value = value.replace(tokenizeKey(entry.getKey()), String.valueOf(entry.getValue()));
+            }
+
+            return value;
         }
-        return value;
+    }
+
+    private String freemarkerProcess(String value, Map<String, Object> objectModel) {
+        try {
+            return freeMarkerHelper.processTemplate(Utils.getUniqTemplateName(value), value, objectModel);
+        } catch (IOException | TemplateException e) {
+            log.error("Failed to process FreeMarker template: '{}'",
+                    value, e);
+            return value;
+        }
     }
 
     private String tokenizeKey(String key) {
