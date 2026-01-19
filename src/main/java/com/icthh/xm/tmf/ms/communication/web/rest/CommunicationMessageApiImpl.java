@@ -38,4 +38,15 @@ public class CommunicationMessageApiImpl implements CommunicationMessageApiDeleg
         List<CommunicationMessage> messages = messageHandlerService.retrieveCommunicationMessage(id);
         return ResponseEntity.ok(messages);
     }
+
+    @Timed
+    @PreAuthorize("hasPermission(null, 'COMMUNICATION.MESSAGE.LIST')")
+    @PrivilegeDescription("Privilege to list communication messages")
+    @Override
+    public ResponseEntity<List<CommunicationMessage>> listCommunicationMessage(String fields,
+                                                                               Integer limit,
+                                                                               Integer offset) {
+        List<CommunicationMessage> messages = messageHandlerService.listCommunicationMessage(fields, limit, offset);
+        return ResponseEntity.ok(messages);
+    }
 }
