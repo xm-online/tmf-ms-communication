@@ -5,6 +5,7 @@ import static java.util.Optional.ofNullable;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
+import com.icthh.xm.tmf.ms.communication.lep.keresolver.ProfileKeyResolver;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import java.util.EnumMap;
 import java.util.List;
