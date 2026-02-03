@@ -1,7 +1,10 @@
 package com.icthh.xm.tmf.ms.communication.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.icthh.xm.commons.lep.LogicExtensionPoint;
+import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
+import com.icthh.xm.tmf.ms.communication.lep.keresolver.ProfileKeyResolver;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.MessageHandlerService;
 import com.icthh.xm.tmf.ms.communication.web.api.CommunicationMessageApiDelegate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
@@ -16,6 +19,7 @@ import java.util.List;
 
 @Component
 @AllArgsConstructor
+@LepService(group = "service")
 public class CommunicationMessageApiImpl implements CommunicationMessageApiDelegate {
 
     private final MessageHandlerService messageHandlerService;
@@ -37,5 +41,16 @@ public class CommunicationMessageApiImpl implements CommunicationMessageApiDeleg
     public ResponseEntity<List<CommunicationMessage>> retrieveCommunicationMessage(String id) {
         List<CommunicationMessage> messages = messageHandlerService.retrieveCommunicationMessage(id);
         return ResponseEntity.ok(messages);
+    }
+
+    @Timed
+    @PreAuthorize("hasPermission(null, 'COMMUNICATION.MESSAGE.LIST')")
+    @PrivilegeDescription("Privilege to list communication messages")
+    @LogicExtensionPoint(value = "ListCommunicationMessage", resolver = ProfileKeyResolver.class)
+    @Override
+    public ResponseEntity<List<CommunicationMessage>> listCommunicationMessage(String fields,
+                                                                               Integer offset,
+                                                                               Integer limit) {
+        return ResponseEntity.ok(List.of());
     }
 }
