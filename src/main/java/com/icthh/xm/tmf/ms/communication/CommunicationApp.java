@@ -2,14 +2,11 @@ package com.icthh.xm.tmf.ms.communication;
 
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.DefaultProfileUtil;
-
 import io.github.jhipster.config.JHipsterConstants;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
@@ -21,8 +18,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 
-@SpringBootApplication(scanBasePackages = { "com.icthh.xm" })
-@EnableAutoConfiguration
+@SpringBootApplication(scanBasePackages = { "com.icthh.xm.tmf.ms.communication", "com.icthh.xm" })
 @EnableConfigurationProperties({ApplicationProperties.class})
 @EnableDiscoveryClient
 public class CommunicationApp {
