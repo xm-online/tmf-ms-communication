@@ -57,6 +57,16 @@ public final class ParameterNames {
      */
     public static final String DESTINATION_TYPE_TON = "DESTINATION.TON";
 
+    /**
+     * WAP Push hex-encoded payload (full OMA/WSP binary payload as a hex string).
+     */
+    public static final String WAP_PUSH_HEX_PAYLOAD = "WAP.PUSH.HEX.PAYLOAD";
+
+    /**
+     * WAP Push segment hex strings, comma-separated, for debugging/logging purposes.
+     */
+    public static final String WAP_PUSH_SEGMENTS_HEX = "WAP.PUSH.SEGMENTS.HEX";
+
     public enum ResultType {
 
         /**

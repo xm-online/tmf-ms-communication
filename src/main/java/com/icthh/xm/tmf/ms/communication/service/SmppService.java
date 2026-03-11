@@ -31,8 +31,10 @@ import org.jsmpp.PDUException;
 import org.jsmpp.bean.Alphabet;
 import org.jsmpp.bean.DataCoding;
 import org.jsmpp.bean.ESMClass;
+import org.jsmpp.bean.GSMSpecificFeature;
 import org.jsmpp.bean.GeneralDataCoding;
 import org.jsmpp.bean.MessageClass;
+import org.jsmpp.bean.MessageMode;
 import org.jsmpp.bean.NumberingPlanIndicator;
 import org.jsmpp.bean.OptionalParameter.OctetString;
 import org.jsmpp.bean.RegisteredDelivery;
@@ -107,9 +109,8 @@ public class SmppService {
      * @param message            text message
      * @param senderId           sender number or alpha-name
      * @param optionalParameters optional parameters, key - parameter tag, value - parameter value
-     * @param validityPeriod     a number of seconds a message is valid.
-     *                           If is not delivered in this period will get EXPIRED delivery state
-     *                           (uses the default if null).
+     * @param validityPeriod     a number of seconds a message is valid. If is not delivered in this period will get
+     *                           EXPIRED delivery state (uses the default if null).
      * @param protocolId         smpp protocol id (uses the default if null)
      * @return message id - unique identifier of the message. Used in delivery reports.
      */
@@ -167,8 +168,8 @@ public class SmppService {
      * @param senderId           sender number or alpha-name
      * @param deliveryReport     enabled delivery report
      * @param optionalParameters optional parameters, key - parameter tag, value - parameter value
-     * @param customParameters   custom parameters. {@link com.icthh.xm.tmf.ms.communication.service.SmppService.CustomParametersBuilder}
-     *
+     * @param customParameters   custom parameters.
+     *                           {@link com.icthh.xm.tmf.ms.communication.service.SmppService.CustomParametersBuilder}
      * @return message id - unique identifier of the message. Used in delivery reports.
      */
     public String send(String destAddrs, String message, String senderId, byte deliveryReport, Map<Short,
@@ -187,39 +188,28 @@ public class SmppService {
             .collect(Collectors.toList());
         optional.add(toPayload(message));
 
-        SmppShortMessageConfigHolder shortMessageBuilder =
+        SmppShortMessageConfigHolder config =
             buildMessageParameters(senderId, destAddrs, deliveryReport, customParameters, dataCoding, optional);
 
-        SMPPSession session = getActualSession();
-        String messageId = session.submitShortMessage(
-            shortMessageBuilder.getServiceType(),
-            shortMessageBuilder.getSourceAddrTon(),
-            shortMessageBuilder.getSourceAddrNpi(),
-            shortMessageBuilder.getSourceAddr(),
-            shortMessageBuilder.getDestAddrTon(),
-            shortMessageBuilder.getDestAddrNpi(),
-            shortMessageBuilder.getDestinationAddr(),
-            shortMessageBuilder.getEsmClass(),
-            shortMessageBuilder.getProtocolId(),
-            shortMessageBuilder.getPriorityFlag(),
-            shortMessageBuilder.getScheduleDeliveryTime(),
-            shortMessageBuilder.getValidityPeriod(),
-            shortMessageBuilder.getRegisteredDelivery(),
-            shortMessageBuilder.getReplaceIfPresentFlag(),
-            shortMessageBuilder.getDataCoding(),
-            shortMessageBuilder.getSmDefaultMsgId(),
-            shortMessageBuilder.getShortMessage(),
-            shortMessageBuilder.getOptionalParameters().toArray(OctetString[]::new)
-        );
+        String messageId = submitMessage(config);
         log.info("Message submitted, message_id is {}", messageId);
         return messageId;
     }
 
     private SmppShortMessageConfigHolder buildMessageParameters(String senderId, String destAddrs, byte deliveryReport,
-                                                                CustomParametersBuilder customParameters,
-                                                                DataCoding dataCoding, List<OctetString> optional) {
+        CustomParametersBuilder customParameters,
+        DataCoding dataCoding, List<OctetString> optional) {
+
+        return buildMessageParameters(senderId, destAddrs, new ESMClass(), deliveryReport, customParameters, dataCoding,
+            EMPTY_MESSAGE, optional);
+    }
+
+    private SmppShortMessageConfigHolder buildMessageParameters(String senderId, String destAddrs, ESMClass esmClass,
+        byte deliveryReport, CustomParametersBuilder customParameters, DataCoding dataCoding, byte[] shortMessage,
+        List<OctetString> optional) {
+
         Smpp smpp = appProps.getSmpp();
-        Date scheduleDeliveryTime = new Date();
+        Date scheduleDeliveryTime = getCurrentDate();
 
         return SmppShortMessageConfigHolder.builder()
             .serviceType(smpp.getServiceType())
@@ -229,7 +219,7 @@ public class SmppService {
             .destAddrTon(getDestAddrTon(customParameters.getDestinationTon(), smpp))
             .destAddrNpi(smpp.getDestAddrNpi())
             .destinationAddr(destAddrs)
-            .esmClass(new ESMClass())
+            .esmClass(esmClass)
             .protocolId((customParameters.getProtocolId() != null ? customParameters.getProtocolId().byteValue() :
                 (byte) smpp.getProtocolId()))
             .priorityFlag((byte) smpp.getPriorityFlag())
@@ -240,13 +230,80 @@ public class SmppService {
             .replaceIfPresentFlag((byte) smpp.getReplaceIfPresentFlag())
             .dataCoding(dataCoding)
             .smDefaultMsgId((byte) smpp.getSmDefaultMsgId())
-            .shortMessage(EMPTY_MESSAGE)
+            .shortMessage(shortMessage)
             .optionalParameters(optional)
             .build();
     }
 
+    protected Date getCurrentDate() {
+        return new Date();
+    }
+
+    /**
+     * Send a pre-built binary SMS segment with UDHI set in the ESM class.
+     *
+     * @param destAddrs      destination number
+     * @param senderId       sender number or alpha-name
+     * @param deliveryReport enabled delivery report
+     * @param shortMessage   pre-built segment bytes: [12-byte UDH][payload chunk]
+     * @return message id - unique identifier of the message. Used in delivery reports.
+     */
+    public String sendBinary(String destAddrs, String senderId, byte deliveryReport,
+        byte[] shortMessage, CustomParametersBuilder customParameters, Map<Short, String> optionalParameters)
+        throws PDUException, IOException, InvalidResponseException,
+        NegativeResponseException, ResponseTimeoutException {
+
+        log.info("Sending binary WAP Push segment: from={}, to={}, segmentBytes={}",
+            senderId, destAddrs, shortMessage.length);
+
+        List<OctetString> optional = optionalParameters.entrySet().stream()
+            .map(e -> new OctetString(e.getKey(), e.getValue()))
+            .collect(Collectors.toList());
+
+        ESMClass esmClass = new ESMClass(MessageMode.DEFAULT, org.jsmpp.bean.MessageType.DEFAULT,
+            GSMSpecificFeature.UDHI);
+
+        SmppShortMessageConfigHolder config = buildMessageParameters(
+            senderId, destAddrs, esmClass, deliveryReport,
+            customParameters,
+            () -> (byte) 0x04,
+            shortMessage,
+            optional
+        );
+
+        String messageId = submitMessage(config);
+        log.info("Binary segment submitted, message_id={}", messageId);
+        return messageId;
+    }
+
+    private String submitMessage(SmppShortMessageConfigHolder config)
+        throws PDUException, IOException, InvalidResponseException,
+        NegativeResponseException, ResponseTimeoutException {
+
+        return getActualSession().submitShortMessage(
+            config.getServiceType(),
+            config.getSourceAddrTon(),
+            config.getSourceAddrNpi(),
+            config.getSourceAddr(),
+            config.getDestAddrTon(),
+            config.getDestAddrNpi(),
+            config.getDestinationAddr(),
+            config.getEsmClass(),
+            config.getProtocolId(),
+            config.getPriorityFlag(),
+            config.getScheduleDeliveryTime(),
+            config.getValidityPeriod(),
+            config.getRegisteredDelivery(),
+            config.getReplaceIfPresentFlag(),
+            config.getDataCoding(),
+            config.getSmDefaultMsgId(),
+            config.getShortMessage(),
+            config.getOptionalParameters().toArray(OctetString[]::new)
+        );
+    }
+
     private String validityPeriodOrDefault(Integer requestedValidityPeriod,
-                                           Date scheduleDeliveryTime, Integer defaultValidityPeriod) {
+        Date scheduleDeliveryTime, Integer defaultValidityPeriod) {
         Integer period = requestedValidityPeriod != null
             ? requestedValidityPeriod
             : defaultValidityPeriod;
@@ -421,7 +478,8 @@ public class SmppService {
         private String validityPeriod;
 
         /**
-         * Is the registered_delivery. Indicator to signify if an SMSC delivery receipt or an SME acknowledgement is required.
+         * Is the registered_delivery. Indicator to signify if an SMSC delivery receipt or an SME acknowledgement is
+         * required.
          */
         private RegisteredDelivery registeredDelivery;
 
@@ -436,7 +494,8 @@ public class SmppService {
         private DataCoding dataCoding;
 
         /**
-         * Is the sm_default_msg_id. Indicates the short message to send from a list of predefined (‘canned’) short messages stored on the SMSC.
+         * Is the sm_default_msg_id. Indicates the short message to send from a list of predefined (‘canned’) short
+         * messages stored on the SMSC.
          */
         private byte smDefaultMsgId;
 
