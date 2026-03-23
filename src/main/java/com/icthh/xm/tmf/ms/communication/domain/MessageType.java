@@ -9,5 +9,6 @@ public enum MessageType {
     Telegram,
     Twilio,
     Custom,
-    WebPush
+    WebPush,
+    WapPush
 }

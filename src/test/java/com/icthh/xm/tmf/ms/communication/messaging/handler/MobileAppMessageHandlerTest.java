@@ -1,6 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
-import static com.icthh.xm.tmf.ms.communication.messaging.handler.SmppMessagingHandlerTest.message;
+import static com.icthh.xm.tmf.ms.communication.messaging.handler.AbstractSmppMessageHandlerUnitTest.message;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.verify;
 

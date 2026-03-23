@@ -147,8 +147,8 @@ test {
     include '**/*UnitTest*'
 
     // to run all test that was not categorized
-    useJUnit {
-        excludeCategories(testCategories)
+    useJUnitPlatform {
+        excludeTags(testCategories)   // Vintage engine maps @Category → tag by FQCN
     }
 
     // uncomment if the tests reports are not generated
@@ -164,8 +164,8 @@ test {
 }
 
 task runCategorizedTests(type: Test) {
-    useJUnit {
-        includeCategories(testCategories)
+    useJUnitPlatform {
+        includeTags(testCategories)   // Vintage engine maps @Category → tag by FQCN
     }
     testLogging testLoggingConf
 }
@@ -351,13 +351,15 @@ dependencies {
     }
     testImplementation "org.springframework.boot:spring-boot-test"
     testImplementation "org.junit.jupiter:junit-jupiter-engine"
+    testImplementation "org.junit.jupiter:junit-jupiter-params"
     testImplementation "org.junit.vintage:junit-vintage-engine"
     testImplementation "com.tngtech.archunit:archunit-junit5-api:${archunit_junit5_version}"
     testRuntimeOnly "com.tngtech.archunit:archunit-junit5-engine:${archunit_junit5_version}"
     testImplementation "org.assertj:assertj-core"
     testImplementation "junit:junit"
-    testImplementation "org.mockito:mockito-core:3.8.0"
-    testImplementation "org.mockito:mockito-inline:3.8.0"
+    testImplementation "org.mockito:mockito-core:${mockito_version}"
+    testImplementation "org.mockito:mockito-inline:${mockito_version}"
+    testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
     testImplementation "org.hamcrest:hamcrest-library"
     testImplementation "com.h2database:h2"
     testImplementation "org.testcontainers:testcontainers:1.10.1"
@@ -375,7 +377,7 @@ task cleanResources(type: Delete) {
 }
 
 wrapper {
-    gradleVersion = "6.0.1"
+    gradleVersion = "6.4.1"
 }
 
 compileJava {

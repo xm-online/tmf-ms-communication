@@ -27,6 +27,7 @@ public class ApplicationProperties {
     private final Retry retry = new Retry();
     private final Firebase firebase = new Firebase();
     private final Email email = new Email();
+    private final WapPush wapPush = new WapPush();
     private int kafkaConcurrencyCount;
     private String kafkaSystemTopic;
     private String kafkaSystemQueue;
@@ -135,5 +136,13 @@ public class ApplicationProperties {
     @Setter
     public static class Email {
         private boolean failOnError = false;
+    }
+
+    @Getter
+    @Setter
+    public static class WapPush {
+
+        private int destinationPort = 2948;
+        private int sourcePort = 2948;
     }
 }
