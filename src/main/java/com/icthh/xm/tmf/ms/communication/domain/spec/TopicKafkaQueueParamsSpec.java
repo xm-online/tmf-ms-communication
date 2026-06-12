@@ -10,4 +10,5 @@ public class TopicKafkaQueueParamsSpec {
     private Boolean logBody = true;
     private Integer maxPollInterval;
     private String isolationLevel;
+    private Integer concurrency;
 }

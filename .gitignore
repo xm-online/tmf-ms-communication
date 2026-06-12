@@ -141,3 +141,9 @@ Desktop.ini
 # ESLint
 ######################
 .eslintcache
+
+######################
+# LEP
+######################
+/src/main/lep
+/src/test/lep/
