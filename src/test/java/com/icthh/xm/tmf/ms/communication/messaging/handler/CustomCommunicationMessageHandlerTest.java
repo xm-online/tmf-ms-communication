@@ -3,9 +3,9 @@ package com.icthh.xm.tmf.ms.communication.messaging.handler;
 import com.icthh.xm.commons.lep.XmLepScriptConfigServerResourceLoader;
 import com.icthh.xm.commons.security.XmAuthenticationContext;
 import com.icthh.xm.commons.security.XmAuthenticationContextHolder;
+import com.icthh.xm.commons.lep.api.LepManagementService;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
 import com.icthh.xm.commons.tenant.TenantContextUtils;
-import com.icthh.xm.lep.api.LepManager;
 import com.icthh.xm.tmf.ms.communication.CommunicationApp;
 import com.icthh.xm.tmf.ms.communication.config.LepConfiguration;
 import com.icthh.xm.tmf.ms.communication.config.SecurityBeanOverrideConfiguration;
@@ -37,8 +37,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.google.common.collect.ImmutableMap.of;
-import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_AUTH_CONTEXT;
-import static com.icthh.xm.commons.lep.XmLepConstants.THREAD_CONTEXT_KEY_TENANT_CONTEXT;
 import static com.icthh.xm.tmf.ms.communication.messaging.handler.AbstractSmppMessageHandlerUnitTest.message;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertTrue;
@@ -56,7 +54,7 @@ import static org.mockito.Mockito.when;
 public class CustomCommunicationMessageHandlerTest {
 
     @Autowired
-    private LepManager lepManager;
+    private LepManagementService lepManagementService;
     @Autowired
     private TenantContextHolder tenantContextHolder;
     @Autowired
@@ -86,10 +84,7 @@ public class CustomCommunicationMessageHandlerTest {
         when(authContextHolder.getContext()).thenReturn(context);
         when(context.getRequiredUserKey()).thenReturn("userKey");
 
-        lepManager.beginThreadContext(ctx -> {
-            ctx.setValue(THREAD_CONTEXT_KEY_TENANT_CONTEXT, tenantContextHolder.getContext());
-            ctx.setValue(THREAD_CONTEXT_KEY_AUTH_CONTEXT, authContextHolder.getContext());
-        });
+        lepManagementService.beginThreadContext();
 
         String pattern = "/config/tenants/RESINTTEST/communication/lep/service/message/";
         addLep(pattern, "TEST_VIBER_MESSAGE");
@@ -100,7 +95,7 @@ public class CustomCommunicationMessageHandlerTest {
     public void afterTest() {
         lepsForCleanUp.forEach(it -> leps.onRefresh(it, null));
         tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
-        lepManager.endThreadContext();
+        lepManagementService.endThreadContext();
     }
 
     private void addLep(String pattern, String lepName) {
