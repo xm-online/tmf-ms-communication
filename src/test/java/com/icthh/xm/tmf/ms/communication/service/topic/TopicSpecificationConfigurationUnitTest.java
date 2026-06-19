@@ -2,11 +2,11 @@ package com.icthh.xm.tmf.ms.communication.service.topic;
 
 import com.icthh.xm.commons.topic.service.DynamicConsumerConfigurationService;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -14,7 +14,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TopicSpecificationConfigurationUnitTest {
     private static final String TENANT_NAME = "XM";
     private static final String TOPIC_PATH = "/config/tenants/XM/communication/topic-spec.yml";
@@ -30,7 +30,7 @@ public class TopicSpecificationConfigurationUnitTest {
     @Mock
     private DynamicConsumerConfigurationService dynamicConsumerConfigurationService;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         when(applicationProperties.getTopicSpecificationPathPattern()).thenReturn(TOPIC_PATH_PATTERN);
 

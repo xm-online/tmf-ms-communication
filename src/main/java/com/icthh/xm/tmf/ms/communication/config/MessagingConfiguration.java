@@ -1,6 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.icthh.xm.tmf.ms.communication.lep.LepKafkaMessageHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingAdapter;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaDeliveryReportListener;
@@ -13,11 +13,8 @@ import java.util.concurrent.TimeUnit;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.actuate.health.CompositeHealthIndicator;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
-import org.springframework.cloud.stream.annotation.EnableBinding;
-import org.springframework.cloud.stream.binder.kafka.KafkaBinderHealthIndicator;
+import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 import org.springframework.cloud.stream.binder.kafka.KafkaMessageChannelBinder;
 import org.springframework.cloud.stream.binder.kafka.config.KafkaBinderConfiguration;
 import org.springframework.cloud.stream.binding.BindingService;
@@ -35,7 +32,6 @@ import org.springframework.kafka.core.KafkaTemplate;
  * for more information.
  */
 @Slf4j
-@EnableBinding
 @EnableIntegration
 @RequiredArgsConstructor
 @Import({KafkaBinderConfiguration.class})
@@ -50,13 +46,11 @@ public class MessagingConfiguration {
                                                    KafkaMessageChannelBinder kafkaMessageChannelBinder,
                                                    KafkaProperties kafkaProperties,
                                                    MessageHandlerService messageHandler,
-                                                   CompositeHealthIndicator bindersHealthIndicator,
-                                                   KafkaBinderHealthIndicator kafkaBinderHealthIndicator,
                                                    LepKafkaMessageHandler lepMessageHandler
     ) {
         return new KafkaChannelFactory(bindingServiceProperties, bindingTargetFactory, bindingService, objectMapper,
             applicationProperties, kafkaProperties, kafkaMessageChannelBinder,
-            messageHandler, bindersHealthIndicator, kafkaBinderHealthIndicator, lepMessageHandler);
+            messageHandler, lepMessageHandler);
     }
 
     @Bean

@@ -15,21 +15,20 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.text.StrSubstitutor;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
+import org.apache.commons.text.StringSubstitutor;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.InputStream;
@@ -39,17 +38,16 @@ import java.util.List;
 import static com.google.common.collect.ImmutableMap.of;
 import static com.icthh.xm.tmf.ms.communication.messaging.handler.AbstractSmppMessageHandlerUnitTest.message;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @ContextConfiguration(classes = {
     CommunicationApp.class,
     SecurityBeanOverrideConfiguration.class,
     LepConfiguration.class
 })
-@Category(CustomCommunicationMessageHandlerTest.class)
 @Slf4j
 public class CustomCommunicationMessageHandlerTest {
 
@@ -61,7 +59,7 @@ public class CustomCommunicationMessageHandlerTest {
     private XmLepScriptConfigServerResourceLoader leps;
     @Autowired
     CustomCommunicationMessageHandler communicationMessageHandler;
-    @MockBean
+    @MockitoBean
     private JavaMailSender javaMailSender;
     @Autowired
     BusinessTimeConfigService businessTimeConfigService;
@@ -69,15 +67,15 @@ public class CustomCommunicationMessageHandlerTest {
     private XmAuthenticationContextHolder authContextHolder;
     @Mock
     private XmAuthenticationContext context;
-    @MockBean
+    @MockitoBean
     RestTemplate restTemplate;
-    @MockBean
+    @MockitoBean
     SmppService smppService;
 
     private List<String> lepsForCleanUp = new ArrayList<>();
 
 
-    @Before
+    @BeforeEach
     public void before() {
         TenantContextUtils.setTenant(tenantContextHolder, "RESINTTEST");
         MockitoAnnotations.initMocks(this);
@@ -91,7 +89,7 @@ public class CustomCommunicationMessageHandlerTest {
         addLep(pattern, "TEST_TELEGRAM_MESSAGE");
     }
 
-    @After
+    @AfterEach
     public void afterTest() {
         lepsForCleanUp.forEach(it -> leps.onRefresh(it, null));
         tenantContextHolder.getPrivilegedContext().destroyCurrentContext();
@@ -100,7 +98,7 @@ public class CustomCommunicationMessageHandlerTest {
 
     private void addLep(String pattern, String lepName) {
         String lepBody = loadFile("config/testLep/Save$$TEST_MESSAGE_SEND$$around.groovy");
-        lepBody = StrSubstitutor.replace(lepBody, of("lepName", lepName));
+        lepBody = StringSubstitutor.replace(lepBody, of("lepName", lepName));
         leps.onRefresh(pattern + "Send$$" + lepName + "$$around.groovy", lepBody);
         lepsForCleanUp.add(pattern + "Send$$" + lepName + "$$around.groovy");
     }

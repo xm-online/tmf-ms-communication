@@ -1,7 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import tools.jackson.databind.ObjectMapper;
+import com.icthh.xm.commons.tenant.YamlMapperUtils;
 import com.icthh.xm.commons.config.client.api.RefreshableConfiguration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +19,7 @@ public abstract class AbstractRefreshableConfiguration<T> implements Refreshable
 
     private static final String TENANT_NAME = "tenantName";
 
-    private final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    private final ObjectMapper mapper = YamlMapperUtils.yamlDefaultMapper();
     private final Map<String, T> configurations = new ConcurrentHashMap<>();
     private final AntPathMatcher matcher = new AntPathMatcher();
 

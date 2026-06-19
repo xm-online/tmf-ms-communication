@@ -1,6 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.icthh.xm.commons.tenant.YamlMapperUtils;
+import tools.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.tenant.TenantContext;
@@ -12,12 +13,13 @@ import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.InputStream;
@@ -31,7 +33,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @Slf4j
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class EmailSpecificationServiceTest {
 
     private static final String EMAIL_SPECIFICATION_PATH_PATTERN = "/config/tenants/{tenantName}/communication/email-spec.yml";
@@ -49,9 +51,9 @@ public class EmailSpecificationServiceTest {
 
     private TenantContextHolder tenantContextHolder;
 
-    private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    private ObjectMapper mapper = YamlMapperUtils.yamlDefaultMapper();
 
-    @Before
+    @BeforeEach
     public void setUp() {
         tenantContextHolder = mock(TenantContextHolder.class);
         mockTenant("TEST");
@@ -92,9 +94,9 @@ public class EmailSpecificationServiceTest {
         assertEquals(expectedEmailSpecList, emailSpecList);
     }
 
-    @Test(expected = EntityNotFoundException.class)
+    @Test
     public void getEmailSpecListNotFound() {
-        emailSpecService.getEmailSpec();
+        assertThrows(EntityNotFoundException.class, () -> emailSpecService.getEmailSpec());
     }
 
     @Test

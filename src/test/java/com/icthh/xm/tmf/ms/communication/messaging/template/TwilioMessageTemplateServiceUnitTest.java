@@ -1,7 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.messaging.template;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import com.icthh.xm.tmf.ms.communication.AbstractSpringBootTest;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
@@ -10,8 +10,8 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreat
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
 import freemarker.cache.StringTemplateLoader;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -21,7 +21,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
-import static org.rnorth.visibleassertions.VisibleAssertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class TwilioMessageTemplateServiceUnitTest extends AbstractSpringBootTest {
 
@@ -50,7 +50,7 @@ public class TwilioMessageTemplateServiceUnitTest extends AbstractSpringBootTest
 
     private TwilioMessageTemplateService twilioMessageTemplateService;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         when(applicationProperties.getTwilioPathPattern()).thenReturn(PATH_PATTERN);
         when(messageTemplateConfigurationService.getTemplateContent(CONFIG_PATH, MessageType.Twilio)).thenReturn(CONFIG);
@@ -66,19 +66,17 @@ public class TwilioMessageTemplateServiceUnitTest extends AbstractSpringBootTest
             "user", Map.of("firstName", "John", "lastName", "Smith")
         );
 
-        assertThrows("Language key, template name and tenant must be not blank",
-            IllegalStateException.class, () -> {
+        assertThrows(IllegalStateException.class, () -> {
             twilioMessageTemplateService.getMessageContent("", TEMPLATE_NAME, LOCALE, model);
-        });
+        }, "Language key, template name and tenant must be not blank");
 
-        assertThrows("Language key, template name and tenant must be not blank",
-            IllegalStateException.class, () -> {
+        assertThrows(IllegalStateException.class, () -> {
                 twilioMessageTemplateService.getMessageContent(TENANT, null, LOCALE, model);
-            });
+            }, "Language key, template name and tenant must be not blank");
     }
 
     @Test
-    public void getMessageContent_validDataModel_shouldReturnCorrectMessage() throws JsonProcessingException {
+    public void getMessageContent_validDataModel_shouldReturnCorrectMessage() throws JacksonException {
         Map<String, Object> model = Map.of(
             "code", "123456789",
             "user", Map.of("firstName", "John", "lastName", "Smith")
@@ -90,7 +88,7 @@ public class TwilioMessageTemplateServiceUnitTest extends AbstractSpringBootTest
         assertThat(result).isEqualTo("Hello, John Smith! This is your code: 123456789");
     }
 
-    private CommunicationMessageCreate getCommunicationMessage(Map<String, Object> model) throws JsonProcessingException {
+    private CommunicationMessageCreate getCommunicationMessage(Map<String, Object> model) throws JacksonException {
         CommunicationMessageCreate message = new CommunicationMessageCreate();
         message.setCharacteristic(new ArrayList<>());
 

@@ -5,7 +5,7 @@ import static org.apache.commons.lang3.StringUtils.unwrap;
 import static org.springframework.cloud.stream.binder.kafka.properties.KafkaConsumerProperties.StartOffset.earliest;
 import static org.springframework.kafka.support.KafkaHeaders.ACKNOWLEDGMENT;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.logging.util.MdcUtils;
 import com.icthh.xm.tmf.ms.communication.lep.LepKafkaMessageHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.MessageHandlerService;
@@ -16,17 +16,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import net.logstash.logback.encoder.org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
-import org.springframework.boot.actuate.health.CompositeHealthIndicator;
-import org.springframework.boot.actuate.health.HealthIndicatorRegistry;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
+import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 import org.springframework.cloud.stream.binder.ConsumerProperties;
 import org.springframework.cloud.stream.binder.HeaderMode;
-import org.springframework.cloud.stream.binder.kafka.KafkaBinderHealthIndicator;
 import org.springframework.cloud.stream.binder.kafka.KafkaMessageChannelBinder;
 import org.springframework.cloud.stream.binder.kafka.properties.KafkaBindingProperties;
 import org.springframework.cloud.stream.binder.kafka.properties.KafkaExtendedBindingProperties;
@@ -34,6 +30,7 @@ import org.springframework.cloud.stream.binding.BindingService;
 import org.springframework.cloud.stream.binding.SubscribableChannelBindingTargetFactory;
 import org.springframework.cloud.stream.config.BindingProperties;
 import org.springframework.cloud.stream.config.BindingServiceProperties;
+import org.springframework.kafka.listener.ContainerProperties.AckMode;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
@@ -62,8 +59,6 @@ public class KafkaChannelFactory {
     private final KafkaProperties kafkaProperties;
     private final LepKafkaMessageHandler lepMessageHandler;
 
-    private CompositeHealthIndicator bindersHealthIndicator;
-    private KafkaBinderHealthIndicator kafkaBinderHealthIndicator;
     private MessageHandlerService messageHandlerService;
 
 
@@ -73,8 +68,6 @@ public class KafkaChannelFactory {
                                ApplicationProperties applicationProperties, KafkaProperties kafkaProperties,
                                KafkaMessageChannelBinder kafkaMessageChannelBinder,
                                MessageHandlerService messagingHandler,
-                               CompositeHealthIndicator bindersHealthIndicator,
-                               KafkaBinderHealthIndicator kafkaBinderHealthIndicator,
                                LepKafkaMessageHandler lepMessageHandler) {
         this.bindingServiceProperties = bindingServiceProperties;
         this.bindingTargetFactory = bindingTargetFactory;
@@ -83,8 +76,6 @@ public class KafkaChannelFactory {
         this.applicationProperties = applicationProperties;
         this.kafkaProperties = kafkaProperties;
         this.messageHandlerService = messagingHandler;
-        this.bindersHealthIndicator = bindersHealthIndicator;
-        this.kafkaBinderHealthIndicator = kafkaBinderHealthIndicator;
         this.lepMessageHandler = lepMessageHandler;
 
         kafkaMessageChannelBinder.setExtendedBindingProperties(kafkaExtendedBindingProperties);
@@ -96,10 +87,9 @@ public class KafkaChannelFactory {
         String chanelName = applicationProperties.getMessaging().getToSendQueueName();
 
         KafkaBindingProperties props = new KafkaBindingProperties();
-        props.getConsumer().setAutoCommitOffset(false);
+        props.getConsumer().setAckMode(AckMode.MANUAL);
         props.getConsumer().setAutoCommitOnError(false);
         props.getConsumer().setStartOffset(earliest);
-        props.getConsumer().setAckEachRecord(true);
         kafkaExtendedBindingProperties.setBindings(Collections.singletonMap(chanelName, props));
 
         ConsumerProperties consumerProperties = new ConsumerProperties();
@@ -116,11 +106,6 @@ public class KafkaChannelFactory {
 
         SubscribableChannel channel = bindingTargetFactory.createInput(chanelName);
         bindingService.bindConsumer(channel, chanelName);
-
-        HealthIndicatorRegistry registry = bindersHealthIndicator.getRegistry();
-        if (registry.get(KAFKA) == null) {
-            registry.register(KAFKA, kafkaBinderHealthIndicator);
-        }
 
         channel.subscribe(message -> {
             try {

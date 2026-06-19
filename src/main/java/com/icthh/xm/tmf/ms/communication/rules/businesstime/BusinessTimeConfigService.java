@@ -1,12 +1,12 @@
 package com.icthh.xm.tmf.ms.communication.rules.businesstime;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.config.client.config.XmConfigProperties;
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
+import com.icthh.xm.commons.tenant.YamlMapperUtils;
+import java.util.Map;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -31,9 +31,8 @@ public class BusinessTimeConfigService extends TenantConfigService {
     public void onRefresh(String updatedKey, String config) {
         super.onRefresh(updatedKey, config);
 
-        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        ObjectMapper objectMapper = YamlMapperUtils.yamlDeserializationMapper(
+            Map.of(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false));
 
         businessDayConfig = objectMapper.readValue(config, BusinessDayConfig.class);
         log.debug("Update business day config: {}", businessDayConfig);

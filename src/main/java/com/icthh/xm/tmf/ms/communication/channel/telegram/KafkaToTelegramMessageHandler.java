@@ -1,6 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.channel.telegram;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import com.icthh.xm.commons.tenant.JsonMapperUtils;
 import com.icthh.xm.commons.topic.domain.TopicConfig;
 import com.icthh.xm.commons.topic.message.MessageHandler;
 import com.icthh.xm.tmf.ms.communication.service.TelegramService;
@@ -15,7 +16,7 @@ public class KafkaToTelegramMessageHandler implements MessageHandler {
 
     public KafkaToTelegramMessageHandler(TelegramService telegramService) {
         this.telegramService = telegramService;
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = JsonMapperUtils.getDefaultJsonMapper();
     }
 
     @Override

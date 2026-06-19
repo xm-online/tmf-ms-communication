@@ -9,16 +9,15 @@ import com.icthh.xm.tmf.ms.communication.mapper.TopicConfigMapper;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.cloud.stream.test.binder.MessageCollectorAutoConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.InputStream;
@@ -27,8 +26,8 @@ import java.util.List;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@RunWith(SpringRunner.class)
-@EnableAutoConfiguration(exclude = MessageCollectorAutoConfiguration.class)
+@ExtendWith(SpringExtension.class)
+@EnableAutoConfiguration
 @SpringBootTest(classes = {CommunicationApp.class, SecurityBeanOverrideConfiguration.class, MessagingConfiguration.class})
 public class TopicSpecificationServiceTest {
 
@@ -46,13 +45,13 @@ public class TopicSpecificationServiceTest {
     @Autowired
     private TopicConfigMapper topicConfigMapper;
 
-    @MockBean
+    @MockitoBean
     private SmppService smppService;
 
-    @MockBean
+    @MockitoBean
     private RestTemplate restTemplate;
 
-    @Before
+    @BeforeEach
     public void setup() {
         subject = new TopicSpecificationService(applicationProperties, topicConfigMapper, topicMessageHandlerFactory);
     }

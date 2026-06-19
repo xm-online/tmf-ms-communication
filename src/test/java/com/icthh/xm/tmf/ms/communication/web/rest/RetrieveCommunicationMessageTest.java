@@ -1,22 +1,23 @@
 package com.icthh.xm.tmf.ms.communication.web.rest;
 
-import com.codahale.metrics.MetricRegistry;
-import com.google.common.collect.ImmutableMap;
-import com.icthh.xm.commons.metric.MetricsConfiguration;
+import com.icthh.xm.commons.security.internal.XmAuthentication;
+import com.icthh.xm.commons.security.internal.XmAuthenticationDetails;
+import com.icthh.xm.commons.security.jwt.TokenProvider;
 import com.icthh.xm.tmf.ms.communication.channel.telegram.TelegramChannelHandler;
 import com.icthh.xm.tmf.ms.communication.channel.twilio.TwilioChannelHandler;
 import com.icthh.xm.tmf.ms.communication.config.ChannelRefreshableConfiguration;
 import com.icthh.xm.tmf.ms.communication.security.AuthoritiesConstants;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletRequest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -24,44 +25,41 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.oauth2.provider.OAuth2Authentication;
-import org.springframework.security.oauth2.provider.OAuth2Request;
-import org.springframework.security.oauth2.provider.token.ResourceServerTokenServices;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class RetrieveCommunicationMessageTest {
     @LocalServerPort
     public Integer localServicePort;
 
-    @MockBean(answer = Answers.RETURNS_DEEP_STUBS)
-    private MetricRegistry metricRegistry;
-    @MockBean
-    private MetricsConfiguration metricsConfiguration;
-    @MockBean
+    @MockitoBean
     private TelegramChannelHandler telegramChannelHandler;
-    @MockBean
+    @MockitoBean
     private TwilioChannelHandler twilioChannelHandler;
-    @MockBean
+    @MockitoBean
     private JavaMailSender javaMailSender;
-    @MockBean
+    @MockitoBean
     private ChannelRefreshableConfiguration channelRefreshableConfiguration;
-    @MockBean(answer = Answers.RETURNS_DEEP_STUBS)
+    @MockitoBean(answers = Answers.RETURNS_DEEP_STUBS)
     private SmppService smppService;
-    @MockBean(answer = Answers.RETURNS_DEEP_STUBS)
+    @MockitoBean(answers = Answers.RETURNS_DEEP_STUBS)
     private KafkaTemplate<String, String> template;
 
-    @Autowired
-    private ResourceServerTokenServices tokenServices;
+    @MockitoBean
+    private TokenProvider tokenProvider;
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -87,12 +85,15 @@ public class RetrieveCommunicationMessageTest {
     }
 
     private String createAccessToken(String username) {
-        TestingAuthenticationToken token = new TestingAuthenticationToken(username, "", AuthoritiesConstants.ADMIN);
-        OAuth2Request authRequest = new OAuth2Request(null, "", token.getAuthorities(), true, null, null, null, null, null);
-        OAuth2Authentication oauth = new OAuth2Authentication(authRequest, token);
-        oauth.setDetails(ImmutableMap.of("tenant", "XM"));
         String accessToken = UUID.randomUUID().toString();
-        Mockito.when(tokenServices.loadAuthentication(accessToken)).thenReturn(oauth);
+        Claims claims = mock(Claims.class);
+        XmAuthenticationDetails details = mock(XmAuthenticationDetails.class);
+        XmAuthentication authentication = new XmAuthentication(details, username,
+            List.of(new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN)));
+        authentication.setAuthenticated(true);
+
+        when(tokenProvider.validateToken(accessToken)).thenReturn(claims);
+        when(tokenProvider.getAuthentication((HttpServletRequest) any(), eq(accessToken), eq(claims))).thenReturn(authentication);
         return "Bearer " + accessToken;
     }
 }

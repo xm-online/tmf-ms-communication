@@ -12,7 +12,12 @@ import org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer;
 public class XmFreeMarkerConfiguration {
 
     @Bean
-    public FreeMarkerConfigurer xmFreeMarkerConfigurer(StringTemplateLoader emailTemplates) {
+    public freemarker.template.Configuration freeMarkerConfiguration(XmFreeMarkerConfigurer xmFreeMarkerConfigurer) {
+        return xmFreeMarkerConfigurer.getConfiguration();
+    }
+
+    @Bean
+    public XmFreeMarkerConfigurer xmFreeMarkerConfigurer(StringTemplateLoader emailTemplates) {
         return new XmFreeMarkerConfigurer(emailTemplates);
     }
 

@@ -442,6 +442,7 @@ paths:
 definitions:
   CommunicationMessage:
     type: object
+    x-parent: true
     description: 'Communication message means a notification approach in the format of a message which can be dispatched (sent) to the certain user by the system with the content which can be felt and understood by the recipient. The user can be either a final customer or a customer service agent. The message can reach the customer in different interaction channels, including: email, short message, mobile app notification (push).'
     required:
       - type

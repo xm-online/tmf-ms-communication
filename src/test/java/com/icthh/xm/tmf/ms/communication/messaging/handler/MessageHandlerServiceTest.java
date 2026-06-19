@@ -1,17 +1,18 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import java.util.List;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class MessageHandlerServiceTest {
 
     @Mock
@@ -27,7 +28,7 @@ public class MessageHandlerServiceTest {
 
     MessageHandlerService messageHandlerService;
 
-    @Before
+    @BeforeEach
     public void setup() {
         messageHandlerService = new MessageHandlerService(
             List.of(
@@ -46,9 +47,9 @@ public class MessageHandlerServiceTest {
         when(emailMessageHandler.getType()).thenReturn(MessageType.Email);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void nullMessageTyeTest() {
-        messageHandlerService.getHandler(null);
+        assertThrows(IllegalArgumentException.class, () -> messageHandlerService.getHandler(null));
     }
 
     @Test

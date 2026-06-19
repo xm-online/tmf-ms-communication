@@ -374,7 +374,7 @@ public class FirebaseServiceTest {
 
     @SneakyThrows
     private <T> Object extractField(String name, T instance) {
-        Field data = ReflectionUtils.findRequiredField(instance.getClass(), name);
+        Field data = ReflectionUtils.getRequiredField(instance.getClass(), name);
         data.setAccessible(true);
         return data.get(instance);
     }

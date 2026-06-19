@@ -2,16 +2,16 @@ package com.icthh.xm.tmf.ms.communication.messaging.template;
 
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class MessageTemplateConfigurationServiceUnitTest {
 
     private static final String TEST_PATTERN = "/config/tenants/{tenantKey}/communication/twilio/{templateName}/{langKey}.ftl";
@@ -21,7 +21,7 @@ public class MessageTemplateConfigurationServiceUnitTest {
 
     private MessageTemplateConfigurationService messageTemplateConfigurationService;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         when(properties.getTwilioPathPattern()).thenReturn(TEST_PATTERN);
         messageTemplateConfigurationService = new MessageTemplateConfigurationService(properties);

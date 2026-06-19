@@ -4,29 +4,35 @@
  */
 buildscript {
     repositories {
+        gradlePluginPortal()
         mavenCentral()
     }
     dependencies {
-        classpath "org.openapitools:openapi-generator-gradle-plugin:${openapiPluginDependencyVersion}"
+        classpath "org.openapitools:openapi-generator-gradle-plugin:" +
+            (project.hasProperty("openapiPluginVersion") ? project.property("openapiPluginVersion") : "7.17.0")
     }
 }
 apply plugin: "org.openapi.generator"
 
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
+
 void createOpenApiGenerateTask(String ymlName) {
-    String taskName = "openApiGenerate_" + ymlName;
-    task(taskName, type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask) {
+    String taskName = "openApiGenerate_" + ymlName
+    tasks.register(taskName, GenerateTask) {
         generatorName = "spring"
         inputSpec = "$rootDir/src/main/resources/swagger/${ymlName}.yml".toString()
-        outputDir = "$buildDir/openapi".toString()
+        outputDir = layout.buildDirectory.dir("openapi").get().asFile.toString()
         apiPackage = "com.icthh.xm.tmf.ms.communication.web.api"
         modelPackage = "com.icthh.xm.tmf.ms.communication.web.api.model"
         apiFilesConstrainedTo = [""]
         modelFilesConstrainedTo = [""]
         supportingFilesConstrainedTo = ["ApiUtil.java"]
-        configOptions = [delegatePattern: "true", title: "communication"]
+        configOptions = [delegatePattern: "true", title: "communication", useSpringBoot3: "true", useJakartaEe: "true"]
         validateSpec = true
         importMappings = [Problem:"org.zalando.problem.Problem"]
-        templateDir = "$rootDir/src/main/resources/openapi/mustache/JavaSpring"
+        // Custom JavaSpring templates dropped during the Boot 4 migration: they emitted
+        // Swagger-1 @ApiModel/@ApiModelProperty annotations. The generator's default
+        // Boot 3/Jakarta templates emit io.swagger.v3 @Schema instead.
     }
     compileJava.dependsOn(taskName)
 
@@ -43,7 +49,7 @@ for (String ymlName : ymlNames) {
 sourceSets {
     main {
         java {
-            srcDir file("${project.buildDir.path}/openapi/src/main/java")
+            srcDir file(layout.buildDirectory.dir("openapi/src/main/java").get().asFile)
         }
     }
 }

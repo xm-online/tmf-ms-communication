@@ -1,8 +1,10 @@
 package com.icthh.xm.tmf.ms.communication.messaging.template;
 
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+import com.icthh.xm.commons.tenant.JsonMapperUtils;
 import com.icthh.xm.tmf.ms.communication.service.mail.MultiTenantLangStringTemplateLoaderService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
@@ -14,8 +16,8 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.LocaleUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.LocaleUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 
 import java.io.IOException;
@@ -40,7 +42,7 @@ public abstract class AbstractMessageTemplateService implements MessageTemplateS
         this.freeMarkerConfiguration = freeMarkerConfiguration;
         this.templateLoader = templateLoader;
         this.templateLoaderService = templateLoaderService;
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = JsonMapperUtils.getDefaultJsonMapper();
     }
 
     @Override
@@ -101,7 +103,7 @@ public abstract class AbstractMessageTemplateService implements MessageTemplateS
         try {
             return objectMapper.readValue(config, new TypeReference<Map<String, Object>>() {
             });
-        } catch (IOException e) {
+        } catch (JacksonException e) {
             throw new RuntimeException("Error when read template mode map: " + e.getMessage());
         }
     }

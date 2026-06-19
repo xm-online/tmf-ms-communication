@@ -16,9 +16,9 @@ import static java.time.LocalTime.of;
 import static java.util.Collections.singletonList;
 import static java.util.Objects.requireNonNull;
 import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
@@ -43,19 +43,19 @@ import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 @Slf4j
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {BusinessTimeConfigService.class})
 public class BusinessTimeConfigRuleTest {
 
@@ -85,10 +85,10 @@ public class BusinessTimeConfigRuleTest {
     @Mock
     private CommunicationMessageMapper mapper;
 
-    @MockBean
+    @MockitoBean
     private XmConfigProperties xmConfigProperties;
 
-    @MockBean
+    @MockitoBean
     private TenantContextHolder tenantContextHolder;
 
     @Autowired
@@ -97,7 +97,7 @@ public class BusinessTimeConfigRuleTest {
     private SmppMessagingHandler smppMessagingHandler;
 
     @SneakyThrows
-    @Before
+    @BeforeEach
     public void setUp() {
         businessTimeConfigService.onRefresh(UPDATED_KEY, IOUtils.toString(
             requireNonNull(getClass().getClassLoader().getResourceAsStream("businessTimeConfig.yml")),

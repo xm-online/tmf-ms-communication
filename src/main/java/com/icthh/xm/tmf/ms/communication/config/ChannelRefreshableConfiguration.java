@@ -1,7 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import tools.jackson.databind.ObjectMapper;
+import com.icthh.xm.commons.tenant.YamlMapperUtils;
 import com.icthh.xm.commons.config.client.api.RefreshableConfiguration;
 import com.icthh.xm.tmf.ms.communication.channel.ChannelHandler;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec;
@@ -24,7 +24,7 @@ public class ChannelRefreshableConfiguration implements RefreshableConfiguration
     private final List<ChannelHandler> channelHandlers;
 
     private AntPathMatcher matcher = new AntPathMatcher();
-    private ObjectMapper ymlMapper = new ObjectMapper(new YAMLFactory());
+    private ObjectMapper ymlMapper = YamlMapperUtils.yamlDefaultMapper();
 
     @SneakyThrows
     @Override

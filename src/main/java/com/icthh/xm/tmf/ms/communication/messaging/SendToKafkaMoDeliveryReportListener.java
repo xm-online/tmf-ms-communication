@@ -7,9 +7,10 @@ import static java.nio.charset.StandardCharsets.UTF_16;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jsmpp.bean.Alphabet.ALPHA_UCS2;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.MapType;
-import com.fasterxml.jackson.databind.type.TypeFactory;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.type.MapType;
+import tools.jackson.databind.type.TypeFactory;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -37,13 +38,15 @@ public class SendToKafkaMoDeliveryReportListener extends AbstractDeliveryReportL
         final StopWatch stopWatch = StopWatch.createStarted();
 
         if (getState(deliverSm) == null) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.setSerializationInclusion(NON_NULL);
-            objectMapper.setVisibility(objectMapper.getSerializationConfig().getDefaultVisibilityChecker()
-                                              .withFieldVisibility(ANY)
-                                              .withGetterVisibility(NONE)
-                                              .withSetterVisibility(NONE)
-                                              .withCreatorVisibility(NONE));
+            ObjectMapper objectMapper = JsonMapper.builder()
+                .changeDefaultPropertyInclusion(incl ->
+                        incl.withValueInclusion(NON_NULL).withContentInclusion(NON_NULL))
+                .changeDefaultVisibility(checker -> checker
+                        .withFieldVisibility(ANY)
+                        .withGetterVisibility(NONE)
+                        .withSetterVisibility(NONE)
+                        .withCreatorVisibility(NONE))
+                .build();
             TypeFactory typeFactory = objectMapper.getTypeFactory();
             MapType mapType = typeFactory.constructMapType(Map.class, String.class, Object.class);
             Map<String, Object> valueMap = objectMapper.convertValue(deliverSm, mapType);
