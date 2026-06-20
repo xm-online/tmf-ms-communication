@@ -49,6 +49,13 @@ logging:
 # Full reference is available at: https://www.jhipster.tech/common-application-properties/
 # ===================================================================
 management:
+    tracing:
+        export:
+            enabled: ${MANAGEMENT_TRACING_EXPORT_ENABLED:false}
+    otlp:
+        metrics:
+            export:
+                enabled: ${MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED:false}
     metrics:
         export:
             prometheus:

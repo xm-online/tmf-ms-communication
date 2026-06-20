@@ -1,8 +1,8 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
 import com.icthh.xm.commons.tenant.YamlMapperUtils;
+import org.mockito.Mockito;
 import tools.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
@@ -30,11 +30,10 @@ import java.util.Optional;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-public class EmailSpecificationServiceTest {
+public class EmailSpecificationServiceUnitTest {
 
     private static final String EMAIL_SPECIFICATION_PATH_PATTERN = "/config/tenants/{tenantName}/communication/email-spec.yml";
     private static final String CUSTOM_EMAIL_SPECIFICATION_PATH_PATTERN = "/config/tenants/{tenantName}/communication/custom-email-spec.yml";
@@ -87,8 +86,8 @@ public class EmailSpecificationServiceTest {
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
         customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
-        expectedEmailSpecList.get(0).setSubjectTemplate(MULTILINGUAL_SUBJECT);
-        expectedEmailSpecList.get(0).setEmailFrom(MULTILINGUAL_EMAIL_FROM);
+        expectedEmailSpecList.getFirst().setSubjectTemplate(MULTILINGUAL_SUBJECT);
+        expectedEmailSpecList.getFirst().setEmailFrom(MULTILINGUAL_EMAIL_FROM);
 
         List<EmailTemplateSpec> emailSpecList = emailSpecService.getEmailSpec().getEmails();
         assertEquals(expectedEmailSpecList, emailSpecList);
@@ -117,9 +116,9 @@ public class EmailSpecificationServiceTest {
 
     public void mockTenant(String tenant) {
         TenantContext tenantContext = mock(TenantContext.class);
-        when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(tenant)));
-        when(tenantContextHolder.getContext()).thenReturn(tenantContext);
-        when(tenantContextHolder.getTenantKey()).thenReturn(tenant);
+        Mockito.lenient().when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(tenant)));
+        Mockito.lenient().when(tenantContextHolder.getContext()).thenReturn(tenantContext);
+        Mockito.lenient().when(tenantContextHolder.getTenantKey()).thenReturn(tenant);
     }
 
     @SneakyThrows

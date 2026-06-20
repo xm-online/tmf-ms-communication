@@ -1,5 +1,8 @@
 package com.icthh.xm.tmf.ms.communication.messaging.template;
 
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 import com.icthh.xm.tmf.ms.communication.AbstractSpringBootTest;
@@ -42,10 +45,10 @@ public class TwilioMessageTemplateServiceUnitTest extends AbstractSpringBootTest
     @Autowired
     private MultiTenantLangStringTemplateLoaderService templateLoaderService;
 
-    @Mock
+    @MockitoBean
     private ApplicationProperties applicationProperties;
 
-    @Mock
+    @MockitoBean
     private MessageTemplateConfigurationService messageTemplateConfigurationService;
 
     private TwilioMessageTemplateService twilioMessageTemplateService;
