@@ -1,6 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
+
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
 import com.icthh.xm.tmf.ms.communication.domain.dto.RenderTemplateRequest;
@@ -32,32 +32,27 @@ public class EmailTemplateController {
     private final EmailTemplateService emailTemplateService;
     private final EmailSpecService emailSpecService;
 
-    @Timed
     @PostMapping("/render")
     @IgnoreLogginAspect
     public RenderTemplateResponse renderEmailContentToHtml(@Valid @RequestBody RenderTemplateRequest renderTemplateRequest) {
         return emailTemplateService.renderEmailContent(renderTemplateRequest);
     }
 
-    @Timed
     @GetMapping
     public List<EmailTemplateSpec> getEmailSpec() {
         return emailSpecService.getEmailSpec().getEmails();
     }
 
-    @Timed
     @GetMapping("/{templateKey}/{langKey}")
     public TemplateDetails getTemplateByKey(@PathVariable String templateKey, @PathVariable String langKey) {
         return emailTemplateService.getTemplateDetailsByKey(templateKey, langKey);
     }
 
-    @Timed
     @GetMapping("/{templateKey}")
     public TemplateMultiLangDetails getTemplateByKey(@PathVariable String templateKey) {
         return emailTemplateService.getTemplateMultiLangDetailsByKey(templateKey);
     }
 
-    @Timed
     @PutMapping("/{templateKey}/{langKey}")
     @PreAuthorize("hasPermission({'updateTemplateRequest': #updateTemplateRequest}, 'EMAIL.TEMPLATE.UPDATE')")
     @PrivilegeDescription("Privilege to update email template")

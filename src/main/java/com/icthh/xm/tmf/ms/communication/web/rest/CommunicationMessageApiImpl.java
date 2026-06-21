@@ -1,6 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
+
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.permission.annotation.PrivilegeDescription;
@@ -24,7 +24,6 @@ public class CommunicationMessageApiImpl implements CommunicationMessageApiDeleg
 
     private final MessageHandlerService messageHandlerService;
 
-    @Timed
     @PreAuthorize("hasPermission({'messageCreate': #messageCreate}, 'COMMUNICATION.MESSAGE.SEND')")
     @PrivilegeDescription("Privilege to create and send communication messages")
     @Override
@@ -34,7 +33,6 @@ public class CommunicationMessageApiImpl implements CommunicationMessageApiDeleg
         return new ResponseEntity<>(message, HttpStatus.CREATED);
     }
 
-    @Timed
     @PreAuthorize("hasPermission({'id': #id}, 'COMMUNICATION.MESSAGE.RETRIEVE')")
     @PrivilegeDescription("Privilege to retrieve communication messages")
     @Override
@@ -43,7 +41,6 @@ public class CommunicationMessageApiImpl implements CommunicationMessageApiDeleg
         return ResponseEntity.ok(messages);
     }
 
-    @Timed
     @PreAuthorize("hasPermission(null, 'COMMUNICATION.MESSAGE.LIST')")
     @PrivilegeDescription("Privilege to list communication messages")
     @LogicExtensionPoint(value = "ListCommunicationMessage", resolver = ProfileKeyResolver.class)

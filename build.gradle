@@ -223,8 +223,6 @@ dependencies {
     implementation "io.micrometer:micrometer-registry-prometheus"
     implementation "net.logstash.logback:logstash-logback-encoder"
 
-    // Jackson 3 (tools.jackson) — primary
-
     implementation "tools.jackson.datatype:jackson-datatype-hppc"
     implementation "tools.jackson.core:jackson-databind"
     implementation "tools.jackson.dataformat:jackson-dataformat-yaml"
@@ -248,13 +246,6 @@ dependencies {
 
     implementation "org.zalando:problem-spring-web:${zalandoVersion}"
 
-    // TODO(OTel migration, Phase 9): remove Dropwizard/codahale metrics in favour of Micrometer.
-    // Kept temporarily so WebConfigurer's metrics filter/servlet and @Timed still compile.
-    implementation "io.dropwizard.metrics:metrics-core:4.2.25"
-    implementation "io.dropwizard.metrics:metrics-servlet:4.2.25"
-    implementation "io.dropwizard.metrics:metrics-servlets:4.2.25"
-    implementation "io.dropwizard.metrics:metrics-annotation:4.2.25"
-
     implementation "org.springframework.cloud:spring-cloud-starter"
     implementation "org.springframework.cloud:spring-cloud-starter-bootstrap"
     implementation "org.springframework.retry:spring-retry"
@@ -270,13 +261,8 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-security-oauth2-client"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
 
-    implementation "org.apache.httpcomponents.client5:httpclient5:${httpClient5Version}"
-    implementation "org.apache.httpcomponents.core5:httpcore5:${httpCore5Version}"
-
     implementation "org.glassfish.jaxb:jaxb-runtime:${jaxbRuntimeVersion}"
 
-    // springfox 3 is abandoned and incompatible with Spring Boot 4; springdoc provides the
-    // io.swagger.v3 @Schema annotations used by the openapi-generator (useSpringBoot3) output.
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocOpenapiVersion}"
 
     implementation "org.mapstruct:mapstruct:${mapstructVersion}"
@@ -285,7 +271,6 @@ dependencies {
         exclude group: "com.vaadin.external.google", module: "android-json"
     }
 
-    // Messaging / channel SDKs (communication-specific)
     implementation "org.springframework.cloud:spring-cloud-stream"
     implementation "org.springframework.cloud:spring-cloud-stream-binder-kafka"
     implementation "org.jsmpp:jsmpp:${jsmpp_version}"
