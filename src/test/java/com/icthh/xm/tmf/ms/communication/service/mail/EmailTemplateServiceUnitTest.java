@@ -88,7 +88,7 @@ public class EmailTemplateServiceUnitTest {
 
     private final ObjectMapper yamlMapper = YamlMapperUtils.yamlDefaultMapper();
 
-    @Mock
+    @MockitoBean
     private CommonConfigRepository commonConfigRepository;
 
     @Autowired

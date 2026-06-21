@@ -41,6 +41,8 @@ public class EmailSpecificationServiceUnitTest {
     private static final String CUSTOM_EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/custom-email-spec.yml";
     public static final Map<String, String> MULTILINGUAL_SUBJECT = Map.of("en", "Custom subject 1", "uk", "Змінена тема 1");
     public static final Map<String, String> MULTILINGUAL_EMAIL_FROM = Map.of("en", "Custom email from 1", "uk", "Змінене поле від 1");
+    public static final Map<String, String> MULTILINGUAL_SUBJECT_3 = Map.of("en", "Custom subject 3", "uk", "Змінена тема 3");
+    public static final Map<String, String> MULTILINGUAL_EMAIL_FROM_3 = Map.of("en", "Email from 3", "uk", "Змінене поле від 3");
 
     @Spy
     @InjectMocks
@@ -88,6 +90,8 @@ public class EmailSpecificationServiceUnitTest {
         List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
         expectedEmailSpecList.getFirst().setSubjectTemplate(MULTILINGUAL_SUBJECT);
         expectedEmailSpecList.getFirst().setEmailFrom(MULTILINGUAL_EMAIL_FROM);
+        expectedEmailSpecList.get(2).setSubjectTemplate(MULTILINGUAL_SUBJECT_3);
+        expectedEmailSpecList.get(2).setEmailFrom(MULTILINGUAL_EMAIL_FROM_3);
 
         List<EmailTemplateSpec> emailSpecList = emailSpecService.getEmailSpec().getEmails();
         assertEquals(expectedEmailSpecList, emailSpecList);

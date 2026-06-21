@@ -1,7 +1,5 @@
 package com.icthh.xm.tmf.ms.communication.messaging.template;
 
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
@@ -15,7 +13,6 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
 import freemarker.cache.StringTemplateLoader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;

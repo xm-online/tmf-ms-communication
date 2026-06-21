@@ -4,6 +4,7 @@ import com.icthh.xm.commons.lep.spring.web.LepInterceptor;
 import com.icthh.xm.commons.web.spring.TenantInterceptor;
 import com.icthh.xm.commons.web.spring.XmLoggingInterceptor;
 import com.icthh.xm.commons.web.spring.config.XmWebMvcConfigurerAdapter;
+import com.icthh.xm.tmf.ms.communication.web.rest.errors.ProblemModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
@@ -46,5 +47,10 @@ public class WebMvcConfiguration extends XmWebMvcConfigurerAdapter {
     @Bean
     public JacksonJsonHttpMessageConverter converter(JsonMapper jsonMapper) {
         return new JacksonJsonHttpMessageConverter(jsonMapper);
+    }
+
+    @Bean
+    public ProblemModule problemModule() {
+        return new ProblemModule();
     }
 }

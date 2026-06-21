@@ -49,6 +49,9 @@ logging:
 # Full reference is available at: https://www.jhipster.tech/common-application-properties/
 # ===================================================================
 management:
+    health:
+        mail:
+            enabled: false
     tracing:
         export:
             enabled: ${MANAGEMENT_TRACING_EXPORT_ENABLED:false}
