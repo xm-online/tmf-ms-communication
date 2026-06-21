@@ -23,7 +23,6 @@ plugins {
     id "com.gorylenko.gradle-git-properties"
     id "org.openapi.generator"
     id "org.sonarqube"
-//    id "com.github.spotbugs"
     id 'checkstyle'
     id 'pmd'
     id 'war'
