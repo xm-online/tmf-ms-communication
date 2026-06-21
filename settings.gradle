@@ -12,7 +12,7 @@ pluginManagement {
         id 'com.gorylenko.gradle-git-properties' version "${gitPropertiesPluginVersion}"
         id "org.openapi.generator" version "${openapiPluginVersion}"
         id "io.spring.nohttp" version "${noHttpCheckstyleVersion}"
-//        id 'com.github.spotbugs' version "${spotbugsPluginVersion}"
+        id 'com.github.spotbugs' version "${spotbugsPluginVersion}"
         id 'io.spring.dependency-management' version "${springDependencyManagement}"
         id 'org.sonarqube' version "${sonarqube_plugin_version}"
         //jhipster-needle-gradle-plugin-management-plugins - JHipster will add additional entries here
