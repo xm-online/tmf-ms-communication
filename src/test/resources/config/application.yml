@@ -35,6 +35,8 @@ spring:
         discovery:
             enabled: false
         consul:
+            discovery:
+                query-passing: true
             enabled: false
 
 logging:
