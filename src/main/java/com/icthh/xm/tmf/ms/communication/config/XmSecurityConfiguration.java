@@ -10,14 +10,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
 
-/**
- * Resource server / method security wiring.
- *
- * <p>JWT validation, CSRF/headers/session and the default URL authorization rules
- * (which already cover communication's {@code /api/**} and {@code /management/**}
- * endpoints) are provided by the xm-commons {@link SecurityConfiguration} base class
- * via the injected {@link TokenProvider}.
- */
 @Configuration
 public class XmSecurityConfiguration extends SecurityConfiguration {
 
@@ -27,10 +19,6 @@ public class XmSecurityConfiguration extends SecurityConfiguration {
         super(tokenProvider, contentSecurityPolicy);
     }
 
-    /**
-     * Enables {@code hasPermission(...)} SpEL used in {@code @PreAuthorize} across the
-     * web layer by wiring the XM permission evaluator into method security.
-     */
     @Bean
     @Primary
     static MethodSecurityExpressionHandler expressionHandler(XmPermissionEvaluator customPermissionEvaluator) {
