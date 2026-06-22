@@ -12,6 +12,7 @@ import tools.jackson.databind.module.SimpleModule;
 
 import java.net.URI;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Jackson 3 module that serializes Zalando {@link Problem} instances following RFC 7807.
@@ -24,6 +25,9 @@ import java.util.Map;
  * {@link ConstraintViolationProblem}/{@link Violation} lose their {@code violations} payload.
  */
 public class ProblemModule extends SimpleModule {
+
+    /** RFC 7807 fields written by {@link #writeProblemFields}; custom parameters must not shadow them. */
+    private static final Set<String> RESERVED_FIELDS = Set.of("type", "title", "status", "detail", "instance");
 
     public ProblemModule() {
         super("ZalandoProblemModule");
@@ -59,7 +63,9 @@ public class ProblemModule extends SimpleModule {
             gen.writeStartObject();
             writeProblemFields(problem, gen);
             for (Map.Entry<String, Object> entry : problem.getParameters().entrySet()) {
-                gen.writePOJOProperty(entry.getKey(), entry.getValue());
+                if (!RESERVED_FIELDS.contains(entry.getKey())) {
+                    gen.writePOJOProperty(entry.getKey(), entry.getValue());
+                }
             }
             gen.writeEndObject();
         }
