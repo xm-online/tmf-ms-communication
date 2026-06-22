@@ -8,8 +8,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath "org.openapitools:openapi-generator-gradle-plugin:" +
-            (project.hasProperty("openapiPluginVersion") ? project.property("openapiPluginVersion") : "7.17.0")
+        classpath "org.openapitools:openapi-generator-gradle-plugin:${openapiPluginVersion}"
     }
 }
 apply plugin: "org.openapi.generator"
