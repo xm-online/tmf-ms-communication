@@ -26,7 +26,7 @@ public class RestTemplateConfiguration {
     public RestTemplate loadBalancedRestTemplate(ObjectProvider<RestTemplateCustomizer> customizerProvider) {
         RestTemplate restTemplate = new RestTemplate();
         if (loadBalancedTemplateEnabled) {
-            log.info("loadBalancedRestTemplate: using Ribbon load balancer");
+            log.info("loadBalancedRestTemplate: using spring load balancer");
             customizerProvider.ifAvailable(customizer -> customizer.customize(restTemplate));
         }
         return restTemplate;
