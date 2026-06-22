@@ -46,7 +46,6 @@ import org.springframework.messaging.SubscribableChannel;
 @Slf4j
 public class KafkaChannelFactory {
 
-    private static final String KAFKA = "kafka";
     public static final String TENANT_NAME = "TENANT.NAME";
     public static final String XM = "XM";
 

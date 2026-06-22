@@ -12,6 +12,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 
 import java.util.List;
+import org.zalando.problem.violations.ConstraintViolationProblemModule;
 import tools.jackson.databind.json.JsonMapper;
 
 @Configuration
@@ -42,15 +43,5 @@ public class WebMvcConfiguration extends XmWebMvcConfigurerAdapter {
     @Override
     protected List<String> getTenantIgnorePathPatterns() {
         return appProps.getTenantIgnoredPathList();
-    }
-
-    @Bean
-    public JacksonJsonHttpMessageConverter converter(JsonMapper jsonMapper) {
-        return new JacksonJsonHttpMessageConverter(jsonMapper);
-    }
-
-    @Bean
-    public ProblemModule problemModule() {
-        return new ProblemModule();
     }
 }

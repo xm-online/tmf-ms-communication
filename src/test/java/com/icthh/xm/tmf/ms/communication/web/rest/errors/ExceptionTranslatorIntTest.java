@@ -65,6 +65,16 @@ public class ExceptionTranslatorIntTest {
     }
 
     @Test
+    public void testConstraintViolation() throws Exception {
+        mockMvc.perform(get("/test/constraint-violation"))
+            .andExpect(status().isBadRequest())
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.message").value(ErrorConstants.ERR_VALIDATION))
+            .andExpect(jsonPath("$.violations.[0].field").value("test"))
+            .andExpect(jsonPath("$.violations.[0].message").isNotEmpty());
+    }
+
+    @Test
     public void testParameterizedError() throws Exception {
         mockMvc.perform(get("/test/parameterized-error"))
             .andExpect(status().isBadRequest())

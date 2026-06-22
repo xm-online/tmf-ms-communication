@@ -1,11 +1,11 @@
 package com.icthh.xm.tmf.ms.communication.client;
 
+import com.icthh.xm.commons.security.internal.XmAuthenticationDetails;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 public class UserFeignClientInterceptor implements RequestInterceptor {
 
@@ -17,9 +17,8 @@ public class UserFeignClientInterceptor implements RequestInterceptor {
     public void apply(RequestTemplate template) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication instanceof JwtAuthenticationToken jwtAuth) {
-            String tokenValue = jwtAuth.getToken().getTokenValue();
-            template.header(AUTHORIZATION_HEADER, String.format("%s %s", BEARER_TOKEN_TYPE, tokenValue));
+        if (authentication != null && authentication.getDetails() instanceof XmAuthenticationDetails details) {
+            template.header(AUTHORIZATION_HEADER, String.format("%s %s", BEARER_TOKEN_TYPE, details.getTokenValue()));
         }
     }
 }
