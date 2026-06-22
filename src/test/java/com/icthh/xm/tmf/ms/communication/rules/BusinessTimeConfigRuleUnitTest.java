@@ -57,7 +57,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @Slf4j
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {BusinessTimeConfigService.class})
-public class BusinessTimeConfigRuleTest {
+public class BusinessTimeConfigRuleUnitTest {
 
     private static final String BUSINESS_TIME = "2019-04-15T10:15:30.00Z";
     private static final String NOT_BUSINESS_TIME = "2019-04-15T02:15:30.00Z";

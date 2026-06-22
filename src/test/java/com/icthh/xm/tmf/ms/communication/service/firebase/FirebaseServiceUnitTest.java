@@ -56,7 +56,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.data.util.ReflectionUtils;
 
 
-public class FirebaseServiceTest {
+public class FirebaseServiceUnitTest {
     public static final String SENDER_ID = "sender-id";
     public static final String TENANT_KEY = "tenant-key";
     public static final String FCM_MESSAGE_ID = "fcm-message-id";

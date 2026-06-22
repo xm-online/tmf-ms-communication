@@ -20,7 +20,7 @@ import java.util.List;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageType.Twilio;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TwilioServiceTest {
+class TwilioServiceUnitTest {
 
     private static String CONFIG_KEY = "senderKey";
     private static String CONFIG_ACCOUNT_SID = "AC528fe950968998cae3d3df2ac4f64fc0";

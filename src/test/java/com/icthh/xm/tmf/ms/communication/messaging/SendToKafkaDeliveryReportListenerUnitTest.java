@@ -19,7 +19,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class SendToKafkaDeliveryReportListenerTest {
+public class SendToKafkaDeliveryReportListenerUnitTest {
 
     @Mock
     private MessagingAdapter messagingAdapter;

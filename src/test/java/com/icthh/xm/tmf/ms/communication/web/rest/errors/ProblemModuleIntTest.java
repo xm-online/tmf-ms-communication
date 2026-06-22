@@ -28,16 +28,12 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
  * {@link JacksonJsonHttpMessageConverter} — which is backed by the Jackson 3 {@code JsonMapper} with the
  * {@link ProblemModule} bean registered (see {@code CommunicationJacksonConfiguration}).
  *
- * <p>Unlike {@code ProblemModuleUnitTest} (which serializes a {@link org.zalando.problem.Problem} in
- * isolation), this test asserts the actual HTTP response body produced by the full MVC pipeline,
- * proving the module turns problems into RFC 7807 documents instead of plain throwables.
- *
  * @see ProblemModule
  * @see ExceptionTranslatorIntTest
  */
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {SecurityBeanOverrideConfiguration.class, CommunicationApp.class})
-class ProblemModuleIntTest {
+public class ProblemModuleIntTest {
 
     @Autowired
     private ExceptionTranslatorTestController controller;

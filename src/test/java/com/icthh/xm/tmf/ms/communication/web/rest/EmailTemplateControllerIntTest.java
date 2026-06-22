@@ -52,7 +52,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ExtendWith(SpringExtension.class)
 @SpringBootTest
 @WithMockUser(authorities = {"SUPER-ADMIN"})
-public class EmailTemplateControllerTest {
+public class EmailTemplateControllerIntTest {
 
     private static final String DEFAULT_RENDERED_RESPONSE = "xm@test.com";
     private static final String DEFAULT_CONTENT = "${subject}@${domainName}.com";

@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @ExtendWith(MockitoExtension.class)
-public class MobileAppMessageHandlerTest {
+public class MobileAppMessageHandlerUnitTest {
 
     @Mock
     FirebaseService firebaseService;

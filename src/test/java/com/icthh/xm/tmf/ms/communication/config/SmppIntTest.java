@@ -27,7 +27,7 @@ import org.testcontainers.containers.GenericContainer;
 @ContextConfiguration()
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {CommunicationApp.class})
-public class SmppTest {
+public class SmppIntTest {
 
     public static final String DOCKER_IMAGE_NAME = "xmonline/smpp-emulator";
     public static final int SMPP_PORT = 2775;

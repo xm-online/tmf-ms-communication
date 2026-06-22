@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @ExtendWith(SpringExtension.class)
 @EnableAutoConfiguration
 @SpringBootTest(classes = {CommunicationApp.class, SecurityBeanOverrideConfiguration.class, MessagingConfiguration.class})
-public class TopicSpecificationServiceTest {
+public class TopicSpecificationServiceIntTest {
 
     private static final String TENANT = "XM";
     private static final String TOPIC_NAME = "communication_XM_queue";

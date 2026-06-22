@@ -49,7 +49,7 @@ import static org.mockito.Mockito.when;
     LepConfiguration.class
 })
 @Slf4j
-public class CustomCommunicationMessageHandlerTest {
+public class CustomCommunicationMessageHandlerIntTest {
 
     @Autowired
     private LepManagementService lepManagementService;

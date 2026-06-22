@@ -53,7 +53,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @Slf4j
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {TTLRuleConfigService.class})
-public class TTLRuleTest {
+public class TTLRuleUnitTest {
 
     private static final String UPDATED_KEY = "/config/tenants/xm/tenant-config.yml";
 
