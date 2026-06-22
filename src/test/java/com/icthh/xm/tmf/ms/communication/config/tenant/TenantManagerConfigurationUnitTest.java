@@ -50,7 +50,7 @@ public class TenantManagerConfigurationUnitTest {
 
     @BeforeEach
     public void setup() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
 
         when(applicationProperties.getEmailSpecificationPathPattern()).thenReturn("/config/tenants/{tenantName}/communication/email-spec.yml");
 

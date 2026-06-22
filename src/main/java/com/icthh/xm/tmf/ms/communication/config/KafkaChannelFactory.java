@@ -178,6 +178,6 @@ public class KafkaChannelFactory {
 
     private String getTenant(CommunicationMessage message) {
         return message.getCharacteristic().stream().filter(ch -> TENANT_NAME.equals(ch.getName())).findFirst()
-            .map(ch -> ch.getValue()).orElse(XM);
+            .map(CommunicationRequestCharacteristic::getValue).orElse(XM);
     }
 }

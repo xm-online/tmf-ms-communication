@@ -123,7 +123,7 @@ public class MailServiceUnitTest {
     @BeforeEach
     public void setup() {
         TenantContextUtils.setTenant(tenantContextHolder, TENANT_NAME);
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         when(authContextHolder.getContext()).thenReturn(context);
         when(context.getUserKey()).thenReturn(Optional.of("userKey"));
         when(mailProviderService.getJavaMailSender(any())).thenReturn(javaMailSender);

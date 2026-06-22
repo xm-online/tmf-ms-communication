@@ -78,7 +78,7 @@ public class CustomCommunicationMessageHandlerTest {
     @BeforeEach
     public void before() {
         TenantContextUtils.setTenant(tenantContextHolder, "RESINTTEST");
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         when(authContextHolder.getContext()).thenReturn(context);
         when(context.getRequiredUserKey()).thenReturn("userKey");
 
