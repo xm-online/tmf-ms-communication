@@ -36,6 +36,9 @@ class TwilioServiceUnitTest {
     @BeforeEach
     public void beforeEach() {
         kafkaTemplate = Mockito.mock(KafkaTemplate.class);
+        messageTemplateService = Mockito.mock(TwilioMessageTemplateService.class);
+        Mockito.when(messageTemplateService.getMessageContent(Mockito.anyString(), Mockito.any()))
+            .thenReturn("Test message");
         ApplicationProperties ap = new ApplicationProperties();
         ApplicationProperties.Messaging messaging = new ApplicationProperties.Messaging();
         messaging.setReciveQueueNameTemplate("tmpl_%s_%s_receive");

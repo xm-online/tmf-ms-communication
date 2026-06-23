@@ -69,8 +69,8 @@ public class EmailTemplateControllerIntTest {
     @Autowired
     private JacksonJsonHttpMessageConverter jacksonMessageConverter;
 
-    @Autowired
-    private PageableHandlerMethodArgumentResolver pageableArgumentResolver;
+    private final PageableHandlerMethodArgumentResolver pageableArgumentResolver =
+        new PageableHandlerMethodArgumentResolver();
 
     @Autowired
     private ExceptionTranslator exceptionTranslator;

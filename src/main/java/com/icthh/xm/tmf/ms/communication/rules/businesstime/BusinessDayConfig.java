@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.ToString;
 import lombok.Value;
 
 @Value
@@ -22,11 +25,18 @@ public class BusinessDayConfig {
         private List<CommunicationRequestCharacteristic> exceptionCharacteristics;
     }
 
-    @Value
+    @Getter
+    @ToString
+    @EqualsAndHashCode
     public static class BusinessTime {
 
-        private LocalTime startTime = LocalTime.MIN;
-        private LocalTime endTime = LocalTime.MAX;
+        private final LocalTime startTime;
+        private final LocalTime endTime;
+
+        public BusinessTime(LocalTime startTime, LocalTime endTime) {
+            this.startTime = startTime == null ? LocalTime.MIN : startTime;
+            this.endTime = endTime == null ? LocalTime.MAX : endTime;
+        }
     }
 
     public BusinessTime getCurrentBusinessTime(LocalDateTime dateTime) {

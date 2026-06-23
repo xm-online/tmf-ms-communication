@@ -18,6 +18,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.text.StringSubstitutor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -48,8 +49,9 @@ import static org.mockito.Mockito.when;
     SecurityBeanOverrideConfiguration.class,
     LepConfiguration.class
 })
+@Tag("com.icthh.xm.tmf.ms.communication.messaging.handler.CustomCommunicationMessageHandlerTest")
 @Slf4j
-public class CustomCommunicationMessageHandlerIntTest {
+public class CustomCommunicationMessageHandlerTest {
 
     @Autowired
     private LepManagementService lepManagementService;

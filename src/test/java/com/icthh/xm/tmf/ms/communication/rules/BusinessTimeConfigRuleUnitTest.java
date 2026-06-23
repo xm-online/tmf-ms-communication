@@ -73,16 +73,16 @@ public class BusinessTimeConfigRuleUnitTest {
     private static final CommunicationRequestCharacteristic secondExceptionalCharacteristic =
         new CommunicationRequestCharacteristic().name("secondException").value("secondValue");
 
-    @Mock
+    @MockitoBean
     private KafkaTemplate<String, Object> kafkaTemplate;
 
-    @Mock
+    @MockitoBean
     private SmppService smppService;
 
-    @Mock
+    @MockitoBean
     private Clock clock;
 
-    @Mock
+    @MockitoBean
     private CommunicationMessageMapper mapper;
 
     @MockitoBean

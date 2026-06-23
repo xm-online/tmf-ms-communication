@@ -57,16 +57,16 @@ public class TTLRuleUnitTest {
 
     private static final String UPDATED_KEY = "/config/tenants/xm/tenant-config.yml";
 
-    @Mock
+    @MockitoBean
     private KafkaTemplate<String, Object> kafkaTemplate;
 
-    @Mock
+    @MockitoBean
     private SmppService smppService;
 
-    @Mock
+    @MockitoBean
     private Clock clock;
 
-    @Mock
+    @MockitoBean
     private CommunicationMessageMapper mapper;
 
     @MockitoBean

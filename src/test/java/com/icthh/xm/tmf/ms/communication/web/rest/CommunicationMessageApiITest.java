@@ -56,7 +56,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     CustomMessageResolver.class,
     CustomMessageCreateResolver.class
 })
-public class CommunicationMessageApiIntTest {
+public class CommunicationMessageApiITest {
 
     public static final String CONTEXT_OF_SMS = "Context of sms";
     public static final String SENDER_ID = "SENDER_ID";

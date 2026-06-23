@@ -136,7 +136,7 @@ public class FirebaseServiceUnitTest {
 
         //verify FCM message:
         ArgumentCaptor<MulticastMessage> multicastCaptor = ArgumentCaptor.forClass(MulticastMessage.class);
-        verify(messagingMock).sendMulticast(multicastCaptor.capture());
+        verify(messagingMock).sendEachForMulticast(multicastCaptor.capture());
         verifyNoMoreInteractions(messagingMock);
 
         MulticastMessage multicastMessage = multicastCaptor.getValue();
@@ -212,7 +212,7 @@ public class FirebaseServiceUnitTest {
         assertNotNull(result);
         Assertions.assertEquals(1, (int) result.getSuccessCount());
         assertEquals(0, (int) result.getFailureCount());
-        assertNull(result.getDetails());
+        assertTrue(result.getDetails().isEmpty());
     }
 
     @Test
@@ -256,7 +256,7 @@ public class FirebaseServiceUnitTest {
         when(tenantContextHolder.getTenantKey())
             .thenReturn(TENANT_KEY);
 
-        when(messagingMock.sendMulticast(any(MulticastMessage.class)))
+        when(messagingMock.sendEachForMulticast(any(MulticastMessage.class)))
             .thenReturn(TestBatchResponse.builder()
                 .responses(List.of(
                     newSendResponse(FCM_MESSAGE_ID),

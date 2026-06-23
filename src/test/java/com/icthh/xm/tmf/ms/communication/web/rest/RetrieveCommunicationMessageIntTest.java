@@ -30,6 +30,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -88,9 +89,9 @@ public class RetrieveCommunicationMessageIntTest {
         String accessToken = UUID.randomUUID().toString();
         Claims claims = mock(Claims.class);
         XmAuthenticationDetails details = mock(XmAuthenticationDetails.class);
+        when(details.getDecodedDetails()).thenReturn(Map.of("tenant", "XM"));
         XmAuthentication authentication = new XmAuthentication(details, username,
             List.of(new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN)));
-        authentication.setAuthenticated(true);
 
         when(tokenProvider.validateToken(accessToken)).thenReturn(claims);
         when(tokenProvider.getAuthentication((HttpServletRequest) any(), eq(accessToken), eq(claims))).thenReturn(authentication);

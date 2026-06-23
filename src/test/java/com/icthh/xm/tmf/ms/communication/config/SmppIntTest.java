@@ -8,8 +8,13 @@ import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import com.icthh.xm.tmf.ms.communication.CommunicationApp;
+import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
+import com.icthh.xm.tmf.ms.communication.service.DeliveryReportListener;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -18,13 +23,17 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.GenericContainer;
 
 @Slf4j
-@ContextConfiguration()
+@ContextConfiguration(classes = {RealSmppServiceConfiguration.class})
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {CommunicationApp.class})
 public class SmppIntTest {
@@ -34,6 +43,9 @@ public class SmppIntTest {
 
     @Autowired
     private SmppService service;
+
+    @Autowired
+    private ApplicationProperties applicationProperties;
 
     private static Consumer<CreateContainerCmd> getContainerModifier() {
         return containerCmd -> containerCmd.withPortBindings(
