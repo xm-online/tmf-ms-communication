@@ -1,29 +1,29 @@
 package com.icthh.xm.tmf.ms.communication.messaging.template;
 
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.ObjectMapper;
-import com.icthh.xm.tmf.ms.communication.AbstractSpringBootTest;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
+import com.icthh.xm.tmf.ms.communication.config.XmFreeMarkerConfiguration.XmFreeMarkerConfigurer;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.service.mail.MultiTenantLangStringTemplateLoaderService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
 import freemarker.cache.StringTemplateLoader;
+import freemarker.template.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-public class TwilioMessageTemplateServiceUnitTest extends AbstractSpringBootTest {
+public class TwilioMessageTemplateServiceUnitTest {
 
     private static final String TENANT = "TEST";
     private static final String TEMPLATE_NAME = "templateName";
@@ -33,25 +33,17 @@ public class TwilioMessageTemplateServiceUnitTest extends AbstractSpringBootTest
     private static final String CONFIG_PATH = "/config/tenants/TEST/communication/twilio/templateName/uk.ftl";
     private static final String CONFIG = "Hello, ${user.firstName + ' ' + user.lastName}! This is your code: ${code}";
 
-    @Autowired
-    private freemarker.template.Configuration freeMarkerConfiguration;
-
-    @Autowired
-    private StringTemplateLoader templateLoader;
-
-    @Autowired
-    private MultiTenantLangStringTemplateLoaderService templateLoaderService;
-
-    @MockitoBean
-    private ApplicationProperties applicationProperties;
-
-    @MockitoBean
-    private MessageTemplateConfigurationService messageTemplateConfigurationService;
-
     private TwilioMessageTemplateService twilioMessageTemplateService;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws Exception {
+        Configuration freeMarkerConfiguration = buildFreeMarkerConfiguration();
+        StringTemplateLoader templateLoader = new StringTemplateLoader();
+        MultiTenantLangStringTemplateLoaderService templateLoaderService = new MultiTenantLangStringTemplateLoaderService();
+
+        ApplicationProperties applicationProperties = mock(ApplicationProperties.class);
+        MessageTemplateConfigurationService messageTemplateConfigurationService = mock(MessageTemplateConfigurationService.class);
+
         when(applicationProperties.getTwilioPathPattern()).thenReturn(PATH_PATTERN);
         when(messageTemplateConfigurationService.getTemplateContent(CONFIG_PATH, MessageType.Twilio)).thenReturn(CONFIG);
 
@@ -108,5 +100,11 @@ public class TwilioMessageTemplateServiceUnitTest extends AbstractSpringBootTest
         communicationRequestCharacteristic.setValue(value);
         message.getCharacteristic().add(communicationRequestCharacteristic);
         return message;
+    }
+
+    private Configuration buildFreeMarkerConfiguration() throws Exception {
+        XmFreeMarkerConfigurer configurer = new XmFreeMarkerConfigurer(new StringTemplateLoader());
+        configurer.afterPropertiesSet();
+        return configurer.getConfiguration();
     }
 }
