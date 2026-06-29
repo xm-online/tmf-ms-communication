@@ -1,7 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.lep;
 
 import com.icthh.xm.commons.lep.api.BaseLepContext;
-import com.icthh.xm.commons.lep.commons.CommonsExecutor;
 import com.icthh.xm.commons.lep.processor.GroovyMap;
 import com.icthh.xm.commons.permission.service.PermissionCheckService;
 import com.icthh.xm.commons.topic.service.KafkaTemplateService;

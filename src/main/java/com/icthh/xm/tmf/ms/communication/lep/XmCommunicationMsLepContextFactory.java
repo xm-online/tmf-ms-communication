@@ -2,8 +2,6 @@ package com.icthh.xm.tmf.ms.communication.lep;
 
 import com.icthh.xm.commons.lep.api.BaseLepContext;
 import com.icthh.xm.commons.lep.api.LepContextFactory;
-import com.icthh.xm.commons.lep.commons.CommonsExecutor;
-import com.icthh.xm.commons.lep.commons.CommonsService;
 import com.icthh.xm.commons.permission.service.PermissionCheckService;
 import com.icthh.xm.commons.topic.service.KafkaTemplateService;
 import com.icthh.xm.lep.api.LepMethod;
