@@ -1,7 +1,8 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.icthh.xm.commons.tenant.YamlMapperUtils;
+import org.mockito.Mockito;
+import tools.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.exceptions.EntityNotFoundException;
 import com.icthh.xm.commons.tenant.TenantContext;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
@@ -12,12 +13,13 @@ import com.icthh.xm.tmf.ms.communication.domain.spec.EmailTemplateSpec;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.InputStream;
@@ -28,11 +30,10 @@ import java.util.Optional;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @Slf4j
-@RunWith(MockitoJUnitRunner.class)
-public class EmailSpecificationServiceTest {
+@ExtendWith(MockitoExtension.class)
+public class EmailSpecificationServiceUnitTest {
 
     private static final String EMAIL_SPECIFICATION_PATH_PATTERN = "/config/tenants/{tenantName}/communication/email-spec.yml";
     private static final String CUSTOM_EMAIL_SPECIFICATION_PATH_PATTERN = "/config/tenants/{tenantName}/communication/custom-email-spec.yml";
@@ -40,6 +41,8 @@ public class EmailSpecificationServiceTest {
     private static final String CUSTOM_EMAIL_SPECIFICATION_PATH = "/config/tenants/TEST/communication/custom-email-spec.yml";
     public static final Map<String, String> MULTILINGUAL_SUBJECT = Map.of("en", "Custom subject 1", "uk", "Змінена тема 1");
     public static final Map<String, String> MULTILINGUAL_EMAIL_FROM = Map.of("en", "Custom email from 1", "uk", "Змінене поле від 1");
+    public static final Map<String, String> MULTILINGUAL_SUBJECT_3 = Map.of("en", "Custom subject 3", "uk", "Змінена тема 3");
+    public static final Map<String, String> MULTILINGUAL_EMAIL_FROM_3 = Map.of("en", "Email from 3", "uk", "Змінене поле від 3");
 
     @Spy
     @InjectMocks
@@ -49,9 +52,9 @@ public class EmailSpecificationServiceTest {
 
     private TenantContextHolder tenantContextHolder;
 
-    private ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+    private ObjectMapper mapper = YamlMapperUtils.yamlDefaultMapper();
 
-    @Before
+    @BeforeEach
     public void setUp() {
         tenantContextHolder = mock(TenantContextHolder.class);
         mockTenant("TEST");
@@ -85,16 +88,18 @@ public class EmailSpecificationServiceTest {
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
         customEmailSpecService.onRefresh(CUSTOM_EMAIL_SPECIFICATION_PATH, customEmailSpecificationConfig);
         List<EmailTemplateSpec> expectedEmailSpecList = getDefaultEmailTemplateSpecList(emailSpecificationConfig);
-        expectedEmailSpecList.get(0).setSubjectTemplate(MULTILINGUAL_SUBJECT);
-        expectedEmailSpecList.get(0).setEmailFrom(MULTILINGUAL_EMAIL_FROM);
+        expectedEmailSpecList.getFirst().setSubjectTemplate(MULTILINGUAL_SUBJECT);
+        expectedEmailSpecList.getFirst().setEmailFrom(MULTILINGUAL_EMAIL_FROM);
+        expectedEmailSpecList.get(2).setSubjectTemplate(MULTILINGUAL_SUBJECT_3);
+        expectedEmailSpecList.get(2).setEmailFrom(MULTILINGUAL_EMAIL_FROM_3);
 
         List<EmailTemplateSpec> emailSpecList = emailSpecService.getEmailSpec().getEmails();
         assertEquals(expectedEmailSpecList, emailSpecList);
     }
 
-    @Test(expected = EntityNotFoundException.class)
+    @Test
     public void getEmailSpecListNotFound() {
-        emailSpecService.getEmailSpec();
+        assertThrows(EntityNotFoundException.class, () -> emailSpecService.getEmailSpec());
     }
 
     @Test
@@ -115,9 +120,9 @@ public class EmailSpecificationServiceTest {
 
     public void mockTenant(String tenant) {
         TenantContext tenantContext = mock(TenantContext.class);
-        when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(tenant)));
-        when(tenantContextHolder.getContext()).thenReturn(tenantContext);
-        when(tenantContextHolder.getTenantKey()).thenReturn(tenant);
+        Mockito.lenient().when(tenantContext.getTenantKey()).thenReturn(Optional.of(TenantKey.valueOf(tenant)));
+        Mockito.lenient().when(tenantContextHolder.getContext()).thenReturn(tenantContext);
+        Mockito.lenient().when(tenantContextHolder.getTenantKey()).thenReturn(tenant);
     }
 
     @SneakyThrows

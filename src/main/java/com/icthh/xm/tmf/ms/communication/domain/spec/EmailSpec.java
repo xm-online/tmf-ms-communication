@@ -3,7 +3,7 @@ package com.icthh.xm.tmf.ms.communication.domain.spec;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 

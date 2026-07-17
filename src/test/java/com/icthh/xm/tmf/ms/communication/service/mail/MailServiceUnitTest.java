@@ -34,33 +34,32 @@ import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMessage;
 
 import freemarker.cache.StringTemplateLoader;
 import lombok.SneakyThrows;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.cloud.stream.test.binder.MessageCollectorAutoConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.AopTestUtils;
 import org.springframework.web.client.RestTemplate;
-import org.testcontainers.shaded.org.apache.commons.io.IOUtils;
+import org.apache.commons.io.IOUtils;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @ActiveProfiles(profiles = "non-async")
-@EnableAutoConfiguration(exclude = MessageCollectorAutoConfiguration.class)
+@EnableAutoConfiguration
 @SpringBootTest(classes = {CommunicationApp.class, SecurityBeanOverrideConfiguration.class})
 public class MailServiceUnitTest {
 
@@ -87,13 +86,13 @@ public class MailServiceUnitTest {
     @Autowired
     private StringTemplateLoader templateLoader;
 
-    @MockBean
+    @MockitoBean
     private JavaMailSender javaMailSender;
 
-    @MockBean
+    @MockitoBean
     private MailProviderService mailProviderService;
 
-    @MockBean
+    @MockitoBean
     private KafkaTemplate<String, String> kafkaTemplate;
 
     @Autowired
@@ -108,10 +107,10 @@ public class MailServiceUnitTest {
     @Mock
     private XmAuthenticationContext context;
 
-    @MockBean
+    @MockitoBean
     private SmppService smppService;
 
-    @MockBean
+    @MockitoBean
     private RestTemplate restTemplate;
 
     @Autowired
@@ -121,10 +120,10 @@ public class MailServiceUnitTest {
     private EmailSpecService emailSpecService;
 
     @SneakyThrows
-    @Before
+    @BeforeEach
     public void setup() {
         TenantContextUtils.setTenant(tenantContextHolder, TENANT_NAME);
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
         when(authContextHolder.getContext()).thenReturn(context);
         when(context.getUserKey()).thenReturn(Optional.of("userKey"));
         when(mailProviderService.getJavaMailSender(any())).thenReturn(javaMailSender);
@@ -178,7 +177,7 @@ public class MailServiceUnitTest {
         assertThat(allValues).containsExactly("Subject with value1", "test@communication.com");
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void shouldFailOnEmailSend() {
         String mainPath = "/config/tenants/" + TENANT_NAME + "/communication/emails/" + TEMPLATE_NAME + "/en.ftl";
         String basePath = "/config/tenants/" + TENANT_NAME + "/communication/emails/" + TEMPLATE_NAME + "-BASE/en.ftl";
@@ -190,7 +189,7 @@ public class MailServiceUnitTest {
         doThrow(new MailSendException("Simulated send failure")).when(javaMailSender).send(any(MimeMessage.class));
 
         MailService spiedMailService = spy((MailService) AopTestUtils.getUltimateTargetObject(mailService));
-        spiedMailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME),
+        assertThrows(IllegalStateException.class, () -> spiedMailService.sendEmailFromTemplate(TenantKey.valueOf(TENANT_NAME),
             ENGLISH,
             TEMPLATE_NAME,
             SUBJECT,
@@ -199,7 +198,7 @@ public class MailServiceUnitTest {
                 "variable1", "value1",
                 "variable2", "value2"
             ),
-            RID, FROM);
+            RID, FROM));
     }
 
     @Test
@@ -330,7 +329,7 @@ public class MailServiceUnitTest {
         assertThat(emailTemplate).isEqualTo(config);
     }
 
-    @Test(expected = EntityNotFoundException.class)
+    @Test
     public void testGetEmailTemplateByKeyWithoutPath() {
         String emailPath = "/config/tenants/RESINTTEST/communication/emails/activation/thirdTemplateKey/en.ftl";
         String config = "Some email content";
@@ -339,7 +338,8 @@ public class MailServiceUnitTest {
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecConfig);
         templateService.onRefresh(emailPath, config);
 
-        templateService.getEmailTemplateByKey(TenantKey.valueOf(TENANT_NAME), "thirdTemplateKey", "en");
+        assertThrows(EntityNotFoundException.class,
+            () -> templateService.getEmailTemplateByKey(TenantKey.valueOf(TENANT_NAME), "thirdTemplateKey", "en"));
     }
 
     @Test

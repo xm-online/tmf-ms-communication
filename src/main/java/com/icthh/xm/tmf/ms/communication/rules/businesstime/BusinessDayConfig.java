@@ -24,7 +24,6 @@ public class BusinessDayConfig {
 
     @Value
     public static class BusinessTime {
-
         private LocalTime startTime = LocalTime.MIN;
         private LocalTime endTime = LocalTime.MAX;
     }

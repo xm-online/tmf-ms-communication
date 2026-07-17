@@ -14,28 +14,21 @@
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
 
-feign:
-    hystrix:
-        enabled: true
+#feign:
 #    client:
 #        config:
 #            default:
 #                connectTimeout: 5000
 #                readTimeout: 5000
 
-# See https://github.com/Netflix/Hystrix/wiki/Configuration
-hystrix:
-    command:
-        default:
-            execution:
-                isolation:
-                    strategy: SEMAPHORE
-    # See https://github.com/spring-cloud/spring-cloud-netflix/issues/1330
-    #                    thread:
-    #                        timeoutInMilliseconds: 10000
-    shareSecurityContext: true
-
 management:
+    tracing:
+        export:
+            enabled: ${MANAGEMENT_TRACING_EXPORT_ENABLED:false}
+    otlp:
+        metrics:
+            export:
+                enabled: ${MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED:false}
     endpoints:
         web:
             base-path: /management
@@ -63,11 +56,14 @@ management:
                 step: 60
 
 spring:
+    jackson:
+        default-property-inclusion: non_null
     application:
         name: communication
     cloud:
         consul:
             discovery:
+                query-passing: true
                 healthCheckPath: /management/health
                 instanceId: ${spring.application.name}:${spring.application.instance-id:${random.value}}
             config:
@@ -147,23 +143,13 @@ jhipster:
         #max-age: 1800
     mail:
         from: communication@localhost
-    swagger:
-        default-include-pattern: /api/.*
-        title: communication API
-        description: communication API documentation
-        version: 0.0.1
-        terms-of-service-url:
-        contact-name:
-        contact-url:
-        contact-email:
-        license:
-        license-url:
-
+    security:
+        content-security-policy: "default-src 'self'; frame-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com data:"
 logging:
     level:
         ROOT: DEBUG
         com.icthh.xm: DEBUG
-        io.github.jhipster: DEBUG
+        tech.jhipster: DEBUG
 
 xm-config:
     enabled: true

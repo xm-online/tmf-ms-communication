@@ -3,15 +3,16 @@ package com.icthh.xm.tmf.ms.communication.web.rest.errors;
 import com.icthh.xm.tmf.ms.communication.CommunicationApp;
 import com.icthh.xm.tmf.ms.communication.config.SecurityBeanOverrideConfiguration;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -26,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * @see CustomExceptionTranslator
  */
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest(classes = {SecurityBeanOverrideConfiguration.class, CommunicationApp.class})
 public class ExceptionTranslatorIntTest {
 
@@ -37,14 +38,14 @@ public class ExceptionTranslatorIntTest {
     private CustomExceptionTranslator exceptionTranslator;
 
     @Autowired
-    private MappingJackson2HttpMessageConverter jacksonMessageConverter;
+    private JacksonJsonHttpMessageConverter jacksonMessageConverter;
 
-    @MockBean
+    @MockitoBean
     private SmppService smppService;
 
     private MockMvc mockMvc;
 
-    @Before
+    @BeforeEach
     public void setup() {
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
             .setControllerAdvice(exceptionTranslator)
@@ -61,6 +62,16 @@ public class ExceptionTranslatorIntTest {
              .andExpect(jsonPath("$.fieldErrors.[0].objectName").value("testDTO"))
              .andExpect(jsonPath("$.fieldErrors.[0].field").value("test"))
              .andExpect(jsonPath("$.fieldErrors.[0].message").value("NotNull"));
+    }
+
+    @Test
+    public void testConstraintViolation() throws Exception {
+        mockMvc.perform(get("/test/constraint-violation"))
+            .andExpect(status().isBadRequest())
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.message").value(ErrorConstants.ERR_VALIDATION))
+            .andExpect(jsonPath("$.violations.[0].field").value("test"))
+            .andExpect(jsonPath("$.violations.[0].message").isNotEmpty());
     }
 
     @Test
@@ -124,7 +135,7 @@ public class ExceptionTranslatorIntTest {
             .andExpect(status().isMethodNotAllowed())
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.message").value("error.http.405"))
-            .andExpect(jsonPath("$.detail").value("Request method 'POST' not supported"));
+            .andExpect(jsonPath("$.detail").value("Request method 'POST' is not supported"));
     }
 
     @Test

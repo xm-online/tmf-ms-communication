@@ -35,13 +35,15 @@ spring:
         discovery:
             enabled: false
         consul:
+            discovery:
+                query-passing: true
             enabled: false
 
 logging:
     level:
         ROOT: DEBUG
         com.icthh.xm: DEBUG
-        io.github.jhipster: DEBUG
+        tech.jhipster: DEBUG
 
 # ===================================================================
 # JHipster specific properties
@@ -49,6 +51,16 @@ logging:
 # Full reference is available at: https://www.jhipster.tech/common-application-properties/
 # ===================================================================
 management:
+    health:
+        mail:
+            enabled: false
+    tracing:
+        export:
+            enabled: ${MANAGEMENT_TRACING_EXPORT_ENABLED:false}
+    otlp:
+        metrics:
+            export:
+                enabled: ${MANAGEMENT_OTLP_METRICS_EXPORT_ENABLED:false}
     metrics:
         export:
             prometheus:
@@ -64,8 +76,9 @@ jhipster:
             enabled: true
             host: localhost
             port: 5000
-            queue-size: 512
+            ring-buffer-size: 512
     security:
+        content-security-policy: "default-src 'self'; frame-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://storage.googleapis.com; style-src 'self' https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com data:"
         authentication:
             jwt:
                 # This token must be encoded using Base64 (you can type `echo 'secret-key'|base64` on your command line)
@@ -77,10 +90,7 @@ jhipster:
             token-service-id: config
             client-id: internal
             client-secret: internal
-    metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
-        logs: # Reports Dropwizard metrics in the logs
-            enabled: false
-            report-frequency: 60 # in seconds
+    
 xm-config:
     enabled: false
 

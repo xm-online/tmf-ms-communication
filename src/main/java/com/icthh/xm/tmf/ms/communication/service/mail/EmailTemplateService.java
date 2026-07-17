@@ -1,8 +1,8 @@
 package com.icthh.xm.tmf.ms.communication.service.mail;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import com.icthh.xm.commons.tenant.YamlMapperUtils;
 import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
 import com.icthh.xm.commons.config.domain.Configuration;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
@@ -58,7 +58,7 @@ public class EmailTemplateService {
     private final CustomEmailSpecService customEmailSpecService;
     private final CommonConfigRepository  commonConfigRepository;
     private final TenantContextHolder tenantContextHolder;
-    private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+    private final ObjectMapper yamlMapper = YamlMapperUtils.yamlDefaultMapper();
     private final ObjectMapper objectMapper;
     private final TemplateDetailsMapper templateDetailsMapper;
     private final StringTemplateLoader templateLoader;

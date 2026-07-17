@@ -1,7 +1,8 @@
 language: java
 jdk:
-- openjdk11
+  - openjdk25
 install: true
+dist: jammy
 #addons:
 #FIXME The version of Java (11.0.15.1) you have used to run this analysis is deprecated and we will stop accepting it soon. Please update to at least Java 17.
 #  sonarcloud:

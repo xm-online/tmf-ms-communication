@@ -54,7 +54,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.testcontainers.shaded.com.google.common.collect.Lists;
+import com.google.common.collect.Lists;
 
 @ExtendWith(MockitoExtension.class)
 public class AbstractSmppMessageHandlerUnitTest {

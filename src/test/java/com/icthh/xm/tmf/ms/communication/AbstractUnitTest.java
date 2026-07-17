@@ -1,11 +1,11 @@
 package com.icthh.xm.tmf.ms.communication;
 
-import org.junit.experimental.categories.Category;
+import org.junit.jupiter.api.Tag;
 
 /**
  * Abstract test for extension for any Unit test.
- * Marks test with junit @Category
+ * Marks test with junit @Tag
  */
-@Category(AbstractUnitTest.class)
+@Tag("com.icthh.xm.tmf.ms.communication.AbstractUnitTest")
 public abstract class AbstractUnitTest {
 }

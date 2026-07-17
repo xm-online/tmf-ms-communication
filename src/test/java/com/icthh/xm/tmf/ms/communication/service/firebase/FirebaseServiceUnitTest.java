@@ -56,7 +56,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.data.util.ReflectionUtils;
 
 
-public class FirebaseServiceTest {
+public class FirebaseServiceUnitTest {
     public static final String SENDER_ID = "sender-id";
     public static final String TENANT_KEY = "tenant-key";
     public static final String FCM_MESSAGE_ID = "fcm-message-id";
@@ -136,7 +136,7 @@ public class FirebaseServiceTest {
 
         //verify FCM message:
         ArgumentCaptor<MulticastMessage> multicastCaptor = ArgumentCaptor.forClass(MulticastMessage.class);
-        verify(messagingMock).sendMulticast(multicastCaptor.capture());
+        verify(messagingMock).sendEachForMulticast(multicastCaptor.capture());
         verifyNoMoreInteractions(messagingMock);
 
         MulticastMessage multicastMessage = multicastCaptor.getValue();
@@ -212,7 +212,7 @@ public class FirebaseServiceTest {
         assertNotNull(result);
         Assertions.assertEquals(1, (int) result.getSuccessCount());
         assertEquals(0, (int) result.getFailureCount());
-        assertNull(result.getDetails());
+        assertTrue(result.getDetails().isEmpty());
     }
 
     @Test
@@ -256,7 +256,7 @@ public class FirebaseServiceTest {
         when(tenantContextHolder.getTenantKey())
             .thenReturn(TENANT_KEY);
 
-        when(messagingMock.sendMulticast(any(MulticastMessage.class)))
+        when(messagingMock.sendEachForMulticast(any(MulticastMessage.class)))
             .thenReturn(TestBatchResponse.builder()
                 .responses(List.of(
                     newSendResponse(FCM_MESSAGE_ID),
@@ -374,7 +374,7 @@ public class FirebaseServiceTest {
 
     @SneakyThrows
     private <T> Object extractField(String name, T instance) {
-        Field data = ReflectionUtils.findRequiredField(instance.getClass(), name);
+        Field data = ReflectionUtils.getRequiredField(instance.getClass(), name);
         data.setAccessible(true);
         return data.get(instance);
     }

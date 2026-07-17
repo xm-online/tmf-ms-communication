@@ -1,8 +1,9 @@
 package com.icthh.xm.tmf.ms.communication;
 
+import com.icthh.xm.commons.client.feign.config.OAuth2InterceptedFeignConfiguration;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.config.DefaultProfileUtil;
-import io.github.jhipster.config.JHipsterConstants;
+import tech.jhipster.config.JHipsterConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,15 +11,22 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
 import org.springframework.core.env.Environment;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 
-@SpringBootApplication(scanBasePackages = { "com.icthh.xm.tmf.ms.communication", "com.icthh.xm" })
+@SpringBootApplication
+@ComponentScan(
+    value = { "com.icthh.xm.tmf.ms.communication", "com.icthh.xm" },
+    excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE,
+        classes = OAuth2InterceptedFeignConfiguration.class)
+)
 @EnableConfigurationProperties({ApplicationProperties.class})
 @EnableDiscoveryClient
 public class CommunicationApp {

@@ -1,11 +1,11 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
-import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+import static tools.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
 import com.icthh.xm.commons.config.client.config.XmConfigProperties;
 import com.icthh.xm.commons.config.client.service.TenantConfigService;
 import com.icthh.xm.commons.tenant.TenantContextHolder;
@@ -34,9 +34,13 @@ public class CommunicationTenantConfigService extends TenantConfigService {
         super(xmConfigProperties, tenantContextHolder);
         this.tenantContextHolder = tenantContextHolder;
 
-        this.objectMapper = new ObjectMapper(new YAMLFactory());
-        this.objectMapper.registerModule(new JavaTimeModule());
-        this.objectMapper.configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+        this.objectMapper = YAMLMapper.builder()
+                .changeDefaultPropertyInclusion(incl ->
+                        incl.withValueInclusion(NON_NULL)
+                                .withContentInclusion(NON_NULL)
+                )
+                .disable(FAIL_ON_UNKNOWN_PROPERTIES)
+                .build();
     }
 
     @Override
@@ -52,8 +56,7 @@ public class CommunicationTenantConfigService extends TenantConfigService {
         }
     }
 
-    private String skipNullFields(String config) throws java.io.IOException {
-        objectMapper.setSerializationInclusion(NON_NULL);
+    private String skipNullFields(String config) throws JacksonException {
         return objectMapper.writeValueAsString(objectMapper.readValue(config, Map.class));
     }
 

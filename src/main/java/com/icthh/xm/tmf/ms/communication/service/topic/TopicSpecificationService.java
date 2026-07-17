@@ -1,7 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.service.topic;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import tools.jackson.databind.ObjectMapper;
+import com.icthh.xm.commons.tenant.YamlMapperUtils;
 import com.icthh.xm.commons.topic.domain.DynamicConsumer;
 import com.icthh.xm.commons.topic.domain.TopicConfig;
 import com.icthh.xm.commons.topic.service.DynamicConsumerConfiguration;
@@ -24,7 +24,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 public class TopicSpecificationService implements DynamicConsumerConfiguration {
 
     private final Map<String, DynamicConsumer> dynamicConsumersByTenant = new ConcurrentHashMap<>();
-    private final ObjectMapper ymlMapper = new ObjectMapper(new YAMLFactory());
+    private final ObjectMapper ymlMapper = YamlMapperUtils.yamlDefaultMapper();
     private final TopicConfigMapper topicConfigMapper;
     private final String topicNameTemplate;
     private final TopicMessageHandlerFactory topicMessageHandlerFactory;

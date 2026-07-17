@@ -8,7 +8,7 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import java.util.List;
 import java.util.UUID;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import lombok.Data;
 
 @Data

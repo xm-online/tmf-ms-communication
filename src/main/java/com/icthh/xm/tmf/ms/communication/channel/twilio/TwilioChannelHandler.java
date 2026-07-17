@@ -1,6 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.channel.twilio;
 
-import com.icthh.xm.commons.logging.trace.SleuthWrapper;
+import com.icthh.xm.commons.logging.trace.TraceWrapper;
 import com.icthh.xm.commons.topic.config.MessageListenerContainerBuilder;
 import com.icthh.xm.commons.topic.domain.ConsumerHolder;
 import com.icthh.xm.commons.topic.domain.TopicConfig;
@@ -14,7 +14,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
+import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer;
 import org.springframework.stereotype.Component;
@@ -38,7 +38,7 @@ public class TwilioChannelHandler implements ChannelHandler {
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final KafkaProperties kafkaProperties;
     private final TwilioService twilioService;
-    private final SleuthWrapper sleuthWrapper;
+    private final TraceWrapper sleuthWrapper;
 
     @Getter
     private Map<String, Map<String, ConsumerHolder>> tenantTwilioConsumers = new ConcurrentHashMap<>();

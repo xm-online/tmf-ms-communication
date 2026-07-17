@@ -14,11 +14,12 @@ import org.zalando.problem.Problem;
 import org.zalando.problem.ProblemBuilder;
 import org.zalando.problem.Status;
 import org.zalando.problem.spring.web.advice.ProblemHandling;
+import org.zalando.problem.spring.web.advice.security.SecurityAdviceTrait;
 import org.zalando.problem.violations.ConstraintViolationProblem;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -31,7 +32,7 @@ import static com.icthh.xm.tmf.ms.communication.web.rest.errors.ErrorConstants.E
  */
 @ControllerAdvice
 @ConditionalOnProperty(name = "application.exception-translator", havingValue = "custom", matchIfMissing = true)
-public class CustomExceptionTranslator implements ProblemHandling {
+public class CustomExceptionTranslator implements ProblemHandling, SecurityAdviceTrait {
 
     /**
      * Post-process the Problem payload to add the message key for the front-end if needed

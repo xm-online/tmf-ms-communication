@@ -13,7 +13,7 @@
     </appender>
 
     <logger name="com.icthh.xm" level="#logback.loglevel#"/>
-    <logger name="io.github.jhipster" level="#logback.loglevel#"/>
+    <logger name="tech.jhipster" level="#logback.loglevel#"/>
 
     <logger name="javax.activation" level="WARN"/>
     <logger name="javax.mail" level="WARN"/>

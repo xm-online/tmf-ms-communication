@@ -2,8 +2,9 @@ package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
 import static java.util.stream.Collectors.toMap;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+import com.icthh.xm.commons.tenant.JsonMapperUtils;
 import com.icthh.xm.commons.lep.LogicExtensionPoint;
 import com.icthh.xm.commons.lep.spring.LepService;
 import com.icthh.xm.commons.logging.util.MdcUtils;
@@ -127,7 +128,7 @@ public class TemplatedEmailMessageHandler implements BasicMessageHandler {
         if (templateModel == null) {
             return objectModel;
         }
-        return new ObjectMapper().readValue(String.valueOf(templateModel), new TypeReference<Map<String, Object>>() {
+        return JsonMapperUtils.getDefaultJsonMapper().readValue(String.valueOf(templateModel), new TypeReference<Map<String, Object>>() {
         });
     }
 }

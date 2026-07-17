@@ -1,6 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
 import com.icthh.xm.tmf.ms.communication.domain.CommunicationSpec;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.CommunicationMessageMapper;
@@ -20,7 +20,7 @@ import java.util.List;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageType.Twilio;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TwilioServiceTest {
+class TwilioServiceUnitTest {
 
     private static String CONFIG_KEY = "senderKey";
     private static String CONFIG_ACCOUNT_SID = "AC528fe950968998cae3d3df2ac4f64fc0";
@@ -36,6 +36,9 @@ class TwilioServiceTest {
     @BeforeEach
     public void beforeEach() {
         kafkaTemplate = Mockito.mock(KafkaTemplate.class);
+        messageTemplateService = Mockito.mock(TwilioMessageTemplateService.class);
+        Mockito.when(messageTemplateService.getMessageContent(Mockito.anyString(), Mockito.any()))
+            .thenReturn("Test message");
         ApplicationProperties ap = new ApplicationProperties();
         ApplicationProperties.Messaging messaging = new ApplicationProperties.Messaging();
         messaging.setReciveQueueNameTemplate("tmpl_%s_%s_receive");

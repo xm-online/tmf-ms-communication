@@ -1,8 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.web.rest;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.ObjectMapper;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.springframework.format.datetime.standard.DateTimeFormatterRegistrar;
@@ -14,7 +12,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
+import tools.jackson.databind.json.JsonMapper;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -37,12 +37,9 @@ public class TestUtil {
      */
     public static byte[] convertObjectToJsonBytes(Object object)
             throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
-
-        JavaTimeModule module = new JavaTimeModule();
-        mapper.registerModule(module);
-
+        ObjectMapper mapper = JsonMapper.builder()
+                        .changeDefaultPropertyInclusion(inv -> inv.withValueInclusion(NON_EMPTY))
+                                .build();
         return mapper.writeValueAsBytes(object);
     }
 

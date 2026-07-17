@@ -15,14 +15,14 @@ import com.icthh.xm.tmf.ms.communication.web.rest.errors.CustomExceptionTranslat
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.validator.internal.util.CollectionHelper;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Arrays;
@@ -36,16 +36,16 @@ import static com.icthh.xm.tmf.ms.communication.domain.MessageType.MobileApp;
 import static com.icthh.xm.tmf.ms.communication.domain.MessageType.Twilio;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @WebMvcTest(controllers = CommunicationMessageApiController.class)
 @ContextConfiguration(classes = {
     CommunicationMessageApiImpl.class,
@@ -63,16 +63,16 @@ public class CommunicationMessageApiITest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @MockitoBean
     SmppMessagingHandler smppMessagingHandler;
 
-    @MockBean
+    @MockitoBean
     TwilioMessageHandler twilioMessageHandler;
 
-    @MockBean
+    @MockitoBean
     EmailMessageHandler emailMessageHandler;
 
-    @MockBean
+    @MockitoBean
     private MobileAppMessageHandler mobileAppMessageHandler;
 
     @Test

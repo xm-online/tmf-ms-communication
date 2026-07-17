@@ -1,7 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
 import static com.icthh.xm.tmf.ms.communication.messaging.handler.AbstractSmppMessageHandlerUnitTest.message;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 
 import com.icthh.xm.tmf.ms.communication.messaging.handler.logic.FirebaseMessageHelper;
@@ -10,18 +10,18 @@ import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessage;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Receiver;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RunWith(MockitoJUnitRunner.class)
-public class MobileAppMessageHandlerTest {
+@ExtendWith(MockitoExtension.class)
+public class MobileAppMessageHandlerUnitTest {
 
     @Mock
     FirebaseService firebaseService;

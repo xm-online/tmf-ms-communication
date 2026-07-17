@@ -32,7 +32,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.testcontainers.shaded.com.google.common.collect.Lists;
+import com.google.common.collect.Lists;
 
 @ExtendWith(MockitoExtension.class)
 class WapPushMessageHandlerUnitTest {

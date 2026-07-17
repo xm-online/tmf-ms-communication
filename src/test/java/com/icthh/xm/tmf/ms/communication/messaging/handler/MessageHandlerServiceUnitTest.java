@@ -1,18 +1,21 @@
 package com.icthh.xm.tmf.ms.communication.messaging.handler;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import java.util.List;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
-public class MessageHandlerServiceTest {
+@ExtendWith(MockitoExtension.class)
+public class MessageHandlerServiceUnitTest {
 
     @Mock
     private SmppMessagingHandler smppMessagingHandler;
@@ -27,7 +30,7 @@ public class MessageHandlerServiceTest {
 
     MessageHandlerService messageHandlerService;
 
-    @Before
+    @BeforeEach
     public void setup() {
         messageHandlerService = new MessageHandlerService(
             List.of(
@@ -39,16 +42,16 @@ public class MessageHandlerServiceTest {
             )
         );
 
-        when(smppMessagingHandler.getType()).thenReturn(MessageType.SMS);
-        when(customCommunicationMessageHandler.getType()).thenReturn(MessageType.Custom);
-        when(twilioMessageHandler.getType()).thenReturn(MessageType.Twilio);
-        when(mobileAppMessageHandler.getType()).thenReturn(MessageType.MobileApp);
-        when(emailMessageHandler.getType()).thenReturn(MessageType.Email);
+        lenient().when(smppMessagingHandler.getType()).thenReturn(MessageType.SMS);
+        lenient().when(customCommunicationMessageHandler.getType()).thenReturn(MessageType.Custom);
+        lenient().when(twilioMessageHandler.getType()).thenReturn(MessageType.Twilio);
+        lenient().when(mobileAppMessageHandler.getType()).thenReturn(MessageType.MobileApp);
+        lenient().when(emailMessageHandler.getType()).thenReturn(MessageType.Email);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void nullMessageTyeTest() {
-        messageHandlerService.getHandler(null);
+        assertThrows(IllegalArgumentException.class, () -> messageHandlerService.getHandler(null));
     }
 
     @Test

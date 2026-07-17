@@ -1,7 +1,8 @@
 package com.icthh.xm.tmf.ms.communication.service.mail;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.icthh.xm.commons.tenant.YamlMapperUtils;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.icthh.xm.commons.config.client.repository.CommonConfigRepository;
 import com.icthh.xm.commons.config.domain.Configuration;
@@ -28,18 +29,18 @@ import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException
 import freemarker.cache.StringTemplateLoader;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.cloud.stream.test.binder.MessageCollectorAutoConfiguration;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.InputStream;
@@ -51,7 +52,7 @@ import java.util.Optional;
 import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_LANGUAGE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -60,8 +61,8 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
 
-@RunWith(SpringRunner.class)
-@EnableAutoConfiguration(exclude = MessageCollectorAutoConfiguration.class)
+@ExtendWith(SpringExtension.class)
+@EnableAutoConfiguration
 @SpringBootTest(classes = {CommunicationApp.class, SecurityBeanOverrideConfiguration.class})
 public class EmailTemplateServiceUnitTest {
 
@@ -85,9 +86,9 @@ public class EmailTemplateServiceUnitTest {
 
     private CustomEmailSpecService customEmailSpecService;
 
-    private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+    private final ObjectMapper yamlMapper = YamlMapperUtils.yamlDefaultMapper();
 
-    @Mock
+    @MockitoBean
     private CommonConfigRepository commonConfigRepository;
 
     @Autowired
@@ -105,19 +106,19 @@ public class EmailTemplateServiceUnitTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @MockitoBean
     private MultiTenantLangStringTemplateLoaderService multiTenantLangStringTemplateLoaderService;
 
     private StringTemplateLoader stringTemplateLoader;
 
-    @MockBean
+    @MockitoBean
     private SmppService smppService;
 
-    @MockBean
+    @MockitoBean
     private RestTemplate restTemplate;
 
 
-    @Before
+    @BeforeEach
     public void setup() {
         tenantContextHolder = mock(TenantContextHolder.class);
         mockTenant(TENANT_KEY);
@@ -154,11 +155,11 @@ public class EmailTemplateServiceUnitTest {
         assertThat(actual).isEqualTo(expectedContent);
     }
 
-    @Test(expected = RenderTemplateException.class)
+    @Test
     public void renderEmailContentReturnNullWhenContentNotValid() {
         RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto("${subjectNotValid{", Map.of(), DEFAULT_LANGUAGE);
 
-        subject.renderEmailContent(renderTemplateRequest);
+        assertThrows(RenderTemplateException.class, () -> subject.renderEmailContent(renderTemplateRequest));
     }
 
     private RenderTemplateRequest createEmailTemplateDto(String content, Map model, String lang) {
@@ -215,19 +216,21 @@ public class EmailTemplateServiceUnitTest {
         assertThat(actual.getTemplatePath()).isEqualTo(templatePath);
     }
 
-    @Test(expected = EntityNotFoundException.class)
+    @Test
     public void getTemplateDetailsByKeyThrowEntityNotFoundWhenTemplateKeyNotValid() {
         String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
 
-        subject.getTemplateDetailsByKey("notValidKey", DEFAULT_LANGUAGE);
+        assertThrows(EntityNotFoundException.class,
+            () -> subject.getTemplateDetailsByKey("notValidKey", DEFAULT_LANGUAGE));
     }
 
-    @Test(expected = EntityNotFoundException.class)
+    @Test
     public void getTemplateMultiLangDetailsByKeyThrowEntityNotFoundWhenTemplateKeyNotValid() {
         String emailSpecificationConfig = loadFile("config/specs/email-spec.yml");
         emailSpecService.onRefresh(EMAIL_SPECIFICATION_PATH, emailSpecificationConfig);
-        subject.getTemplateMultiLangDetailsByKey("notValidKey");
+        assertThrows(EntityNotFoundException.class,
+            () -> subject.getTemplateMultiLangDetailsByKey("notValidKey"));
     }
 
     @Test

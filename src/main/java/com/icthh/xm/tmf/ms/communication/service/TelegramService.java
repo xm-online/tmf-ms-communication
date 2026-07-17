@@ -1,6 +1,6 @@
 package com.icthh.xm.tmf.ms.communication.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.logging.aop.IgnoreLogginAspect;
 import com.icthh.xm.tmf.ms.communication.channel.telegram.TelegramUpdateListener;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;

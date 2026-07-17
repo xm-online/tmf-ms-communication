@@ -14,18 +14,18 @@ import com.icthh.xm.tmf.ms.communication.service.EmailSpecService;
 import com.icthh.xm.tmf.ms.communication.service.SmppService;
 import com.icthh.xm.tmf.ms.communication.service.mail.EmailTemplateService;
 import lombok.SneakyThrows;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.Validator;
@@ -49,10 +49,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @WithMockUser(authorities = {"SUPER-ADMIN"})
-public class EmailTemplateControllerTest {
+public class EmailTemplateControllerIntTest {
 
     private static final String DEFAULT_RENDERED_RESPONSE = "xm@test.com";
     private static final String DEFAULT_CONTENT = "${subject}@${domainName}.com";
@@ -67,10 +67,10 @@ public class EmailTemplateControllerTest {
     private TenantContextHolder tenantContextHolder;
 
     @Autowired
-    private MappingJackson2HttpMessageConverter jacksonMessageConverter;
+    private JacksonJsonHttpMessageConverter jacksonMessageConverter;
 
-    @Autowired
-    private PageableHandlerMethodArgumentResolver pageableArgumentResolver;
+    private final PageableHandlerMethodArgumentResolver pageableArgumentResolver =
+        new PageableHandlerMethodArgumentResolver();
 
     @Autowired
     private ExceptionTranslator exceptionTranslator;
@@ -81,16 +81,16 @@ public class EmailTemplateControllerTest {
     @Autowired
     private EmailTemplateController subject;
 
-    @MockBean
+    @MockitoBean
     private EmailTemplateService emailTemplateService;
 
-    @MockBean
+    @MockitoBean
     private EmailSpecService emailSpecService;
 
-    @MockBean
+    @MockitoBean
     private SmppService smppService;
 
-    @Before
+    @BeforeEach
     public void setup() {
         TenantContextUtils.setTenant(tenantContextHolder, "XM");
         MockitoAnnotations.openMocks(this);

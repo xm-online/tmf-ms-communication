@@ -17,7 +17,7 @@ logging:
     level:
         ROOT: INFO
         com.icthh.xm.tmf.ms.communication: INFO
-        io.github.jhipster: INFO
+        tech.jhipster: INFO
 
 spring:
     kafka:
@@ -98,16 +98,13 @@ jhipster:
     mail: # specific JHipster mail property, for standard properties see MailProperties
         from: communication@localhost
         base-url: http://my-server-url-to-change # Modify according to your server's URL
-    metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
-        logs: # Reports Dropwizard metrics in the logs
-            enabled: false
-            report-frequency: 60 # in seconds
+    
     logging:
         logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
             enabled: false
             host: localhost
             port: 5000
-            queue-size: 512
+            ring-buffer-size: 512
 oauth2:
     signature-verification:
         public-key-endpoint-uri: http://config/api/token_key

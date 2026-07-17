@@ -5,10 +5,15 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import static com.icthh.xm.tmf.ms.communication.config.Constants.DEFAULT_LANGUAGE;
 
@@ -17,6 +22,13 @@ public class ExceptionTranslatorTestController {
 
     @PostMapping("/test/method-argument")
     public void methodArgument(@Valid @RequestBody TestDTO testDTO) {
+    }
+
+    @GetMapping("/test/constraint-violation")
+    public void constraintViolation() {
+        Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+        Set<ConstraintViolation<TestDTO>> violations = validator.validate(new TestDTO());
+        throw new ConstraintViolationException(violations);
     }
 
     @GetMapping("/test/parameterized-error")
