@@ -110,7 +110,7 @@ application:
     custom-email-path-pattern: /config/tenants/{tenantKey}/communication/custom-emails/**/{langKey}.ftl
     email-specification-path-pattern: /config/tenants/{tenantName}/communication/email-spec.yml
     custom-email-specification-path-pattern: /config/tenants/{tenantName}/communication/custom-email-spec.yml
-    tenant-ignored-path-list: /swagger-resources/configuration/ui, /management/health, /oauth/token_key, /h2-console
+    tenant-ignored-path-list: /swagger-resources/configuration/ui, /management/health, /oauth/token_key, /h2-console, /v3/api-docs
     email-queue-name-template: communication_%s_queue
     lep:
         tenant-script-storage: XM_MS_CONFIG

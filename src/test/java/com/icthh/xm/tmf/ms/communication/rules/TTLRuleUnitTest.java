@@ -191,10 +191,12 @@ public class TTLRuleUnitTest {
     public void validateMessageOutdatedBornTimeTest() throws Throwable {
         loadOneMillisecondConfig();
 
+        // born a second ago against a 1 ms TTL: using Instant.now() here raced the TTL check
+        // and passed only when the assertion happened to land in a later millisecond
         failureCheck(message().addCharacteristicItem(
             new CommunicationRequestCharacteristic()
                 .name(MESSAGE_RECEIVED_BY_CHANNEL_TIMESTAMP)
-                .value(String.valueOf(Instant.now().toEpochMilli()))
+                .value(String.valueOf(Instant.now().minusSeconds(1).toEpochMilli()))
         ));
     }
 
