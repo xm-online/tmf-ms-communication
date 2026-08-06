@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
+import tools.jackson.databind.json.JsonMapper;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
@@ -42,7 +43,7 @@ public class ProblemModuleIntTest {
     private CustomExceptionTranslator exceptionTranslator;
 
     @Autowired
-    private JacksonJsonHttpMessageConverter jacksonMessageConverter;
+    private JsonMapper jsonMapper;
 
     @MockitoBean
     private SmppService smppService;
@@ -53,7 +54,7 @@ public class ProblemModuleIntTest {
     void setup() {
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
             .setControllerAdvice(exceptionTranslator)
-            .setMessageConverters(jacksonMessageConverter)
+            .setMessageConverters(new JacksonJsonHttpMessageConverter(jsonMapper))
             .build();
     }
 

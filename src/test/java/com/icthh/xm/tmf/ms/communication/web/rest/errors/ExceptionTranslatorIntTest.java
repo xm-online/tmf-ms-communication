@@ -9,6 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
+import tools.jackson.databind.json.JsonMapper;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -38,7 +39,7 @@ public class ExceptionTranslatorIntTest {
     private CustomExceptionTranslator exceptionTranslator;
 
     @Autowired
-    private JacksonJsonHttpMessageConverter jacksonMessageConverter;
+    private JsonMapper jsonMapper;
 
     @MockitoBean
     private SmppService smppService;
@@ -49,7 +50,7 @@ public class ExceptionTranslatorIntTest {
     public void setup() {
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
             .setControllerAdvice(exceptionTranslator)
-            .setMessageConverters(jacksonMessageConverter)
+            .setMessageConverters(new JacksonJsonHttpMessageConverter(jsonMapper))
             .build();
     }
 
