@@ -21,6 +21,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
+import tools.jackson.databind.json.JsonMapper;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
@@ -67,7 +68,7 @@ public class EmailTemplateControllerIntTest {
     private TenantContextHolder tenantContextHolder;
 
     @Autowired
-    private JacksonJsonHttpMessageConverter jacksonMessageConverter;
+    private JsonMapper jsonMapper;
 
     private final PageableHandlerMethodArgumentResolver pageableArgumentResolver =
         new PageableHandlerMethodArgumentResolver();
@@ -98,7 +99,7 @@ public class EmailTemplateControllerIntTest {
         this.mockMvc = MockMvcBuilders.standaloneSetup(subject)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
-            .setMessageConverters(jacksonMessageConverter)
+            .setMessageConverters(new JacksonJsonHttpMessageConverter(jsonMapper))
             .setValidator(validator).build();
     }
 
