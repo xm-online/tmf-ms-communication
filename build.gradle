@@ -67,7 +67,8 @@ idea {
 
 String[] testCategories = ['com.icthh.xm.tmf.ms.communication.AbstractSpringBootTest',
                            'com.icthh.xm.tmf.ms.communication.AbstractUnitTest',
-                           'com.icthh.xm.tmf.ms.communication.AbstractWebMvcTest']
+                           'com.icthh.xm.tmf.ms.communication.AbstractWebMvcTest',
+                           'com.icthh.xm.lep.AbstractUnitTest']
 
 Closure testLoggingConf = {
     exceptionFormat = 'full'
