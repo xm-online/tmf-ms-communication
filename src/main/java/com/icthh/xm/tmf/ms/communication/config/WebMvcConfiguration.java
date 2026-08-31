@@ -27,7 +27,9 @@ public class WebMvcConfiguration extends XmWebMvcConfigurerAdapter {
 
     @Override
     protected void xmAddInterceptors(final InterceptorRegistry registry) {
-        registry.addInterceptor(lepInterceptor).addPathPatterns("/**");
+        // LEP needs a tenant in the context, so tenant-less paths (e.g. /v3/api-docs)
+        // must be excluded the same way they are for TenantInterceptor
+        registerTenantInterceptorWithIgnorePathPattern(registry, lepInterceptor);
     }
 
     @Override
