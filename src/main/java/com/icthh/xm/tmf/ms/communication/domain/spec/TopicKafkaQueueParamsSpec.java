@@ -11,4 +11,5 @@ public class TopicKafkaQueueParamsSpec {
     private Integer maxPollInterval;
     private String isolationLevel;
     private Integer concurrency;
+    private String groupId;
 }
