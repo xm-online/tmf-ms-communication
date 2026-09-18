@@ -143,6 +143,11 @@ Desktop.ini
 .eslintcache
 
 ######################
+# Code coverage
+######################
+/src/main/resources/config/application-test-local.yml
+
+######################
 # LEP
 ######################
 /src/main/lep
