@@ -3,13 +3,16 @@ package com.icthh.xm.tmf.ms.communication.service;
 import static org.jsmpp.bean.Alphabet.ALPHA_DEFAULT;
 import static org.jsmpp.bean.OptionalParameter.Tag.MESSAGE_PAYLOAD;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyByte;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -21,7 +24,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 import org.jsmpp.bean.DataCoding;
@@ -37,14 +39,16 @@ import org.jsmpp.bean.RegisteredDelivery;
 import org.jsmpp.bean.TypeOfNumber;
 import org.jsmpp.extra.SessionState;
 import org.jsmpp.session.SMPPSession;
+import org.jsmpp.session.SessionStateListener;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.MockedConstruction;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class SmppServiceUnitTest {
@@ -85,21 +89,27 @@ class SmppServiceUnitTest {
 
     @Mock
     private ApplicationProperties appProps;
-    @Mock
-    private SMPPSession session;
     @Captor
     private ArgumentCaptor<ESMClass> esmClassCaptor;
     @Captor
     private ArgumentCaptor<DataCoding> dataCodingCaptor;
+    @Captor
+    private ArgumentCaptor<SessionStateListener> sessionStateListenerCaptor;
 
     private SmppService smppService;
+    private MockedConstruction<SMPPSession> sessionConstruction;
 
     @BeforeEach
     void setUp() {
-        List<DeliveryReportListener> listeners = Collections.emptyList();
-        smppService = spy(new SmppService(appProps, listeners));
-        injectBoundSession();
+        sessionConstruction = mockConstruction(SMPPSession.class, (session, context) ->
+            lenient().when(session.getSessionState()).thenReturn(SessionState.BOUND_TRX));
+        smppService = spy(new SmppService(appProps, Collections.emptyList()));
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+    }
+
+    @AfterEach
+    void tearDown() {
+        sessionConstruction.close();
     }
 
     @Test
@@ -132,7 +142,7 @@ class SmppServiceUnitTest {
 
     @Test
     void shouldSubmitAlphaMessage() throws Exception {
-        stubSmpp();
+        SMPPSession session = initializeSession();
         doReturn(CURRENT_DATE).when(smppService).getCurrentDate();
         when(session.submitShortMessage(
             eq(SERVICE_TYPE), eq(TypeOfNumber.ALPHANUMERIC), eq(NumberingPlanIndicator.UNKNOWN),
@@ -155,7 +165,7 @@ class SmppServiceUnitTest {
 
     @Test
     void shouldUseFallbackSourceAddrWhenSenderIdIsBlank() throws Exception {
-        stubSmpp();
+        SMPPSession session = initializeSession();
         when(session.submitShortMessage(
             anyString(), any(TypeOfNumber.class), any(NumberingPlanIndicator.class), eq(SOURCE_ADDR),
             any(TypeOfNumber.class), any(NumberingPlanIndicator.class), anyString(),
@@ -173,7 +183,7 @@ class SmppServiceUnitTest {
 
     @Test
     void shouldApplyCustomProtocolIdAndValidityPeriod() throws Exception {
-        stubSmpp();
+        SMPPSession session = initializeSession();
         doReturn(CURRENT_DATE).when(smppService).getCurrentDate();
         int customProtocol = 64;
         int customValidity = 7200;
@@ -200,7 +210,7 @@ class SmppServiceUnitTest {
 
     @Test
     void shouldApplyCustomSourceAndDestTon() throws Exception {
-        stubSmpp();
+        SMPPSession session = initializeSession();
         when(session.submitShortMessage(
             anyString(), eq(TypeOfNumber.INTERNATIONAL), any(NumberingPlanIndicator.class), anyString(),
             eq(TypeOfNumber.NATIONAL), any(NumberingPlanIndicator.class), anyString(),
@@ -221,7 +231,7 @@ class SmppServiceUnitTest {
 
     @Test
     void shouldSubmitBinaryMessage() throws Exception {
-        stubSmpp();
+        SMPPSession session = initializeSession();
         doReturn(CURRENT_DATE).when(smppService).getCurrentDate();
         byte[] binaryPayload = {0x01, 0x02, 0x03};
 
@@ -253,24 +263,56 @@ class SmppServiceUnitTest {
 
         smppService.init();
 
-        verify(session, never()).getSessionState();
+        assertTrue(sessionConstruction.constructed().isEmpty());
+    }
+
+    @Test
+    void shouldRecreateSessionWhenSessionBecomesUnbound() {
+        SMPPSession oldSession = initializeSession();
+        verify(oldSession).addSessionStateListener(sessionStateListenerCaptor.capture());
+        when(oldSession.getSessionState()).thenReturn(SessionState.CLOSED);
+
+        sessionStateListenerCaptor.getValue().onStateChange(
+            SessionState.CLOSED, SessionState.BOUND_TRX, oldSession);
+
+        assertEquals(2, sessionConstruction.constructed().size());
+        assertNotSame(oldSession, sessionConstruction.constructed().get(1));
+        verify(oldSession).unbindAndClose();
     }
 
     @Test
     void shouldUnbindAndCloseSessionOnDestroy() throws Exception {
+        SMPPSession session = initializeSession();
         smppService.onDestroy();
         verify(session).unbindAndClose();
     }
 
     @Test
-    void shouldHandleNullSessionOnDestroy() throws Exception {
-        ReflectionTestUtils.setField(smppService, "session", null);
+    void shouldNotRecreateSessionWhenSessionBecomesUnboundDuringDestroy() throws Exception {
+        SMPPSession session = initializeSession();
+        verify(session).addSessionStateListener(sessionStateListenerCaptor.capture());
+
         smppService.onDestroy();
+        sessionStateListenerCaptor.getValue().onStateChange(
+            SessionState.CLOSED, SessionState.BOUND_TRX, session);
+
+        assertEquals(1, sessionConstruction.constructed().size());
+        verify(session).unbindAndClose();
     }
 
-    private void injectBoundSession() {
-        lenient().when(session.getSessionState()).thenReturn(SessionState.BOUND_TRX);
-        ReflectionTestUtils.setField(smppService, "session", session);
+    @Test
+    void shouldNotCreateOrReuseSessionAfterDestroy() throws Exception {
+        smppService.onDestroy();
+        stubSmpp();
+
+        assertThrows(IllegalStateException.class,
+            () -> smppService.send(DEST_ADDRESS, MESSAGE_TEXT, SENDER_ID, DELIVERY_REPORT, Map.of(),
+                CustomParametersBuilder.builder().build()));
+    }
+
+    @Test
+    void shouldHandleNullSessionOnDestroy() throws Exception {
+        new SmppService(appProps, Collections.emptyList()).onDestroy();
     }
 
     private void stubSmpp() {
@@ -278,9 +320,17 @@ class SmppServiceUnitTest {
         when(appProps.getSmpp()).thenReturn(smpp);
     }
 
+    private SMPPSession initializeSession() {
+        stubSmpp();
+        smppService.init();
+        return sessionConstruction.constructed().getFirst();
+    }
+
     private static Smpp defaultSmpp() {
         Smpp smpp = new Smpp();
         smpp.setEnabled(true);
+        smpp.setConnectionTimeout(1000L);
+        smpp.setPort(2775);
         smpp.setServiceType(SERVICE_TYPE);
         smpp.setSourceAddr(SOURCE_ADDR);
         smpp.setSourceAddrTon(TypeOfNumber.ALPHANUMERIC);

@@ -21,6 +21,7 @@ import org.springframework.cloud.stream.binding.BindingService;
 import org.springframework.cloud.stream.binding.SubscribableChannelBindingTargetFactory;
 import org.springframework.cloud.stream.config.BindingServiceProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -33,6 +34,7 @@ import org.springframework.kafka.core.KafkaTemplate;
  */
 @Slf4j
 @EnableIntegration
+@Configuration
 @RequiredArgsConstructor
 @Import({KafkaBinderConfiguration.class})
 @ConditionalOnProperty("application.stream-binding-enabled")
