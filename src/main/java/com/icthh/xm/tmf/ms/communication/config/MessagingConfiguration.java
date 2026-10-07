@@ -5,6 +5,8 @@ import com.icthh.xm.tmf.ms.communication.lep.LepKafkaMessageHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.MessagingAdapter;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaDeliveryReportListener;
 import com.icthh.xm.tmf.ms.communication.messaging.SendToKafkaMoDeliveryReportListener;
+import com.icthh.xm.tmf.ms.communication.messaging.ToSendQueueDynamicConsumerConfiguration;
+import com.icthh.xm.tmf.ms.communication.messaging.ToSendQueueMessageHandler;
 import com.icthh.xm.tmf.ms.communication.messaging.handler.MessageHandlerService;
 
 import java.util.concurrent.LinkedBlockingQueue;
@@ -15,44 +17,35 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
-import org.springframework.cloud.stream.binder.kafka.KafkaMessageChannelBinder;
-import org.springframework.cloud.stream.binder.kafka.config.KafkaBinderConfiguration;
-import org.springframework.cloud.stream.binding.BindingService;
-import org.springframework.cloud.stream.binding.SubscribableChannelBindingTargetFactory;
-import org.springframework.cloud.stream.config.BindingServiceProperties;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.integration.config.EnableIntegration;
 import org.springframework.kafka.core.KafkaTemplate;
 
 /**
- * Configures Spring Cloud Stream support.
- * <p>
- * See http://docs.spring.io/spring-cloud-stream/docs/current/reference/htmlsingle/
- * for more information.
+ * Configures Kafka messaging: the to-send queue consumer and the delivery report producers.
  */
 @Slf4j
-@EnableIntegration
 @Configuration
 @RequiredArgsConstructor
-@Import({KafkaBinderConfiguration.class})
 @ConditionalOnProperty("application.stream-binding-enabled")
 public class MessagingConfiguration {
 
     @Bean
-    public KafkaChannelFactory kafkaChannelFactory(BindingServiceProperties bindingServiceProperties,
-                                                   SubscribableChannelBindingTargetFactory bindingTargetFactory,
-                                                   BindingService bindingService, ObjectMapper objectMapper,
-                                                   ApplicationProperties applicationProperties,
-                                                   KafkaMessageChannelBinder kafkaMessageChannelBinder,
-                                                   KafkaProperties kafkaProperties,
-                                                   MessageHandlerService messageHandler,
-                                                   LepKafkaMessageHandler lepMessageHandler
-    ) {
-        return new KafkaChannelFactory(bindingServiceProperties, bindingTargetFactory, bindingService, objectMapper,
-            applicationProperties, kafkaProperties, kafkaMessageChannelBinder,
-            messageHandler, lepMessageHandler);
+    public ToSendQueueMessageHandler toSendQueueMessageHandler(ObjectMapper objectMapper,
+                                                               MessageHandlerService messageHandlerService,
+                                                               LepKafkaMessageHandler lepMessageHandler) {
+        return new ToSendQueueMessageHandler(objectMapper, messageHandlerService, lepMessageHandler);
+    }
+
+    @Bean
+    public ToSendQueueDynamicConsumerConfiguration toSendQueueDynamicConsumerConfiguration(
+        ApplicationProperties applicationProperties,
+        KafkaProperties kafkaProperties,
+        ToSendQueueMessageHandler toSendQueueMessageHandler,
+        ApplicationEventPublisher applicationEventPublisher) {
+        return new ToSendQueueDynamicConsumerConfiguration(applicationProperties, kafkaProperties,
+            toSendQueueMessageHandler, applicationEventPublisher);
     }
 
     @Bean
