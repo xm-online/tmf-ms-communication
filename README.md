@@ -50,6 +50,48 @@ To package your application as a war in order to deploy it to an application ser
 
     ./gradlew -Pprod -Pwar clean bootWar
 
+## Docker image
+
+The image is built from `src/main/docker/Dockerfile` on top of
+`gcr.io/distroless/java25-debian13:nonroot`: no shell, no package manager,
+runs as UID 65532, and writes only to `/tmp` at runtime.
+
+Build locally (`clean` first, so `build/libs` holds a single WAR):
+
+```bash
+./gradlew -Pprod clean bootWar
+docker build -t communication -f src/main/docker/Dockerfile .
+```
+
+Run locally with the same hardening as the Swarm stack (`deploy/docker-compose.yml`):
+
+```bash
+docker run --rm --read-only --tmpfs /tmp:size=64m --cap-drop ALL \
+  --env-file deploy/env/communication-app.env -p 8701:8701 communication
+```
+
+JVM tuning goes through `JDK_JAVA_OPTIONS` (image default `-Xms128m -Xmx512m`);
+it replaces the former `JAVA_OPTS` and `XMX`. JMX remote is no longer enabled.
+
+Troubleshooting: there is no shell in the image, use `docker logs`. If you
+must look inside a container, build a one-off image with the base tag changed
+to `debug-nonroot` (adds busybox) and never publish it.
+
+Bumping the base image: verify the signature, then put the new digest into
+the Dockerfile. Dependabot also opens weekly PRs for digest updates.
+
+```bash
+docker run --rm ghcr.io/sigstore/cosign/cosign:v2.6.0 verify \
+  gcr.io/distroless/java25-debian13:nonroot \
+  --certificate-oidc-issuer https://accounts.google.com \
+  --certificate-identity keyless@distroless.iam.gserviceaccount.com
+docker buildx imagetools inspect gcr.io/distroless/java25-debian13:nonroot --format '{{.Manifest.Digest}}'
+```
+
+Outside Swarm add `no-new-privileges` (Docker) or `allowPrivilegeEscalation: false`
+(Kubernetes); Swarm ignores that option, and the image has no setuid binaries.
+Swarm needs Docker 20.10+ for `cap_drop`.
+
 ## Testing
 
 To launch your application's tests, run:
