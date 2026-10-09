@@ -104,25 +104,42 @@ implementing):
 
 ### 2. Runtime hardening (`deploy/docker-compose.yml`)
 
-Four keys are added to `communication-app`; nothing else changes:
+Three keys are added to `communication-app` plus a top-level volume; nothing
+else changes:
 
 ```yaml
 read_only: true
 cap_drop:
     - ALL
 volumes:
-    - type: tmpfs
+    - type: volume
+      source: communication-tmp
       target: /tmp
-      tmpfs:
-          size: 67108864   # 64 MB: Tomcat work dir + Kafka/Netty native libs
+# top level
+volumes:
+    communication-tmp:
+        driver: local
+        driver_opts:
+            type: tmpfs
+            device: tmpfs
+            o: size=64m,mode=1777,nosuid,nodev   # 64 MB: Tomcat work dir + native libs
 ```
+
+A compose `type: tmpfs` mount cannot be used: Docker mounts every tmpfs
+`noexec` unless `exec` is given, and the Swarm compose loader has no field
+for that option. Verified with a probe inside the image: under a tmpfs mount
+zstd-jni and snappy-java fail with `UnsatisfiedLinkError: failed to map
+segment`; under the tmpfs-backed local volume (mounted without `noexec`) both
+load. The volume is per node and its contents are discarded when the last
+container using it stops (the local driver unmounts the tmpfs), so nothing
+accumulates across restarts.
 
 - `/tmp` is the only writable path. `docker diff` on a writable run of the
   new image showed exactly two writes: `/tmp/hsperfdata_nonroot` and
   `/tmp/tomcat.8701.*`.
 - `/tmp` cannot be `noexec`: zstd-jni, lz4 and Netty extract native
   libraries there and map them executable.
-- The tmpfs size cap protects the node from `/tmp` filling memory.
+- The 64 MB size cap protects the node from `/tmp` filling memory.
 - `user` is not set in compose: UID 65532 is baked into the image and is the
   single source of truth.
 - `security_opt: no-new-privileges` is deliberately omitted: `docker stack

@@ -66,9 +66,13 @@ docker build -t communication -f src/main/docker/Dockerfile .
 Run locally with the same hardening as the Swarm stack (`deploy/docker-compose.yml`):
 
 ```bash
-docker run --rm --read-only --tmpfs /tmp:size=64m --cap-drop ALL \
+docker run --rm --read-only --tmpfs /tmp:exec,size=64m --cap-drop ALL \
   --env-file deploy/env/communication-app.env -p 8701:8701 communication
 ```
+
+`/tmp` must allow `exec`: Kafka's zstd and snappy codecs extract native libraries
+there and the JVM maps them executable. Docker mounts tmpfs `noexec` by default,
+which is why the Swarm stack uses a tmpfs-backed volume instead of a tmpfs mount.
 
 JVM tuning goes through `JDK_JAVA_OPTIONS` (image default `-Xms128m -Xmx512m`);
 it replaces the former `JAVA_OPTS` and `XMX`. JMX remote is no longer enabled.
