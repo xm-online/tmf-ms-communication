@@ -24,6 +24,7 @@ import com.icthh.xm.commons.tenant.TenantContextUtils;
 import com.icthh.xm.commons.tenant.TenantKey;
 import com.icthh.xm.tmf.ms.communication.CommunicationApp;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
+import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException;
 import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService;
 import com.icthh.xm.tmf.ms.communication.config.CommunicationTenantConfigService.CommunicationTenantConfig.MailSetting;
 import com.icthh.xm.tmf.ms.communication.config.SecurityBeanOverrideConfiguration;
@@ -119,6 +120,9 @@ public class MailServiceUnitTest {
     @Autowired
     private EmailSpecService emailSpecService;
 
+    @Autowired
+    private EmailTemplateService emailTemplateService;
+
     @SneakyThrows
     @BeforeEach
     public void setup() {
@@ -141,6 +145,26 @@ public class MailServiceUnitTest {
         applicationProperties.setEmailSpecificationPathPattern(EMAIL_SPECIFICATION_PATH_PATTERN);
         applicationProperties.setCustomEmailSpecificationPathPattern(CUSTOM_EMAIL_SPECIFICATION_PATH_PATTERN);
         applicationProperties.setSubjectFreemarkerProcessing(true);
+    }
+
+    @Test
+    public void templateCannotImportTemplateOfOtherTenant() {
+        String otherTenantBasePath = "/config/tenants/OTHERTENANT/communication/emails/" + TEMPLATE_NAME + "-BASE/en.ftl";
+        templateService.onRefresh(otherTenantBasePath, "<#macro body>BASE</#macro>");
+        String body = "<#import \"/OTHERTENANT/" + TEMPLATE_NAME + "-BASE/en\" as main><@main.body/>";
+
+        assertThrows(RenderTemplateException.class, () -> emailTemplateService.processEmailTemplate(
+            TENANT_NAME, body, Map.of(), "en", TENANT_NAME + "/" + TEMPLATE_NAME + "/en"));
+    }
+
+    @Test
+    public void templateCannotReachOtherTenantByRelativePath() {
+        String otherTenantBasePath = "/config/tenants/OTHERTENANT/communication/emails/" + TEMPLATE_NAME + "-BASE/en.ftl";
+        templateService.onRefresh(otherTenantBasePath, "<#macro body>BASE</#macro>");
+        String body = "<#import \"../../OTHERTENANT/" + TEMPLATE_NAME + "-BASE/en\" as main><@main.body/>";
+
+        assertThrows(RenderTemplateException.class, () -> emailTemplateService.processEmailTemplate(
+            TENANT_NAME, body, Map.of(), "en", TENANT_NAME + "/" + TEMPLATE_NAME + "/en"));
     }
 
     @Test

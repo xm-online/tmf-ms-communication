@@ -79,7 +79,7 @@ public class EmailTemplateService {
             freemarker.template.Configuration configuration = (freemarker.template.Configuration) freeMarkerConfiguration.clone();
             StringTemplateLoader templateLoaderByTenantAndLang = multiTenantLangStringTemplateLoaderService.getTemplateLoader(tenantKey, lang);
             MultiTemplateLoader multiTemplateLoader = new MultiTemplateLoader(
-                new TemplateLoader[]{templateLoaderByTenantAndLang, templateLoader}
+                new TemplateLoader[]{templateLoaderByTenantAndLang, new TenantScopedTemplateLoader(tenantKey, templateLoader)}
             );
             configuration.setTemplateLoader(multiTemplateLoader);
 
@@ -87,12 +87,12 @@ public class EmailTemplateService {
 
             return FreeMarkerTemplateUtils.processTemplateIntoString(mailTemplate, objectModel);
         } catch (TemplateException e) {
-            log.error("Template could not be rendered with content: {} and model: {} for language: {}.", content,
-                objectModel, lang, e);
+            log.error("Template {} could not be rendered for tenant {} and language {}: {}",
+                templatePath, tenantKey, lang, e.getMessageWithoutStackTop());
             throw new RenderTemplateException(e.getMessageWithoutStackTop(), content, objectModel, lang);
         } catch (IOException e) {
-            log.error("Template could not be rendered with content: {} and model: {} for language: {}.", content,
-                objectModel, lang, e);
+            log.error("Template {} could not be rendered for tenant {} and language {}: {}",
+                templatePath, tenantKey, lang, e.getMessage());
             throw new RenderTemplateException(e.getMessage(), content, objectModel, lang);
         }
     }

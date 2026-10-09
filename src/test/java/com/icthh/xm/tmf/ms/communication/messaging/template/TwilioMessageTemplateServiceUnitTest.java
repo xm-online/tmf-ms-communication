@@ -1,16 +1,22 @@
 package com.icthh.xm.tmf.ms.communication.messaging.template;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.icthh.xm.tmf.ms.communication.config.ApplicationProperties;
+import com.icthh.xm.tmf.ms.communication.config.XmFreeMarkerConfiguration;
 import com.icthh.xm.tmf.ms.communication.config.XmFreeMarkerConfiguration.XmFreeMarkerConfigurer;
 import com.icthh.xm.tmf.ms.communication.domain.MessageType;
 import com.icthh.xm.tmf.ms.communication.service.mail.MultiTenantLangStringTemplateLoaderService;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.api.model.Sender;
+import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException;
 import freemarker.cache.StringTemplateLoader;
 import freemarker.template.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
@@ -34,6 +40,7 @@ public class TwilioMessageTemplateServiceUnitTest {
     private static final String CONFIG = "Hello, ${user.firstName + ' ' + user.lastName}! This is your code: ${code}";
 
     private TwilioMessageTemplateService twilioMessageTemplateService;
+    private MessageTemplateConfigurationService messageTemplateConfigurationService;
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -42,7 +49,7 @@ public class TwilioMessageTemplateServiceUnitTest {
         MultiTenantLangStringTemplateLoaderService templateLoaderService = new MultiTenantLangStringTemplateLoaderService();
 
         ApplicationProperties applicationProperties = mock(ApplicationProperties.class);
-        MessageTemplateConfigurationService messageTemplateConfigurationService = mock(MessageTemplateConfigurationService.class);
+        messageTemplateConfigurationService = mock(MessageTemplateConfigurationService.class);
 
         when(applicationProperties.getTwilioPathPattern()).thenReturn(PATH_PATTERN);
         when(messageTemplateConfigurationService.getTemplateContent(CONFIG_PATH, MessageType.Twilio)).thenReturn(CONFIG);
@@ -80,6 +87,37 @@ public class TwilioMessageTemplateServiceUnitTest {
         assertThat(result).isEqualTo("Hello, John Smith! This is your code: 123456789");
     }
 
+    @Test
+    public void getMessageContent_templateInstantiatesClass_shouldThrowRenderTemplateException() {
+        when(messageTemplateConfigurationService.getTemplateContent(CONFIG_PATH, MessageType.Twilio))
+            .thenReturn("<#assign ex = \"freemarker.template.utility.Execute\"?new()>${ex(\"id\")}");
+
+        RenderTemplateException exception = assertThrows(RenderTemplateException.class,
+            () -> twilioMessageTemplateService.getMessageContent(TENANT, TEMPLATE_NAME, LOCALE, Map.of()));
+
+        assertThat(exception.getMessage()).contains("not allowed");
+    }
+
+    @Test
+    public void getMessageContent_renderFails_logDoesNotContainTemplateAndModel() {
+        when(messageTemplateConfigurationService.getTemplateContent(CONFIG_PATH, MessageType.Twilio))
+            .thenReturn("TEMPLATE_MARKER ${missing.value}");
+        Logger logger = (Logger) LoggerFactory.getLogger(AbstractMessageTemplateService.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            assertThrows(RenderTemplateException.class, () -> twilioMessageTemplateService.getMessageContent(
+                TENANT, TEMPLATE_NAME, LOCALE, Map.of("secret", "SECRET_MARKER")));
+
+            assertThat(appender.list).isNotEmpty();
+            assertThat(appender.list).extracting(ILoggingEvent::getFormattedMessage)
+                .noneMatch(message -> message.contains("TEMPLATE_MARKER") || message.contains("SECRET_MARKER"));
+        } finally {
+            logger.detachAppender(appender);
+        }
+    }
+
     private CommunicationMessageCreate getCommunicationMessage(Map<String, Object> model) throws JacksonException {
         CommunicationMessageCreate message = new CommunicationMessageCreate();
         message.setCharacteristic(new ArrayList<>());
@@ -105,6 +143,6 @@ public class TwilioMessageTemplateServiceUnitTest {
     private Configuration buildFreeMarkerConfiguration() throws Exception {
         XmFreeMarkerConfigurer configurer = new XmFreeMarkerConfigurer(new StringTemplateLoader());
         configurer.afterPropertiesSet();
-        return configurer.getConfiguration();
+        return new XmFreeMarkerConfiguration().freeMarkerConfiguration(configurer);
     }
 }

@@ -6,6 +6,7 @@ import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
 import com.icthh.xm.commons.tenant.JsonMapperUtils;
 import com.icthh.xm.tmf.ms.communication.service.mail.MultiTenantLangStringTemplateLoaderService;
+import com.icthh.xm.tmf.ms.communication.service.mail.TenantScopedTemplateLoader;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationMessageCreate;
 import com.icthh.xm.tmf.ms.communication.web.api.model.CommunicationRequestCharacteristic;
 import com.icthh.xm.tmf.ms.communication.web.rest.errors.RenderTemplateException;
@@ -76,19 +77,20 @@ public abstract class AbstractMessageTemplateService implements MessageTemplateS
             return FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
 
         } catch (TemplateException e) {
-            log.error("Template could not be rendered with content: {} and model: {} for language: {}.", content,
-                model, lang, e);
+            log.error("Template {} could not be rendered for tenant {} and language {}: {}",
+                templatePath, tenantKey, lang, e.getMessageWithoutStackTop());
             throw new RenderTemplateException(e.getMessageWithoutStackTop(), content, model, lang);
         } catch (IOException e) {
-            log.error("Template could not be rendered with content: {} and model: {} for language: {}.", content,
-                model, lang, e);
+            log.error("Template {} could not be rendered for tenant {} and language {}: {}",
+                templatePath, tenantKey, lang, e.getMessage());
             throw new RenderTemplateException(e.getMessage(), content, model, lang);
         }
     }
 
     private MultiTemplateLoader getMultiTemplateLoader(String tenantKey, String lang) {
         StringTemplateLoader templateLoaderByTenantAndLang = templateLoaderService.getTemplateLoader(tenantKey, lang);
-        return new MultiTemplateLoader(new TemplateLoader[]{templateLoaderByTenantAndLang, templateLoader});
+        return new MultiTemplateLoader(
+            new TemplateLoader[]{templateLoaderByTenantAndLang, new TenantScopedTemplateLoader(tenantKey, templateLoader)});
     }
 
     private Map<String, Object> getMessageModel(CommunicationMessageCreate message) {

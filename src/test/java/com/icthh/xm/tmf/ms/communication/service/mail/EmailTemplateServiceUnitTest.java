@@ -42,6 +42,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.web.client.RestTemplate;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 import java.util.Collection;
@@ -160,6 +164,37 @@ public class EmailTemplateServiceUnitTest {
         RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto("${subjectNotValid{", Map.of(), DEFAULT_LANGUAGE);
 
         assertThrows(RenderTemplateException.class, () -> subject.renderEmailContent(renderTemplateRequest));
+    }
+
+    @Test
+    public void renderEmailContentRejectsClassInstantiation() {
+        String content = "<#assign ex = \"freemarker.template.utility.Execute\"?new()>${ex(\"id\")}";
+        RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto(content, Map.of(), DEFAULT_LANGUAGE);
+
+        RenderTemplateException exception = assertThrows(RenderTemplateException.class,
+            () -> subject.renderEmailContent(renderTemplateRequest));
+
+        assertThat(exception.getMessage()).contains("not allowed");
+    }
+
+    @Test
+    public void renderErrorLogDoesNotContainTemplateAndModel() {
+        Logger logger = (Logger) LoggerFactory.getLogger(EmailTemplateService.class);
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            RenderTemplateRequest renderTemplateRequest = createEmailTemplateDto("TEMPLATE_MARKER ${missing.value}",
+                Map.of("secret", "SECRET_MARKER"), DEFAULT_LANGUAGE);
+
+            assertThrows(RenderTemplateException.class, () -> subject.renderEmailContent(renderTemplateRequest));
+
+            assertThat(appender.list).isNotEmpty();
+            assertThat(appender.list).extracting(ILoggingEvent::getFormattedMessage)
+                .noneMatch(message -> message.contains("TEMPLATE_MARKER") || message.contains("SECRET_MARKER"));
+        } finally {
+            logger.detachAppender(appender);
+        }
     }
 
     private RenderTemplateRequest createEmailTemplateDto(String content, Map model, String lang) {
