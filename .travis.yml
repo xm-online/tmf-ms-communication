@@ -31,6 +31,7 @@ script:
         TAGS="$PROJECT_VERSION $PROJECT_VERSION-$TRAVIS_BUILD_NUMBER $(echo $PROJECT_VERSION | awk -F '.' '{printf $1"."$2" "$1}') latest";
     fi
   - docker build -t app-docker-img --label commit_id="$TRAVIS_COMMIT" --label version="$PROJECT_VERSION" --label build_number="$TRAVIS_BUILD_NUMBER" --label build_url="$TRAVIS_BUILD_WEB_URL" --label git_url="$TRAVIS_REPO_SLUG" --label commit_message="$TRAVIS_COMMIT_MESSAGE" -f src/main/docker/Dockerfile .
+  - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $HOME/.cache/trivy:/root/.cache/ aquasec/trivy:0.75.0 image --exit-code 1 --severity CRITICAL,HIGH --ignore-unfixed --scanners vuln app-docker-img
   - for TAG in $TAGS;
     do
         docker tag app-docker-img $DOCKER_REPO:$TAG;
@@ -41,6 +42,7 @@ cache:
   directories:
   - "~/.gradle"
   - "~/.m2"
+  - "~/.cache/trivy"
 env:
   global:
   - secure: en1I2Ds+kn3prZ7dFaRiSS+6Bxg3GRw6p0vaCCUZraVfNdzGsb3K6SXhnWc+sHDC26PvHd3M8iVDRk8mRQ9yXeKsGg2v2osgBmJtDMvUerpQoirbf+H6hC6vKt03hqIm4ss8gGoMcLR7aWwO0cBnbpZnvC2g1jrqq14Zy3Htn/1FMOugnQ5g1csz7PRe2rvbuY45y+edrnlW1xj5jXQ6/yANymQK80iOoeIjGBLb55A214efFQOCc5q3UMCe7Zq+SVfw68EjErEn619J3Wg6zYyxOHSTCFVw1db6iOdF2chYCNaNIvAxuWN14bDARDwlTYIC5aR+YtAVe3J5mz4GBRZf/EWdk8TgpOFQO8aZsDcEL2bQk/iHx5qZjhrVW8snMq+T+oMkb3Zq6AqqT50N3NARSD5T+8CGyrW9UwLGslDGgO51OCHYjoGY9v8T6DQlraV43wym6U5jBNG9tgUPy8NapFoP3Cy8OkrjQ6zjcrRXWcUlY5+naxTusoNT0VuvycAnkTJDV8AieeB+4NKKlVuttrSDCaxv0B/S55gqeDplOXbAxtq/x7ss4TK6d4DN4rh4sQV2YtANQi9KIBbImvCdhxwrTlY+T9uOqPCOZxUwh4yeomXd7JT4Zt4bReyqAl1fwkY9fW263esGagHLdPfw5pM7fnLkhjNVkOUDfqQ=
