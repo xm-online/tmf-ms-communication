@@ -2,6 +2,15 @@ version: '3.8'
 services:
     communication-app:
         image: xmonline/tmf-ms-communication:${IMAGE_TMF_MS_COMMUNICATION_TAG:-latest}
+        # The image has no shell, runs as UID 65532 and writes only to /tmp.
+        read_only: true
+        cap_drop:
+            - ALL
+        volumes:
+            - type: tmpfs
+              target: /tmp
+              tmpfs:
+                  size: 67108864   # 64 MB: Tomcat work dir + Kafka/Netty native libs
         networks:
             - xm2
         env_file:
