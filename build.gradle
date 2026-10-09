@@ -283,8 +283,6 @@ dependencies {
         exclude group: "com.vaadin.external.google", module: "android-json"
     }
 
-    implementation "org.springframework.cloud:spring-cloud-stream"
-    implementation "org.springframework.cloud:spring-cloud-stream-binder-kafka"
     implementation "org.jsmpp:jsmpp:${jsmpp_version}"
     implementation "com.github.pengrad:java-telegram-bot-api:${telegrambots_version}"
     implementation "com.twilio.sdk:twilio:${twilio_version}"
