@@ -122,7 +122,10 @@ bootWar {
     mainClass = 'com.icthh.xm.tmf.ms.communication.CommunicationApp'
     manifest {
         attributes(
-            "Implementation-Version": archiveVersion
+            "Implementation-Version": archiveVersion,
+            // Groovy (LEP) needs deep reflection into java.lang; the JVM honours this
+            // manifest attribute for `java -jar`, so no --add-opens flags are needed at runtime.
+            "Add-Opens": "java.base/java.lang java.base/java.lang.invoke"
         )
     }
 }
