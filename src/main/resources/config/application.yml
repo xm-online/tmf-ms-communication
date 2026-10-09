@@ -167,6 +167,7 @@ xm-config:
 # application:
 application:
     subject-freemarker-processing: false
+    email-template-api-enabled: true
     kafka-system-topic: system_topic
     kafka-system-queue: system_queue
     # The concurrency of the inbound consumer.
