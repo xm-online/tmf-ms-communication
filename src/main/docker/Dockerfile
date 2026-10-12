@@ -1,25 +1,21 @@
-FROM eclipse-temurin:25-jre
+# Mirror prefix for air-gapped builds, e.g. --build-arg REGISTRY=mirror.example.com/ pulls mirror.example.com/gcr.io/...
+ARG REGISTRY=
 
-ENTRYPOINT ["/entrypoint.sh"]
+# Build stage: split the Spring Boot WAR into layers (dependencies change rarely, application code often)
+FROM eclipse-temurin:25-jre AS builder
+WORKDIR /build
+COPY build/libs/*.war application.war
+RUN java -Djarmode=tools -jar application.war extract --layers --destination extracted
 
-ADD src/main/docker/entrypoint.sh /
-
-RUN chmod 755 entrypoint.sh && apt-get update && apt-get install -y locales locales-all zip unzip curl && apt-get clean
-
-ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
-    JHIPSTER_SLEEP=0 \
-    XMX=512m \
-		TZ=Europe/Kiev \
-		LANG=en_US.UTF-8 \
-		LANGUAGE=en_US:en \
-		TERM=xterm \
-    JAVA_OPTS="-Xms128m -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.ssl=false \
-               -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.local.only=false \
-               -Dcom.sun.management.jmxremote.rmi.port=19999 -Dcom.sun.management.jmxremote.port=19999 \
-               --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.invoke=ALL-UNNAMED"
-# --add-opens fix issues with illegal reflective access operation in groovy lib, will be fixed in next groovy releases
-
-# add directly the war
-ADD build/libs/*.war /app.war
-
+# Runtime stage: distroless (no shell, no package manager), non-root UID 65532, files owned by root
+FROM ${REGISTRY}gcr.io/distroless/java25-debian13:nonroot
+# COPY before WORKDIR: COPY creates /app as root, WORKDIR would create it as the nonroot user (writable)
+COPY --from=builder /build/extracted/dependencies/ /app/
+COPY --from=builder /build/extracted/spring-boot-loader/ /app/
+COPY --from=builder /build/extracted/snapshot-dependencies/ /app/
+COPY --from=builder /build/extracted/application/ /app/
+WORKDIR /app
+ENV TZ=Europe/Kiev JDK_JAVA_OPTIONS="-Xms128m -Xmx512m"
 EXPOSE 8701
+# user.country keeps the default Locale en_US as before (LANG=C.UTF-8 alone yields "en")
+ENTRYPOINT ["java", "-Duser.country=US", "-jar", "application.war"]

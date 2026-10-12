@@ -50,6 +50,34 @@ To package your application as a war in order to deploy it to an application ser
 
     ./gradlew -Pprod -Pwar clean bootWar
 
+## Docker image
+
+`src/main/docker/Dockerfile` is a two-stage build: a JRE stage splits the Spring Boot WAR into layers,
+the runtime stage is `gcr.io/distroless/java25-debian13:nonroot` (no shell, no package manager,
+runs as UID 65532; application files are root-owned and read-only to it, the writable paths are
+`/tmp`, `/var/tmp` and `/home/nonroot`).
+
+    ./gradlew -Pprod clean bootWar
+    docker build -t communication -f src/main/docker/Dockerfile .
+    docker run --rm -p 8701:8701 -e JDK_JAVA_OPTIONS="-Xms128m -Xmx1g" communication
+
+Behind a firewall pass a registry prefix that mirrors the upstream path, e.g.
+`--build-arg REGISTRY=mirror.example.com/` pulls `mirror.example.com/gcr.io/distroless/java25-debian13:nonroot`.
+
+### Breaking changes against the previous image (eclipse-temurin, root, bash entrypoint)
+
+| Before | After |
+|---|---|
+| `JAVA_OPTS` + `XMX` | `JDK_JAVA_OPTIONS` (default `-Xms128m -Xmx512m`); `--add-opens` flags are no longer needed, they are declared in the WAR manifest. Set it before deploying this image (the old image still prefers its `-Xmx$XMX`), then drop `JAVA_OPTS`/`XMX` |
+| JMX remote on port 19999 | Removed; metrics stay on `/management/prometheus` |
+| `/run/secrets/*` exported as environment variables | Removed; pass secrets as environment variables |
+| `APPLICATION_EXTERNAL_CLASSPATH` | Removed; add libraries as build-time dependencies |
+| `JHIPSTER_SLEEP` | Ignored |
+| `docker exec ... sh` | No shell; use `docker logs` or `kubectl debug --target=<container>` |
+| Runs as root | Runs as UID 65532; mounted volumes must be readable by it; application files are read-only to it, writable paths are `/tmp`, `/var/tmp`, `/home/nonroot` |
+| `/app.war` | `/app/application.war`; matters only if `command`/`args` are overridden |
+| `SPRING_OUTPUT_ANSI_ENABLED=ALWAYS` | Not set; no ANSI colours by default |
+
 ## Testing
 
 To launch your application's tests, run:
