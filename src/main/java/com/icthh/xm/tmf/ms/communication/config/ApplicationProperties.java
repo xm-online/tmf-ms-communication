@@ -46,6 +46,7 @@ public class ApplicationProperties {
     private String emailQueueNameTemplate;
     private TopicSpec topicSpec;
     private boolean subjectFreemarkerProcessing;
+    private boolean emailTemplateApiEnabled = true;
 
     @Getter
     @Setter

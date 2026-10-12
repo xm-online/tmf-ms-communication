@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import jakarta.annotation.PreDestroy;
 import lombok.Builder;
@@ -61,6 +62,7 @@ public class SmppService {
     private final List<DeliveryReportListener> deliveryReportListeners;
 
     private volatile SMPPSession session;
+    private final AtomicBoolean isShuttingDown = new AtomicBoolean();
 
     @SneakyThrows
     private SMPPSession createSession(ApplicationProperties appProps) {
@@ -88,7 +90,7 @@ public class SmppService {
             }
         });
         session.addSessionStateListener((newState, oldState, source) -> {
-            if (!newState.isBound()) {
+            if (!isShuttingDown.get() && !newState.isBound()) {
                 getActualSession();
             }
         });
@@ -326,12 +328,16 @@ public class SmppService {
     }
 
     private SMPPSession getActualSession() {
+        ensureNotShuttingDown();
+
         SMPPSession session = this.session;
         if (session != null && session.getSessionState().isBound()) {
             return session;
         }
 
         synchronized (this) {
+            ensureNotShuttingDown();
+
             session = this.session;
             if (session == null) {
                 session = createSession(appProps);
@@ -343,6 +349,12 @@ public class SmppService {
             }
         }
         return session;
+    }
+
+    private void ensureNotShuttingDown() {
+        if (isShuttingDown.get()) {
+            throw new IllegalStateException("SMPP service is shutting down");
+        }
     }
 
     private boolean isAlpha(String message) {
@@ -371,7 +383,13 @@ public class SmppService {
 
     @PreDestroy
     public void onDestroy() throws Exception {
-        unbindAndClose(session);
+        isShuttingDown.set(true);
+        SMPPSession sessionToClose;
+        synchronized (this) {
+            sessionToClose = session;
+            session = null;
+        }
+        unbindAndClose(sessionToClose);
     }
 
     private static void unbindAndClose(Session session) {
