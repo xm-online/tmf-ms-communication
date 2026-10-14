@@ -122,7 +122,9 @@ bootWar {
     mainClass = 'com.icthh.xm.tmf.ms.communication.CommunicationApp'
     manifest {
         attributes(
-            "Implementation-Version": archiveVersion
+            "Implementation-Version": archiveVersion,
+            // Groovy (LEP) needs deep reflection into java.lang; honoured by `java -jar`, replaces --add-opens JVM flags
+            "Add-Opens": "java.base/java.lang java.base/java.lang.invoke"
         )
     }
 }
@@ -398,7 +400,7 @@ wrapper {
     gradleVersion = "9.2.1"
 }
 
-bootWar.dependsOn war
+bootWar.dependsOn 'war'
 compileJava {
     dependsOn processResources
     // add method parameters names to .class (used by LEP scripts)
