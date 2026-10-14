@@ -448,7 +448,6 @@ definitions:
       - type
       - content
       - sender
-      - receiver
     properties:
       callbackFlag:
         type: boolean
@@ -530,7 +529,6 @@ definitions:
       - type
       - content
       - sender
-      - receiver
     properties:
       callbackFlag:
         type: boolean
