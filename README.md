@@ -50,6 +50,17 @@ To package your application as a war in order to deploy it to an application ser
 
     ./gradlew -Pprod -Pwar clean bootWar
 
+### API specification endpoints (`/v3/api-docs`, Swagger UI)
+
+They are **on by default** (dev, INT, tests). To turn them off, for example in production so that nobody,
+not even a super-admin token, can enumerate the API, set any one of:
+
+- Environment variables (in the Helm values `env:`): `SPRINGDOC_API_DOCS_ENABLED=false` and `SPRINGDOC_SWAGGER_UI_ENABLED=false`
+- Application properties: `springdoc.api-docs.enabled=false`, `springdoc.swagger-ui.enabled=false`
+
+When off, springdoc registers no controllers, so every specification path returns an error.
+`mw-prod-terraform` sets these variables for `communication-app`.
+
 ## Docker image
 
 `src/main/docker/Dockerfile` is a two-stage build: a JRE stage splits the Spring Boot WAR into layers,
