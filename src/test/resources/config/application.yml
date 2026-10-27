@@ -85,11 +85,6 @@ jhipster:
                 base64-secret: Y2U2OWQ3MTY4Mzg4MmM0NWQ4ZTA5MTNkMWRlOGNlNmM0ZWRjNWQ3MGJmZjYwOWQ3YWE3Y2NlYTI0MDhlMGRlN2RlYTc1MjAxODA0YWRkYjViM2RmZDg1MTg0MTkyMTYzN2UyM2I5ZTRkZWViMjhhNDBkNzMwNThmYzU5N2M4OTY=
                 # Token is valid 24 hours
                 token-validity-in-seconds: 86400
-        client-authorization:
-            access-token-uri: http://config/oauth/token
-            token-service-id: config
-            client-id: internal
-            client-secret: internal
     
 xm-config:
     enabled: false
