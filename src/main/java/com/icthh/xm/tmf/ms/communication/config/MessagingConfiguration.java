@@ -32,18 +32,15 @@ import org.springframework.kafka.core.KafkaTemplate;
 public class MessagingConfiguration {
 
     @Bean
-    public ToSendQueueMessageHandler toSendQueueMessageHandler(ObjectMapper objectMapper,
-                                                               MessageHandlerService messageHandlerService,
-                                                               LepKafkaMessageHandler lepMessageHandler) {
-        return new ToSendQueueMessageHandler(objectMapper, messageHandlerService, lepMessageHandler);
-    }
-
-    @Bean
     public ToSendQueueDynamicConsumerConfiguration toSendQueueDynamicConsumerConfiguration(
         ApplicationProperties applicationProperties,
         KafkaProperties kafkaProperties,
-        ToSendQueueMessageHandler toSendQueueMessageHandler,
+        ObjectMapper objectMapper,
+        MessageHandlerService messageHandlerService,
+        LepKafkaMessageHandler lepMessageHandler,
         ApplicationEventPublisher applicationEventPublisher) {
+        ToSendQueueMessageHandler toSendQueueMessageHandler =
+            new ToSendQueueMessageHandler(objectMapper, messageHandlerService, lepMessageHandler);
         return new ToSendQueueDynamicConsumerConfiguration(applicationProperties, kafkaProperties,
             toSendQueueMessageHandler, applicationEventPublisher);
     }
