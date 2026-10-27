@@ -224,8 +224,8 @@ application:
         priority-flag: 1
         replace-if-present-flag: 0
         sm-default-msg-id: 0
-        alphaEncoding:
-        notAlphaEncoding:
+        # alphaEncoding: # APPLICATION_SMPP_ALPHAENCODING=0, SMPP data coding of alphanumeric messages, default alphabet when not set; empty breaks the start
+        # notAlphaEncoding: # APPLICATION_SMPP_NOTALPHAENCODING=8, SMPP data coding of other messages, UCS2 when not set; empty breaks the start
     firebase:
         enabled: false
         # proxy configuration that apply for Firebase communication only
