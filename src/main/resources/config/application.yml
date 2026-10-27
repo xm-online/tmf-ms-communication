@@ -188,7 +188,7 @@ application:
         delivered-mo-queue-name: communication_delivered_mo_reports
         deliveryProcessorThreadCount: 16
         deliveryMessageQueueMaxSize: 16000
-    tenant-ignored-path-list: /swagger-resources/configuration/ui, /management/health, /management/health/liveness, /management/health/readiness, /oauth/token_key, /h2-console, /v3/api-docs
+    tenant-ignored-path-list: /swagger-resources/configuration/ui, /management/health, /management/health/liveness, /management/health/readiness, /oauth/token_key, /h2-console, /v3/api-docs, /error
     lep:
         tenant-script-storage: XM_MS_CONFIG
         lep-resource-path-pattern: /config/tenants/{tenantName}/entity/lep/resources/**/*
