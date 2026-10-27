@@ -105,6 +105,7 @@ spring:
         properties:
             reconnect.backoff.ms: 1000
             partition.assignment.strategy: org.apache.kafka.clients.consumer.RangeAssignor
+        # Kafka connection by environment variables, PLAINTEXT when not set: https://github.com/xm-online/xm-ms-template/blob/main/README.md#kafka-connection
 
 security:
     oauth2:
@@ -198,7 +199,7 @@ application:
         delivered-mo-queue-name: communication_delivered_mo_reports
         deliveryProcessorThreadCount: 16
         deliveryMessageQueueMaxSize: 16000
-    tenant-ignored-path-list: /swagger-resources/configuration/ui, /management/health, /oauth/token_key, /h2-console, /v3/api-docs
+    tenant-ignored-path-list: /swagger-resources/configuration/ui, /management/health, /management/health/liveness, /management/health/readiness, /oauth/token_key, /h2-console, /v3/api-docs
     lep:
         tenant-script-storage: XM_MS_CONFIG
         lep-resource-path-pattern: /config/tenants/{tenantName}/entity/lep/resources/**/*
@@ -243,3 +244,6 @@ application:
         enabled: true
     email:
         failOnError: false
+    api-docs:
+        privilege-check: true
+    config-private-key:

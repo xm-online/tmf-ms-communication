@@ -15,7 +15,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
-import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
+import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer;
 import org.springframework.stereotype.Component;
@@ -37,7 +37,7 @@ public class TelegramChannelHandler implements ChannelHandler {
 
     private final ApplicationProperties applicationProperties;
     private final KafkaTemplate<String, String> kafkaTemplate;
-    private final KafkaProperties kafkaProperties;
+    private final ConsumerFactory<String, String> consumerFactory;
     private final TelegramService telegramService;
     private final TraceWrapper sleuthWrapper;
 
@@ -86,7 +86,7 @@ public class TelegramChannelHandler implements ChannelHandler {
 
     protected AbstractMessageListenerContainer buildListenerContainer(String tenantKey, TopicConfig topicConfig) {
         KafkaToTelegramMessageHandler messageHandler = new KafkaToTelegramMessageHandler(telegramService);
-        return new MessageListenerContainerBuilder(kafkaProperties, kafkaTemplate)
+        return new MessageListenerContainerBuilder(consumerFactory, kafkaTemplate)
             .build(tenantKey, topicConfig, messageHandler, sleuthWrapper);
     }
 

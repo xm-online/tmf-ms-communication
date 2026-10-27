@@ -1,6 +1,7 @@
 package com.icthh.xm.tmf.ms.communication.config;
 
 import com.icthh.xm.commons.permission.access.XmPermissionEvaluator;
+import com.icthh.xm.commons.security.XmPermissionCheckService;
 import com.icthh.xm.commons.security.jwt.TokenProvider;
 import com.icthh.xm.commons.security.spring.config.SecurityConfiguration;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,8 +16,9 @@ public class XmSecurityConfiguration extends SecurityConfiguration {
 
     public XmSecurityConfiguration(TokenProvider tokenProvider,
                                    @Value("${jhipster.security.content-security-policy}")
-                                   String contentSecurityPolicy) {
-        super(tokenProvider, contentSecurityPolicy);
+                                   String contentSecurityPolicy,
+                                   XmPermissionCheckService permissionCheckService) {
+        super(tokenProvider, contentSecurityPolicy, permissionCheckService);
     }
 
     @Bean
