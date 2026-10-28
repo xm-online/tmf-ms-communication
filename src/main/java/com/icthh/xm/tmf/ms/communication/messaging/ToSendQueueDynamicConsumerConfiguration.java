@@ -23,6 +23,7 @@ public class ToSendQueueDynamicConsumerConfiguration implements DynamicConsumerC
 
     static final String OWNER_TENANT = "XM";
     private static final String AUTO_OFFSET_RESET_EARLIEST = "earliest";
+    private static final int TO_SEND_QUEUE_PARTITIONS = 16;
 
     private final ApplicationProperties applicationProperties;
     private final KafkaProperties kafkaProperties;
@@ -54,6 +55,8 @@ public class ToSendQueueDynamicConsumerConfiguration implements DynamicConsumerC
         topicConfig.setGroupId(kafkaProperties.getConsumer().getGroupId());
         topicConfig.setAutoOffsetReset(AUTO_OFFSET_RESET_EARLIEST);
         topicConfig.setConcurrency(applicationProperties.getKafkaConcurrencyCount());
+        topicConfig.setAutoCreateTopic(true);
+        topicConfig.setPartitions(TO_SEND_QUEUE_PARTITIONS);
         return topicConfig;
     }
 }

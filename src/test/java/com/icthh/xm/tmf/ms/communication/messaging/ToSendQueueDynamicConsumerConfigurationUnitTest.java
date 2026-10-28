@@ -54,6 +54,8 @@ public class ToSendQueueDynamicConsumerConfigurationUnitTest {
         assertThat(config.getAutoOffsetReset()).isEqualTo("earliest");
         assertThat(config.getConcurrency()).isEqualTo(16);
         assertThat(config.getDeadLetterQueue()).isNull();
+        assertThat(config.getAutoCreateTopic()).isTrue();
+        assertThat(config.getPartitions()).isEqualTo(16);
     }
 
     @Test
