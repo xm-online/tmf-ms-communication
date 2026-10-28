@@ -16,6 +16,6 @@ COPY --from=builder /build/extracted/snapshot-dependencies/ /app/
 COPY --from=builder /build/extracted/application/ /app/
 WORKDIR /app
 ENV TZ=Europe/Kiev JDK_JAVA_OPTIONS="-Xms128m -Xmx512m"
-EXPOSE 8701
+EXPOSE 8701 9080
 # user.country keeps the default Locale en_US as before (LANG=C.UTF-8 alone yields "en")
 ENTRYPOINT ["java", "-Duser.country=US", "-jar", "application.war"]
