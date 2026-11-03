@@ -14,7 +14,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.StopWatch;
-import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
+import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.listener.AbstractMessageListenerContainer;
 import org.springframework.stereotype.Component;
@@ -36,7 +36,7 @@ public class TwilioChannelHandler implements ChannelHandler {
 
     private final ApplicationProperties applicationProperties;
     private final KafkaTemplate<String, String> kafkaTemplate;
-    private final KafkaProperties kafkaProperties;
+    private final ConsumerFactory<String, String> consumerFactory;
     private final TwilioService twilioService;
     private final TraceWrapper sleuthWrapper;
 
@@ -83,7 +83,7 @@ public class TwilioChannelHandler implements ChannelHandler {
 
     protected AbstractMessageListenerContainer buildListenerContainer(String tenantKey, TopicConfig topicConfig) {
         KafkaToTwilioMessageHandler messageHandler = new KafkaToTwilioMessageHandler(twilioService);
-        return new MessageListenerContainerBuilder(kafkaProperties, kafkaTemplate)
+        return new MessageListenerContainerBuilder(consumerFactory, kafkaTemplate)
             .build(tenantKey, topicConfig, messageHandler, sleuthWrapper);
     }
 
