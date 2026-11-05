@@ -81,7 +81,7 @@ class SmppServiceUnitTest {
     private static final RegisteredDelivery EXPECTED_DELIVERY_REPORT = new RegisteredDelivery(DELIVERY_REPORT);
     private static final DataCoding EXPECTED_ALPHA_DATA_CONFIG = new GeneralDataCoding(ALPHA_DEFAULT,
         MessageClass.CLASS1, false);
-    private static final byte EXPECTED_BINARY_DATA_CONFIG = (byte) 0x04;
+    private static final byte EXPECTED_BINARY_DATA_CONFIG = (byte) 0xF5;
     private static final OptionalParameter EXPECTED_OPTIONAL_PARAMETER = new OctetString((short) 6005,
         "30001".getBytes());
     private static final OptionalParameter EXPECTED_ALPHA_PAYLOAD_PARAMETER = new OctetString(MESSAGE_PAYLOAD.code(),

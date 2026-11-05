@@ -268,7 +268,7 @@ public class SmppService {
         SmppShortMessageConfigHolder config = buildMessageParameters(
             senderId, destAddrs, esmClass, deliveryReport,
             customParameters,
-            () -> (byte) 0x04,
+            () -> (byte) 0xF5,
             shortMessage,
             optional
         );
